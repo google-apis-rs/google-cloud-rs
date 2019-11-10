@@ -36,7 +36,6 @@ impl SubscriptionConfig {
 }
 
 impl Default for SubscriptionConfig {
-    /// Get the default subscription configuration.
     fn default() -> SubscriptionConfig {
         SubscriptionConfig {
             ack_deadline_duration: Duration::seconds(10),

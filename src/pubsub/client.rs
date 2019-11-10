@@ -4,8 +4,8 @@ use std::sync::{Arc, Mutex};
 use http::HeaderValue;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
-use crate::authorize::{ApplicationCredentials, TokenManager};
-use crate::pubsub::{api, Subscription, Topic, TopicConfig};
+use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
+use crate::pubsub::{api, Error, Subscription, Topic, TopicConfig};
 
 /// The Pub/Sub client, tied to a specific project.
 pub struct Client {
@@ -25,23 +25,21 @@ impl Client {
     /// Create a new client for the specified project.
     ///
     /// Credentials are looked up in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
-    pub fn new(project_name: impl Into<String>) -> Client {
-        let path = env::var("GOOGLE_APPLICATION_CREDENTIALS")
-            .expect("missing GOOGLE_APPLICATION_CREDENTIALS environment variable");
-        let file = std::fs::File::open(path).unwrap();
-        let creds = json::from_reader(file).unwrap();
-        Client::from_credentials(project_name, creds)
+    pub async fn new(project_name: impl Into<String>) -> Result<Client, Error> {
+        let path = env::var("GOOGLE_APPLICATION_CREDENTIALS")?;
+        let file = std::fs::File::open(path)?;
+        let creds = json::from_reader(file)?;
+
+        Client::from_credentials(project_name, creds).await
     }
 
     /// Create a new client for the specified project with custom credentials.
-    pub fn from_credentials(
+    pub async fn from_credentials(
         project_name: impl Into<String>,
         creds: ApplicationCredentials,
-    ) -> Client {
-        let certs = include_bytes!("../../roots.pem");
-
+    ) -> Result<Client, Error> {
         let mut tls_config = ClientTlsConfig::with_rustls();
-        tls_config.ca_certificate(Certificate::from_pem(certs.as_ref()));
+        tls_config.ca_certificate(Certificate::from_pem(TLS_CERTS));
         tls_config.domain_name(Client::DOMAIN_NAME);
 
         let token_manager = Arc::new(Mutex::new(TokenManager::new(
@@ -57,13 +55,14 @@ impl Client {
                 headers.insert("authorization", value);
             })
             .tls_config(&tls_config)
-            .channel();
+            .connect()
+            .await?;
 
-        Client {
+        Ok(Client {
             project_name: project_name.into(),
             publisher: Mutex::new(api::client::PublisherClient::new(channel.clone())),
             subscriber: Mutex::new(api::client::SubscriberClient::new(channel)),
-        }
+        })
     }
 
     /// Create a new topic.
@@ -71,7 +70,7 @@ impl Client {
         &self,
         topic_name: &str,
         config: TopicConfig,
-    ) -> Result<Topic<'_>, Box<dyn std::error::Error>> {
+    ) -> Result<Topic<'_>, Error> {
         let mut service = self.publisher.lock().unwrap();
 
         let request = api::Topic {
@@ -92,7 +91,7 @@ impl Client {
     }
 
     /// List all exisiting topics.
-    pub async fn topics(&self) -> Result<Vec<Topic<'_>>, Box<dyn std::error::Error>> {
+    pub async fn topics(&self) -> Result<Vec<Topic<'_>>, Error> {
         let mut topics = Vec::new();
         let page_size = 25;
         let mut page_token = String::default();
@@ -120,10 +119,7 @@ impl Client {
     }
 
     /// Get a handle to a specific topic.
-    pub async fn topic(
-        &self,
-        topic_name: &str,
-    ) -> Result<Option<Topic<'_>>, Box<dyn std::error::Error>> {
+    pub async fn topic(&self, topic_name: &str) -> Result<Option<Topic<'_>>, Error> {
         let mut service = self.publisher.lock().unwrap();
         let request = api::GetTopicRequest {
             topic: format!(
@@ -140,7 +136,7 @@ impl Client {
     }
 
     /// List all existing subscriptions (to any topic).
-    pub async fn subscriptions(&self) -> Result<Vec<Subscription<'_>>, Box<dyn std::error::Error>> {
+    pub async fn subscriptions(&self) -> Result<Vec<Subscription<'_>>, Error> {
         let mut subscriptions = Vec::new();
         let page_size = 25;
         let mut page_token = String::default();
@@ -171,7 +167,7 @@ impl Client {
     pub async fn subscription(
         &self,
         subscription_name: &str,
-    ) -> Result<Option<Subscription<'_>>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<Subscription<'_>>, Error> {
         let mut service = self.subscriber.lock().unwrap();
 
         let request = api::GetSubscriptionRequest {

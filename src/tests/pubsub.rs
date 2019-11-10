@@ -1,19 +1,28 @@
 use std::io::{self, Write};
 
-use json::json;
+use serde::{Deserialize, Serialize};
 
+use crate::authorize::ApplicationCredentials;
 use crate::pubsub;
 
+async fn setup_client() -> pubsub::Client {
+    let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))
+        .expect("invalid GCP credentials format");
+    let client = pubsub::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await;
+
+    client.expect("could not create pubsub client")
+}
+
 #[tokio::test]
-async fn pubsub_connects_successfully() {
-    let client = pubsub::Client::new(env!("GCP_TEST_PROJECT"));
+async fn pubsub_lists_topics() {
+    let client = setup_client().await;
     let topics = client.topics().await;
     assert!(topics.is_ok());
 }
 
 #[tokio::test]
 async fn pubsub_sends_and_receives_message_successfully() {
-    let client = pubsub::Client::new(env!("GCP_TEST_PROJECT"));
+    let client = setup_client().await;
 
     print!("acquiring topic... ");
     io::stdout().flush().unwrap();
@@ -45,8 +54,16 @@ async fn pubsub_sends_and_receives_message_successfully() {
     println!("OK !");
 
     print!("serializing message... ");
+    #[derive(Serialize, Deserialize)]
+    struct Message<'a> {
+        name: &'a str,
+        value: &'a str,
+    }
     io::stdout().flush().unwrap();
-    let data = json!({ "hello": "world !" });
+    let data = Message {
+        name: "hello",
+        value: "world !",
+    };
     let message = json::to_vec(&data).unwrap();
     println!("OK !");
 
@@ -70,7 +87,7 @@ async fn pubsub_sends_and_receives_message_successfully() {
 
     print!("deserializing message... ");
     io::stdout().flush().unwrap();
-    let data = json::from_slice::<json::Value>(received.data());
+    let data = json::from_slice::<Message>(received.data());
     assert!(data.is_ok());
     println!("OK !");
 

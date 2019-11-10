@@ -10,3 +10,5 @@ pub use self::client::*;
 pub use self::message::*;
 pub use self::subscription::*;
 pub use self::topic::*;
+
+pub type Error = Box<dyn std::error::Error + 'static>;
