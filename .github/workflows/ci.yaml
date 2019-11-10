@@ -35,6 +35,7 @@ jobs:
     - name: check unstable
       uses: actions-rs/cargo@v1
       env:
+        GCP_TEST_CREDENTIALS: ${{ secrets.GCP_TEST_CREDENTIALS }}
         GCP_TEST_PROJECT: ${{ secrets.GCP_TEST_PROJECT }}
         GCP_TEST_TOPIC: ${{ secrets.GCP_TEST_TOPIC }}
         GCP_TEST_SUBSCRIPTION: ${{ secrets.GCP_TEST_SUBSCRIPTION }}
@@ -45,6 +46,7 @@ jobs:
     - name: tests
       uses: actions-rs/cargo@v1
       env:
+        GCP_TEST_CREDENTIALS: ${{ secrets.GCP_TEST_CREDENTIALS }}
         GCP_TEST_PROJECT: ${{ secrets.GCP_TEST_PROJECT }}
         GCP_TEST_TOPIC: ${{ secrets.GCP_TEST_TOPIC }}
         GCP_TEST_SUBSCRIPTION: ${{ secrets.GCP_TEST_SUBSCRIPTION }}
