@@ -17,10 +17,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@master
-
-    - name: Checkout submodules
-      run: |
-        git submodule update --init --recursive
+      with:
+        submodules: true
 
     - name: Install ${{ matrix.rust }} toolchain
       uses: actions-rs/toolchain@v1
@@ -59,10 +57,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-
-    - name: Checkout submodules
-      run: |
-        git submodule update --init --recursive
+      with:
+        submodules: true
 
     - name: Install stable toolchain
       uses: actions-rs/toolchain@v1
