@@ -3,6 +3,8 @@ use std::fmt;
 use json::json;
 use serde::{Deserialize, Serialize};
 
+pub(crate) const TLS_CERTS: &[u8] = include_bytes!("../../roots.pem");
+
 const AUTH_ENDPOINT: &str = "https://oauth2.googleapis.com/token";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

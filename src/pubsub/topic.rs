@@ -16,7 +16,6 @@ impl TopicConfig {
 }
 
 impl Default for TopicConfig {
-    /// Get the default topic configuration.
     fn default() -> TopicConfig {
         TopicConfig {
             labels: HashMap::new(),
