@@ -16,8 +16,6 @@ mod api {
     pub use self::r#type::*;
 }
 
-pub(crate) mod fmt;
-
 pub use self::client::*;
 pub use self::entity::*;
 pub use self::key::*;
