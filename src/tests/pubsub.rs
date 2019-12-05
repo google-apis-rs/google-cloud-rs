@@ -55,12 +55,12 @@ async fn pubsub_sends_and_receives_message_successfully() {
     println!("OK !");
 
     print!("serializing message... ");
+    io::stdout().flush().unwrap();
     #[derive(Serialize, Deserialize)]
     struct Message<'a> {
         name: &'a str,
         value: &'a str,
     }
-    io::stdout().flush().unwrap();
     let data = Message {
         name: "hello",
         value: "world !",
@@ -82,6 +82,7 @@ async fn pubsub_sends_and_receives_message_successfully() {
     println!("OK !");
 
     print!("acknowledging message... ");
+    io::stdout().flush().unwrap();
     let result = received.ack().await;
     assert!(result.is_ok());
     println!("OK !");

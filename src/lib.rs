@@ -14,6 +14,9 @@ pub mod datastore;
 /// Pub/Sub bindings.
 #[cfg(feature = "pubsub")]
 pub mod pubsub;
+/// Cloud Vision bindings.
+#[cfg(feature = "vision")]
+pub mod vision;
 
 #[cfg(test)]
 mod tests;
