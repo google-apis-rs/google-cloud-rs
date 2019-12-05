@@ -19,7 +19,7 @@ jobs:
           - macOS-latest
 
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v1
       with:
         submodules: true
 
@@ -61,7 +61,7 @@ jobs:
     name: Checking fmt
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v1
       with:
         submodules: true
 
