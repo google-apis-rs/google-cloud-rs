@@ -8,26 +8,26 @@ categories = ["web-programming", "network-programming", "asynchronous"]
 keywords = ["grpc", "futures", "async", "protobuf", "google", "cloud"]
 
 [dependencies]
-tonic = { version = "0.1.0-alpha.5", features = ["rustls", "prost"] }
-futures-preview = { version = "=0.3.0-alpha.19", features = ["async-await", "compat"] }
-tokio = { version = "=0.2.0-alpha.6" }
-isahc = { version = "0.7.4", features = ["json"] }
+tonic = { version = "0.1.0-beta.1", features = ["tls", "prost"] }
+tokio = { version = "0.2.6", features = ["macros"] }
+isahc = { version = "0.8.2", features = ["json"] }
+futures = { version = "0.3.1" }
 
 prost = { git = "https://github.com/danburkert/prost", rev = "60eac4b" }
 prost-types = { git = "https://github.com/danburkert/prost", rev = "60eac4b" }
 
-http = { version = "0.1.18" }
+http = { version = "0.2.0" }
 bytes = { version = "0.4.12" }
-chrono = { version = "0.4.9" }
+chrono = { version = "0.4.10" }
 
-serde = { version = "1.0.101", features = ["derive"] }
-json = { package = "serde_json", version = "1.0.40" }
-jwt = { package = "frank_jwt", version = "3.1.1" }
+serde = { version = "1.0.104", features = ["derive"] }
+json = { package = "serde_json", version = "1.0.44" }
+jwt = { package = "frank_jwt", version = "3.1.2" }
 
-thiserror = { version = "1.0.4" }
+thiserror = { version = "1.0.9" }
 
 [build-dependencies]
-tonic-build = { version = "0.1.0-alpha.5" }
+tonic-build = { version = "0.1.0-beta.1" }
 
 [features]
 default = ["pubsub", "datastore"]

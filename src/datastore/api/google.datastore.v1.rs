@@ -866,8 +866,8 @@ pub mod transaction_options {
         ReadOnly(ReadOnly),
     }
 }
-#[doc = r" Generated client implementations."]
-pub mod client {
+#[doc = r" Generated server implementations."]
+pub mod datastore_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
     #[doc = " Each RPC normalizes the partition IDs of the keys in its input entities,"]
@@ -897,27 +897,22 @@ pub mod client {
         T::ResponseBody: Body + HttpBody + Send + 'static,
         T::Error: Into<StdError>,
         <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
-        <T::ResponseBody as HttpBody>::Data: Into<bytes::Bytes> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
-        }
-        #[doc = r" Check if the service is ready."]
-        pub async fn ready(&mut self) -> Result<(), tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })
         }
         #[doc = " Looks up entities by key."]
         pub async fn lookup(
             &mut self,
             request: impl tonic::IntoRequest<super::LookupRequest>,
         ) -> Result<tonic::Response<super::LookupResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.datastore.v1.Datastore/Lookup");
@@ -928,7 +923,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::RunQueryRequest>,
         ) -> Result<tonic::Response<super::RunQueryResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.datastore.v1.Datastore/RunQuery");
@@ -939,7 +939,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::BeginTransactionRequest>,
         ) -> Result<tonic::Response<super::BeginTransactionResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.datastore.v1.Datastore/BeginTransaction",
@@ -952,7 +957,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::CommitRequest>,
         ) -> Result<tonic::Response<super::CommitResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.datastore.v1.Datastore/Commit");
@@ -963,7 +973,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::RollbackRequest>,
         ) -> Result<tonic::Response<super::RollbackResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.datastore.v1.Datastore/Rollback");
@@ -975,7 +990,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::AllocateIdsRequest>,
         ) -> Result<tonic::Response<super::AllocateIdsResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.datastore.v1.Datastore/AllocateIds");
@@ -987,7 +1007,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::ReserveIdsRequest>,
         ) -> Result<tonic::Response<super::ReserveIdsResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.datastore.v1.Datastore/ReserveIds");

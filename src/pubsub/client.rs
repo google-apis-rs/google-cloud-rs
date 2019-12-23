@@ -10,8 +10,8 @@ use crate::pubsub::{api, Error, Subscription, Topic, TopicConfig};
 /// The Pub/Sub client, tied to a specific project.
 pub struct Client {
     pub(crate) project_name: String,
-    pub(crate) publisher: Mutex<api::client::PublisherClient<Channel>>,
-    pub(crate) subscriber: Mutex<api::client::SubscriberClient<Channel>>,
+    pub(crate) publisher: Mutex<api::publisher_client::PublisherClient<Channel>>,
+    pub(crate) subscriber: Mutex<api::subscriber_client::SubscriberClient<Channel>>,
 }
 
 impl Client {
@@ -38,9 +38,9 @@ impl Client {
         project_name: impl Into<String>,
         creds: ApplicationCredentials,
     ) -> Result<Client, Error> {
-        let mut tls_config = ClientTlsConfig::with_rustls();
-        tls_config.ca_certificate(Certificate::from_pem(TLS_CERTS));
-        tls_config.domain_name(Client::DOMAIN_NAME);
+        let tls_config = ClientTlsConfig::new()
+            .ca_certificate(Certificate::from_pem(TLS_CERTS))
+            .domain_name(Client::DOMAIN_NAME);
 
         let token_manager = Arc::new(Mutex::new(TokenManager::new(
             creds,
@@ -54,14 +54,14 @@ impl Client {
                 let value = HeaderValue::from_str(token.as_str()).unwrap();
                 headers.insert("authorization", value);
             })
-            .tls_config(&tls_config)
+            .tls_config(tls_config)
             .connect()
             .await?;
 
         Ok(Client {
             project_name: project_name.into(),
-            publisher: Mutex::new(api::client::PublisherClient::new(channel.clone())),
-            subscriber: Mutex::new(api::client::SubscriberClient::new(channel)),
+            publisher: Mutex::new(api::publisher_client::PublisherClient::new(channel.clone())),
+            subscriber: Mutex::new(api::subscriber_client::SubscriberClient::new(channel)),
         })
     }
 

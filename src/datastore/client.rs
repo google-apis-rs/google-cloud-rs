@@ -13,7 +13,7 @@ use crate::datastore::{Entity, Error, Filter, Key, KeyID, Order, Query, Value};
 /// The Datastore client, tied to a specific project.
 pub struct Client {
     pub(crate) project_name: String,
-    pub(crate) service: Mutex<api::client::DatastoreClient<Channel>>,
+    pub(crate) service: Mutex<api::datastore_client::DatastoreClient<Channel>>,
 }
 
 impl Client {
@@ -40,9 +40,9 @@ impl Client {
         project_name: impl Into<String>,
         creds: ApplicationCredentials,
     ) -> Result<Client, Error> {
-        let mut tls_config = ClientTlsConfig::with_rustls();
-        tls_config.ca_certificate(Certificate::from_pem(TLS_CERTS));
-        tls_config.domain_name(Client::DOMAIN_NAME);
+        let tls_config = ClientTlsConfig::new()
+            .ca_certificate(Certificate::from_pem(TLS_CERTS))
+            .domain_name(Client::DOMAIN_NAME);
 
         let token_manager = Arc::new(Mutex::new(TokenManager::new(
             creds,
@@ -56,13 +56,13 @@ impl Client {
                 let value = HeaderValue::from_str(token.as_str()).unwrap();
                 headers.insert("authorization", value);
             })
-            .tls_config(&tls_config)
+            .tls_config(tls_config)
             .connect()
             .await?;
 
         Ok(Client {
             project_name: project_name.into(),
-            service: Mutex::new(api::client::DatastoreClient::new(channel)),
+            service: Mutex::new(api::datastore_client::DatastoreClient::new(channel)),
         })
     }
 
