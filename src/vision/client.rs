@@ -5,13 +5,15 @@ use http::HeaderValue;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
+use crate::vision::api::image_annotator_client::ImageAnnotatorClient;
+use crate::vision::api::product_search_client::ProductSearchClient;
 use crate::vision::{api, Error, Image, TextAnnotation, TextDetectionConfig};
 
 /// The Pub/Sub client, tied to a specific project.
 pub struct Client {
     pub(crate) project_name: String,
-    pub(crate) img_annotator: Mutex<api::client::ImageAnnotatorClient<Channel>>,
-    pub(crate) product_search: Mutex<api::client::ProductSearchClient<Channel>>,
+    pub(crate) img_annotator: Mutex<ImageAnnotatorClient<Channel>>,
+    pub(crate) product_search: Mutex<ProductSearchClient<Channel>>,
 }
 
 impl Client {
@@ -38,9 +40,9 @@ impl Client {
         project_name: impl Into<String>,
         creds: ApplicationCredentials,
     ) -> Result<Client, Error> {
-        let mut tls_config = ClientTlsConfig::with_rustls();
-        tls_config.ca_certificate(Certificate::from_pem(TLS_CERTS));
-        tls_config.domain_name(Client::DOMAIN_NAME);
+        let tls_config = ClientTlsConfig::new()
+            .ca_certificate(Certificate::from_pem(TLS_CERTS))
+            .domain_name(Client::DOMAIN_NAME);
 
         let token_manager = Arc::new(Mutex::new(TokenManager::new(
             creds,
@@ -54,14 +56,14 @@ impl Client {
                 let value = HeaderValue::from_str(token.as_str()).unwrap();
                 headers.insert("authorization", value);
             })
-            .tls_config(&tls_config)
+            .tls_config(tls_config)
             .connect()
             .await?;
 
         Ok(Client {
             project_name: project_name.into(),
-            img_annotator: Mutex::new(api::client::ImageAnnotatorClient::new(channel.clone())),
-            product_search: Mutex::new(api::client::ProductSearchClient::new(channel)),
+            img_annotator: Mutex::new(ImageAnnotatorClient::new(channel.clone())),
+            product_search: Mutex::new(ProductSearchClient::new(channel)),
         })
     }
 

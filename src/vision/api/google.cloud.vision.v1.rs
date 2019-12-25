@@ -644,8 +644,8 @@ pub mod purge_products_request {
         DeleteOrphanProducts(bool),
     }
 }
-#[doc = r" Generated client implementations."]
-pub mod client {
+#[doc = r" Generated server implementations."]
+pub mod product_search_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
     #[doc = " Manages Products and ProductSets of reference images for use in product"]
@@ -682,20 +682,10 @@ pub mod client {
         T::ResponseBody: Body + HttpBody + Send + 'static,
         T::Error: Into<StdError>,
         <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
-        <T::ResponseBody as HttpBody>::Data: Into<bytes::Bytes> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
-        }
-        #[doc = r" Check if the service is ready."]
-        pub async fn ready(&mut self) -> Result<(), tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })
         }
         #[doc = " Creates and returns a new ProductSet resource."]
         #[doc = ""]
@@ -707,7 +697,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreateProductSetRequest>,
         ) -> Result<tonic::Response<super::ProductSet>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/CreateProductSet",
@@ -724,7 +719,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::ListProductSetsRequest>,
         ) -> Result<tonic::Response<super::ListProductSetsResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/ListProductSets",
@@ -740,7 +740,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::GetProductSetRequest>,
         ) -> Result<tonic::Response<super::ProductSet>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/GetProductSet",
@@ -759,7 +764,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateProductSetRequest>,
         ) -> Result<tonic::Response<super::ProductSet>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/UpdateProductSet",
@@ -774,7 +784,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteProductSetRequest>,
         ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/DeleteProductSet",
@@ -793,7 +808,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreateProductRequest>,
         ) -> Result<tonic::Response<super::Product>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/CreateProduct",
@@ -809,7 +829,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::ListProductsRequest>,
         ) -> Result<tonic::Response<super::ListProductsResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/ListProducts",
@@ -825,7 +850,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::GetProductRequest>,
         ) -> Result<tonic::Response<super::Product>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/GetProduct",
@@ -851,7 +881,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateProductRequest>,
         ) -> Result<tonic::Response<super::Product>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/UpdateProduct",
@@ -867,7 +902,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteProductRequest>,
         ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/DeleteProduct",
@@ -897,7 +937,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreateReferenceImageRequest>,
         ) -> Result<tonic::Response<super::ReferenceImage>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/CreateReferenceImage",
@@ -915,7 +960,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteReferenceImageRequest>,
         ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/DeleteReferenceImage",
@@ -933,7 +983,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::ListReferenceImagesRequest>,
         ) -> Result<tonic::Response<super::ListReferenceImagesResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/ListReferenceImages",
@@ -949,7 +1004,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::GetReferenceImageRequest>,
         ) -> Result<tonic::Response<super::ReferenceImage>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/GetReferenceImage",
@@ -968,7 +1028,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::AddProductToProductSetRequest>,
         ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/AddProductToProductSet",
@@ -980,7 +1045,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::RemoveProductFromProductSetRequest>,
         ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/RemoveProductFromProductSet",
@@ -999,7 +1069,12 @@ pub mod client {
             request: impl tonic::IntoRequest<super::ListProductsInProductSetRequest>,
         ) -> Result<tonic::Response<super::ListProductsInProductSetResponse>, tonic::Status>
         {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/ListProductsInProductSet",
@@ -1024,7 +1099,12 @@ pub mod client {
             tonic::Response<super::super::super::super::longrunning::Operation>,
             tonic::Status,
         > {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/ImportProductSets",
@@ -1062,7 +1142,12 @@ pub mod client {
             tonic::Response<super::super::super::super::longrunning::Operation>,
             tonic::Status,
         > {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vision.v1.ProductSearch/PurgeProducts",
@@ -1071,125 +1156,6 @@ pub mod client {
         }
     }
     impl<T: Clone> Clone for ProductSearchClient<T> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-            }
-        }
-    }
-    #[doc = " Service that performs Google Cloud Vision API detection tasks over client"]
-    #[doc = " images, such as face, landmark, logo, label, and text detection. The"]
-    #[doc = " ImageAnnotator service returns detected entities from the images."]
-    pub struct ImageAnnotatorClient<T> {
-        inner: tonic::client::Grpc<T>,
-    }
-    impl ImageAnnotatorClient<tonic::transport::Channel> {
-        #[doc = r" Attempt to create a new client by connecting to a given endpoint."]
-        pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
-        where
-            D: std::convert::TryInto<tonic::transport::Endpoint>,
-            D::Error: Into<StdError>,
-        {
-            let conn = tonic::transport::Endpoint::new(dst)?.connect().await?;
-            Ok(Self::new(conn))
-        }
-    }
-    impl<T> ImageAnnotatorClient<T>
-    where
-        T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + HttpBody + Send + 'static,
-        T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
-        <T::ResponseBody as HttpBody>::Data: Into<bytes::Bytes> + Send,
-    {
-        pub fn new(inner: T) -> Self {
-            let inner = tonic::client::Grpc::new(inner);
-            Self { inner }
-        }
-        #[doc = r" Check if the service is ready."]
-        pub async fn ready(&mut self) -> Result<(), tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })
-        }
-        #[doc = " Run image detection and annotation for a batch of images."]
-        pub async fn batch_annotate_images(
-            &mut self,
-            request: impl tonic::IntoRequest<super::BatchAnnotateImagesRequest>,
-        ) -> Result<tonic::Response<super::BatchAnnotateImagesResponse>, tonic::Status> {
-            self.ready().await?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.cloud.vision.v1.ImageAnnotator/BatchAnnotateImages",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Service that performs image detection and annotation for a batch of files."]
-        #[doc = " Now only \"application/pdf\", \"image/tiff\" and \"image/gif\" are supported."]
-        #[doc = ""]
-        #[doc = " This service will extract at most 5 (customers can specify which 5 in"]
-        #[doc = " AnnotateFileRequest.pages) frames (gif) or pages (pdf or tiff) from each"]
-        #[doc = " file provided and perform detection and annotation for each image"]
-        #[doc = " extracted."]
-        pub async fn batch_annotate_files(
-            &mut self,
-            request: impl tonic::IntoRequest<super::BatchAnnotateFilesRequest>,
-        ) -> Result<tonic::Response<super::BatchAnnotateFilesResponse>, tonic::Status> {
-            self.ready().await?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.cloud.vision.v1.ImageAnnotator/BatchAnnotateFiles",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Run asynchronous image detection and annotation for a list of images."]
-        #[doc = ""]
-        #[doc = " Progress and results can be retrieved through the"]
-        #[doc = " `google.longrunning.Operations` interface."]
-        #[doc = " `Operation.metadata` contains `OperationMetadata` (metadata)."]
-        #[doc = " `Operation.response` contains `AsyncBatchAnnotateImagesResponse` (results)."]
-        #[doc = ""]
-        #[doc = " This service will write image annotation outputs to json files in customer"]
-        #[doc = " GCS bucket, each json file containing BatchAnnotateImagesResponse proto."]
-        pub async fn async_batch_annotate_images(
-            &mut self,
-            request: impl tonic::IntoRequest<super::AsyncBatchAnnotateImagesRequest>,
-        ) -> Result<
-            tonic::Response<super::super::super::super::longrunning::Operation>,
-            tonic::Status,
-        > {
-            self.ready().await?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.cloud.vision.v1.ImageAnnotator/AsyncBatchAnnotateImages",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Run asynchronous image detection and annotation for a list of generic"]
-        #[doc = " files, such as PDF files, which may contain multiple pages and multiple"]
-        #[doc = " images per page. Progress and results can be retrieved through the"]
-        #[doc = " `google.longrunning.Operations` interface."]
-        #[doc = " `Operation.metadata` contains `OperationMetadata` (metadata)."]
-        #[doc = " `Operation.response` contains `AsyncBatchAnnotateFilesResponse` (results)."]
-        pub async fn async_batch_annotate_files(
-            &mut self,
-            request: impl tonic::IntoRequest<super::AsyncBatchAnnotateFilesRequest>,
-        ) -> Result<
-            tonic::Response<super::super::super::super::longrunning::Operation>,
-            tonic::Status,
-        > {
-            self.ready().await?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.cloud.vision.v1.ImageAnnotator/AsyncBatchAnnotateFiles",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-    }
-    impl<T: Clone> Clone for ImageAnnotatorClient<T> {
         fn clone(&self) -> Self {
             Self {
                 inner: self.inner.clone(),
@@ -2519,4 +2485,138 @@ pub enum Likelihood {
     Likely = 4,
     /// It is very likely.
     VeryLikely = 5,
+}
+#[doc = r" Generated server implementations."]
+pub mod image_annotator_client {
+    #![allow(unused_variables, dead_code, missing_docs)]
+    use tonic::codegen::*;
+    #[doc = " Service that performs Google Cloud Vision API detection tasks over client"]
+    #[doc = " images, such as face, landmark, logo, label, and text detection. The"]
+    #[doc = " ImageAnnotator service returns detected entities from the images."]
+    pub struct ImageAnnotatorClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl ImageAnnotatorClient<tonic::transport::Channel> {
+        #[doc = r" Attempt to create a new client by connecting to a given endpoint."]
+        pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
+        where
+            D: std::convert::TryInto<tonic::transport::Endpoint>,
+            D::Error: Into<StdError>,
+        {
+            let conn = tonic::transport::Endpoint::new(dst)?.connect().await?;
+            Ok(Self::new(conn))
+        }
+    }
+    impl<T> ImageAnnotatorClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        #[doc = " Run image detection and annotation for a batch of images."]
+        pub async fn batch_annotate_images(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BatchAnnotateImagesRequest>,
+        ) -> Result<tonic::Response<super::BatchAnnotateImagesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vision.v1.ImageAnnotator/BatchAnnotateImages",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Service that performs image detection and annotation for a batch of files."]
+        #[doc = " Now only \"application/pdf\", \"image/tiff\" and \"image/gif\" are supported."]
+        #[doc = ""]
+        #[doc = " This service will extract at most 5 (customers can specify which 5 in"]
+        #[doc = " AnnotateFileRequest.pages) frames (gif) or pages (pdf or tiff) from each"]
+        #[doc = " file provided and perform detection and annotation for each image"]
+        #[doc = " extracted."]
+        pub async fn batch_annotate_files(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BatchAnnotateFilesRequest>,
+        ) -> Result<tonic::Response<super::BatchAnnotateFilesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vision.v1.ImageAnnotator/BatchAnnotateFiles",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Run asynchronous image detection and annotation for a list of images."]
+        #[doc = ""]
+        #[doc = " Progress and results can be retrieved through the"]
+        #[doc = " `google.longrunning.Operations` interface."]
+        #[doc = " `Operation.metadata` contains `OperationMetadata` (metadata)."]
+        #[doc = " `Operation.response` contains `AsyncBatchAnnotateImagesResponse` (results)."]
+        #[doc = ""]
+        #[doc = " This service will write image annotation outputs to json files in customer"]
+        #[doc = " GCS bucket, each json file containing BatchAnnotateImagesResponse proto."]
+        pub async fn async_batch_annotate_images(
+            &mut self,
+            request: impl tonic::IntoRequest<super::AsyncBatchAnnotateImagesRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vision.v1.ImageAnnotator/AsyncBatchAnnotateImages",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Run asynchronous image detection and annotation for a list of generic"]
+        #[doc = " files, such as PDF files, which may contain multiple pages and multiple"]
+        #[doc = " images per page. Progress and results can be retrieved through the"]
+        #[doc = " `google.longrunning.Operations` interface."]
+        #[doc = " `Operation.metadata` contains `OperationMetadata` (metadata)."]
+        #[doc = " `Operation.response` contains `AsyncBatchAnnotateFilesResponse` (results)."]
+        pub async fn async_batch_annotate_files(
+            &mut self,
+            request: impl tonic::IntoRequest<super::AsyncBatchAnnotateFilesRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vision.v1.ImageAnnotator/AsyncBatchAnnotateFiles",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+    impl<T: Clone> Clone for ImageAnnotatorClient<T> {
+        fn clone(&self) -> Self {
+            Self {
+                inner: self.inner.clone(),
+            }
+        }
+    }
 }

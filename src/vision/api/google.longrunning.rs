@@ -137,8 +137,8 @@ pub struct OperationInfo {
     #[prost(string, tag = "2")]
     pub metadata_type: std::string::String,
 }
-#[doc = r" Generated client implementations."]
-pub mod client {
+#[doc = r" Generated server implementations."]
+pub mod operations_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
     #[doc = " Manages long-running operations with an API service."]
@@ -170,20 +170,10 @@ pub mod client {
         T::ResponseBody: Body + HttpBody + Send + 'static,
         T::Error: Into<StdError>,
         <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
-        <T::ResponseBody as HttpBody>::Data: Into<bytes::Bytes> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
-        }
-        #[doc = r" Check if the service is ready."]
-        pub async fn ready(&mut self) -> Result<(), tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })
         }
         #[doc = " Lists operations that match the specified filter in the request. If the"]
         #[doc = " server doesn't support this method, it returns `UNIMPLEMENTED`."]
@@ -199,7 +189,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::ListOperationsRequest>,
         ) -> Result<tonic::Response<super::ListOperationsResponse>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.longrunning.Operations/ListOperations",
@@ -213,7 +208,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::GetOperationRequest>,
         ) -> Result<tonic::Response<super::Operation>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.longrunning.Operations/GetOperation");
@@ -227,7 +227,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteOperationRequest>,
         ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.longrunning.Operations/DeleteOperation",
@@ -248,7 +253,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::CancelOperationRequest>,
         ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.longrunning.Operations/CancelOperation",
@@ -268,7 +278,12 @@ pub mod client {
             &mut self,
             request: impl tonic::IntoRequest<super::WaitOperationRequest>,
         ) -> Result<tonic::Response<super::Operation>, tonic::Status> {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.longrunning.Operations/WaitOperation",
