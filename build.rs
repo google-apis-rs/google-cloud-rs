@@ -22,7 +22,10 @@ fn main() {
         .build_server(false)
         .format(true)
         .out_dir("src/vision/api")
-        .compile(&["protos/google/cloud/vision/v1/image_annotator.proto"], &["protos"])
+        .compile(
+            &["protos/google/cloud/vision/v1/image_annotator.proto"],
+            &["protos"],
+        )
         .unwrap();
     println!("cargo:rerun-if-changed=protos/google/cloud/vision/v1/image_annotator.proto");
 }
