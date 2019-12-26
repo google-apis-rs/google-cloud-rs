@@ -5,17 +5,16 @@ use serde::{Deserialize, Serialize};
 use crate::authorize::ApplicationCredentials;
 use crate::pubsub;
 
-async fn setup_client() -> pubsub::Client {
-    let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))
-        .expect("invalid GCP credentials format");
-    let client = pubsub::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await;
-
-    client.expect("could not create pubsub client")
+async fn setup_client() -> Result<pubsub::Client, pubsub::Error> {
+    let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))?;
+    pubsub::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await
 }
 
 #[tokio::test]
 async fn pubsub_lists_topics() {
     let client = setup_client().await;
+    assert!(client.is_ok());
+    let client = client.unwrap();
     let topics = client.topics().await;
     assert!(topics.is_ok());
 }
@@ -23,6 +22,8 @@ async fn pubsub_lists_topics() {
 #[tokio::test]
 async fn pubsub_sends_and_receives_message_successfully() {
     let client = setup_client().await;
+    assert!(client.is_ok());
+    let client = client.unwrap();
 
     print!("acquiring topic... ");
     io::stdout().flush().unwrap();
