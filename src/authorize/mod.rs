@@ -100,7 +100,7 @@ impl TokenManager {
                     .body_mut()
                     .json::<AuthResponse>()
                     .unwrap();
-                let value = TokenValue::Bearer(dbg!(response.access_token));
+                let value = TokenValue::Bearer(response.access_token);
                 let token = value.to_string();
                 self.current_token = Some(Token { expiry, value });
                 token
