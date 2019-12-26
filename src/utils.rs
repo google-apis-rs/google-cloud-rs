@@ -2,6 +2,8 @@ use json::json;
 
 use crate::authorize::ApplicationCredentials;
 
+/// Legacy function, allowing to generate short-lived tokens without using OAuth.
+#[allow(dead_code)]
 pub(crate) fn generate_token(
     endpoint: &str,
     creds: &ApplicationCredentials,

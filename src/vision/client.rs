@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::env;
 use std::sync::{Arc, Mutex};
 
@@ -5,9 +6,12 @@ use http::HeaderValue;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
+use crate::vision::api;
 use crate::vision::api::image_annotator_client::ImageAnnotatorClient;
 use crate::vision::api::product_search_client::ProductSearchClient;
-use crate::vision::{api, Error, Image, TextAnnotation, TextDetectionConfig};
+use crate::vision::{
+    Error, FaceAnnotation, FaceDetectionConfig, Image, TextAnnotation, TextDetectionConfig,
+};
 
 /// The Pub/Sub client, tied to a specific project.
 #[derive(Clone)]
@@ -94,6 +98,37 @@ impl Client {
             .text_annotations
             .into_iter()
             .map(TextAnnotation::from)
+            .collect();
+
+        Ok(annotations)
+    }
+
+    /// Perform text detection on the given image.
+    pub async fn detect_faces(
+        &mut self,
+        image: Image,
+        config: FaceDetectionConfig,
+    ) -> Result<Vec<FaceAnnotation>, Error> {
+        let request = api::AnnotateImageRequest {
+            image: Some(image.into()),
+            features: vec![api::Feature {
+                r#type: api::feature::Type::FaceDetection as i32,
+                max_results: config.max_results,
+                model: String::from("builtin/stable"),
+            }],
+            image_context: None,
+        };
+        let request = api::BatchAnnotateImagesRequest {
+            requests: vec![request],
+            parent: String::default(), // TODO: Make this configurable (specifying computation region).
+        };
+        let response = self.img_annotator.batch_annotate_images(request).await?;
+        let response = response.into_inner();
+        let response = response.responses.into_iter().next().unwrap();
+        let annotations = response
+            .face_annotations
+            .into_iter()
+            .flat_map(FaceAnnotation::try_from)
             .collect();
 
         Ok(annotations)

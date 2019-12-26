@@ -1,6 +1,8 @@
 mod bounding_box;
 mod client;
+mod face;
 mod image;
+mod likelihood;
 mod text;
 mod api {
     pub mod rpc {
@@ -32,7 +34,9 @@ mod api {
 
 pub use self::bounding_box::*;
 pub use self::client::*;
+pub use self::face::*;
 pub use self::image::*;
+pub use self::likelihood::*;
 pub use self::text::*;
 
 /// The error type for the Cloud Vision module.
