@@ -9,7 +9,7 @@ keywords = ["grpc", "futures", "async", "protobuf", "google", "cloud"]
 
 [dependencies]
 tonic = { version = "0.1.0-beta.1", features = ["tls", "prost"] }
-tokio = { version = "0.2.6", features = ["macros"] }
+tokio = { version = "0.2.6", features = ["macros", "fs"] }
 isahc = { version = "0.8.2", features = ["json"] }
 futures = { version = "0.3.1" }
 
