@@ -10,6 +10,7 @@ use crate::vision::api::product_search_client::ProductSearchClient;
 use crate::vision::{api, Error, Image, TextAnnotation, TextDetectionConfig};
 
 /// The Pub/Sub client, tied to a specific project.
+#[derive(Clone)]
 pub struct Client {
     pub(crate) project_name: String,
     pub(crate) img_annotator: ImageAnnotatorClient<Channel>,
