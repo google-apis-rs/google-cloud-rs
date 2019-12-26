@@ -1,5 +1,5 @@
-use std::io;
 use std::env;
+use std::io;
 
 use thiserror::Error;
 
