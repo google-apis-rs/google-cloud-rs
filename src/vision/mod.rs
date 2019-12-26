@@ -35,5 +35,5 @@ pub use self::client::*;
 pub use self::image::*;
 pub use self::text::*;
 
-/// The error type for the Cloud Vision client.
-pub type Error = Box<dyn std::error::Error + 'static>;
+/// The error type for the Cloud Vision module.
+pub type Error = crate::error::Error;
