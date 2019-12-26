@@ -20,7 +20,7 @@ async fn vision_connects_successfully() {
 async fn vision_detects_text_successfully() {
     let client = setup_client().await;
     assert!(client.is_ok());
-    let client = client.unwrap();
+    let mut client = client.unwrap();
 
     let bytes = tokio::fs::read("samples/placeholder.png").await.unwrap();
     let image = vision::Image::from_bytes(bytes);

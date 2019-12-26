@@ -14,7 +14,7 @@ async fn setup_client() -> Result<pubsub::Client, pubsub::Error> {
 async fn pubsub_lists_topics() {
     let client = setup_client().await;
     assert!(client.is_ok());
-    let client = client.unwrap();
+    let mut client = client.unwrap();
     let topics = client.topics().await;
     assert!(topics.is_ok());
 }
@@ -23,7 +23,7 @@ async fn pubsub_lists_topics() {
 async fn pubsub_sends_and_receives_message_successfully() {
     let client = setup_client().await;
     assert!(client.is_ok());
-    let client = client.unwrap();
+    let mut client = client.unwrap();
 
     print!("acquiring topic... ");
     io::stdout().flush().unwrap();
@@ -35,7 +35,7 @@ async fn pubsub_sends_and_receives_message_successfully() {
     assert!(topic.is_ok());
     let topic = topic.unwrap();
     assert!(topic.is_some());
-    let topic = topic.unwrap();
+    let mut topic = topic.unwrap();
     println!("OK !");
 
     print!("acquiring subscription... ");
@@ -78,7 +78,7 @@ async fn pubsub_sends_and_receives_message_successfully() {
     io::stdout().flush().unwrap();
     let received = subscription.receive().await;
     assert!(received.is_some());
-    let received = received.unwrap();
+    let mut received = received.unwrap();
     println!("OK !");
 
     print!("acknowledging message... ");

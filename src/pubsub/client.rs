@@ -5,13 +5,17 @@ use http::HeaderValue;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
-use crate::pubsub::{api, Error, Subscription, Topic, TopicConfig};
+use crate::pubsub::api;
+use crate::pubsub::api::publisher_client::PublisherClient;
+use crate::pubsub::api::subscriber_client::SubscriberClient;
+use crate::pubsub::{Error, Subscription, Topic, TopicConfig};
 
 /// The Pub/Sub client, tied to a specific project.
+#[derive(Clone)]
 pub struct Client {
     pub(crate) project_name: String,
-    pub(crate) publisher: Mutex<api::publisher_client::PublisherClient<Channel>>,
-    pub(crate) subscriber: Mutex<api::subscriber_client::SubscriberClient<Channel>>,
+    pub(crate) publisher: PublisherClient<Channel>,
+    pub(crate) subscriber: SubscriberClient<Channel>,
 }
 
 impl Client {
@@ -60,19 +64,17 @@ impl Client {
 
         Ok(Client {
             project_name: project_name.into(),
-            publisher: Mutex::new(api::publisher_client::PublisherClient::new(channel.clone())),
-            subscriber: Mutex::new(api::subscriber_client::SubscriberClient::new(channel)),
+            publisher: api::publisher_client::PublisherClient::new(channel.clone()),
+            subscriber: api::subscriber_client::SubscriberClient::new(channel),
         })
     }
 
     /// Create a new topic.
     pub async fn create_topic(
-        &self,
+        &mut self,
         topic_name: &str,
         config: TopicConfig,
-    ) -> Result<Topic<'_>, Error> {
-        let mut service = self.publisher.lock().unwrap();
-
+    ) -> Result<Topic, Error> {
         let request = api::Topic {
             name: format!(
                 "projects/{0}/topics/{1}",
@@ -83,19 +85,18 @@ impl Client {
             message_storage_policy: None,
             kms_key_name: String::new(),
         };
-        let response = service.create_topic(request).await?;
+        let response = self.publisher.create_topic(request).await?;
         let topic = response.into_inner();
         let name = topic.name.split('/').last().unwrap_or(topic_name);
 
-        Ok(Topic::new(&self, name))
+        Ok(Topic::new(self.clone(), name))
     }
 
     /// List all exisiting topics.
-    pub async fn topics(&self) -> Result<Vec<Topic<'_>>, Error> {
+    pub async fn topics(&mut self) -> Result<Vec<Topic>, Error> {
         let mut topics = Vec::new();
         let page_size = 25;
         let mut page_token = String::default();
-        let mut service = self.publisher.lock().unwrap();
 
         loop {
             let request = api::ListTopicsRequest {
@@ -103,12 +104,12 @@ impl Client {
                 page_size,
                 page_token,
             };
-            let response = service.list_topics(request).await?;
+            let response = self.publisher.list_topics(request).await?;
             let response = response.into_inner();
             page_token = response.next_page_token;
             topics.extend(response.topics.into_iter().map(|topic| {
                 let name = topic.name.split('/').last().unwrap();
-                Topic::new(&self, name)
+                Topic::new(self.clone(), name)
             }));
             if page_token.is_empty() {
                 break;
@@ -119,8 +120,7 @@ impl Client {
     }
 
     /// Get a handle to a specific topic.
-    pub async fn topic(&self, topic_name: &str) -> Result<Option<Topic<'_>>, Error> {
-        let mut service = self.publisher.lock().unwrap();
+    pub async fn topic(&mut self, topic_name: &str) -> Result<Option<Topic>, Error> {
         let request = api::GetTopicRequest {
             topic: format!(
                 "projects/{0}/topics/{1}",
@@ -128,19 +128,18 @@ impl Client {
                 topic_name
             ),
         };
-        let response = service.get_topic(request).await?;
+        let response = self.publisher.get_topic(request).await?;
         let topic = response.into_inner();
         let name = topic.name.split('/').last().unwrap_or(topic_name);
 
-        Ok(Some(Topic::new(&self, name)))
+        Ok(Some(Topic::new(self.clone(), name)))
     }
 
     /// List all existing subscriptions (to any topic).
-    pub async fn subscriptions(&self) -> Result<Vec<Subscription<'_>>, Error> {
+    pub async fn subscriptions(&mut self) -> Result<Vec<Subscription>, Error> {
         let mut subscriptions = Vec::new();
         let page_size = 25;
         let mut page_token = String::default();
-        let mut service = self.subscriber.lock().unwrap();
 
         loop {
             let request = api::ListSubscriptionsRequest {
@@ -148,12 +147,12 @@ impl Client {
                 page_size,
                 page_token,
             };
-            let response = service.list_subscriptions(request).await?;
+            let response = self.subscriber.list_subscriptions(request).await?;
             let response = response.into_inner();
             page_token = response.next_page_token;
             subscriptions.extend(response.subscriptions.into_iter().map(|subscription| {
                 let name = subscription.name.split('/').last().unwrap();
-                Subscription::new(&self, name)
+                Subscription::new(self.clone(), name)
             }));
             if page_token.is_empty() {
                 break;
@@ -165,11 +164,9 @@ impl Client {
 
     /// Get a handle of a specific subscription.
     pub async fn subscription(
-        &self,
+        &mut self,
         subscription_name: &str,
-    ) -> Result<Option<Subscription<'_>>, Error> {
-        let mut service = self.subscriber.lock().unwrap();
-
+    ) -> Result<Option<Subscription>, Error> {
         let request = api::GetSubscriptionRequest {
             subscription: format!(
                 "projects/{0}/subscriptions/{1}",
@@ -177,11 +174,11 @@ impl Client {
                 subscription_name
             ),
         };
-        let response = service.get_subscription(request).await?;
+        let response = self.subscriber.get_subscription(request).await?;
         let subscription = response.into_inner();
         let name = subscription.name.split('/').last();
         let name = name.unwrap_or(subscription_name);
 
-        Ok(Some(Subscription::new(&self, name)))
+        Ok(Some(Subscription::new(self.clone(), name)))
     }
 }

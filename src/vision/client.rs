@@ -12,8 +12,8 @@ use crate::vision::{api, Error, Image, TextAnnotation, TextDetectionConfig};
 /// The Pub/Sub client, tied to a specific project.
 pub struct Client {
     pub(crate) project_name: String,
-    pub(crate) img_annotator: Mutex<ImageAnnotatorClient<Channel>>,
-    pub(crate) product_search: Mutex<ProductSearchClient<Channel>>,
+    pub(crate) img_annotator: ImageAnnotatorClient<Channel>,
+    pub(crate) product_search: ProductSearchClient<Channel>,
 }
 
 impl Client {
@@ -62,19 +62,17 @@ impl Client {
 
         Ok(Client {
             project_name: project_name.into(),
-            img_annotator: Mutex::new(ImageAnnotatorClient::new(channel.clone())),
-            product_search: Mutex::new(ProductSearchClient::new(channel)),
+            img_annotator: ImageAnnotatorClient::new(channel.clone()),
+            product_search: ProductSearchClient::new(channel),
         })
     }
 
     /// Perform text detection on the given image.
     pub async fn detect_document_text(
-        &self,
+        &mut self,
         image: Image,
         config: TextDetectionConfig,
     ) -> Result<Vec<TextAnnotation>, Error> {
-        let mut service = self.img_annotator.lock().unwrap();
-
         let request = api::AnnotateImageRequest {
             image: Some(image.into()),
             features: vec![api::Feature {
@@ -88,7 +86,7 @@ impl Client {
             requests: vec![request],
             parent: String::default(), // TODO: Make this configurable (specifying computation region).
         };
-        let response = service.batch_annotate_images(request).await?;
+        let response = self.img_annotator.batch_annotate_images(request).await?;
         let response = response.into_inner();
         let response = response.responses.into_iter().next().unwrap();
         let annotations = response

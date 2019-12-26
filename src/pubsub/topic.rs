@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
-use crate::pubsub::{api, Client, Subscription, SubscriptionConfig};
+use crate::pubsub::api;
+use crate::pubsub::{Client, Error, Subscription, SubscriptionConfig};
 
 /// Represents the topic's configuration.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TopicConfig {
     pub(crate) labels: HashMap<String, String>,
 }
@@ -24,13 +26,14 @@ impl Default for TopicConfig {
 }
 
 /// Represents a topic.
-pub struct Topic<'a> {
-    pub(crate) client: &'a Client,
+#[derive(Clone)]
+pub struct Topic {
+    pub(crate) client: Client,
     pub(crate) name: String,
 }
 
-impl<'a> Topic<'a> {
-    pub(crate) fn new(client: &'a Client, name: impl Into<String>) -> Topic<'a> {
+impl Topic {
+    pub(crate) fn new(client: Client, name: impl Into<String>) -> Topic {
         Topic {
             client,
             name: name.into(),
@@ -39,12 +42,10 @@ impl<'a> Topic<'a> {
 
     /// Create a subscription tied to this topic.
     pub async fn create_subscription(
-        &self,
+        &mut self,
         name: &str,
         config: SubscriptionConfig,
-    ) -> Result<Subscription<'a>, Box<dyn std::error::Error + 'static>> {
-        let mut service = self.client.subscriber.lock().unwrap();
-
+    ) -> Result<Subscription, Error> {
         let request = api::Subscription {
             name: format!(
                 "projects/{0}/subscriptions/{1}",
@@ -70,20 +71,15 @@ impl<'a> Topic<'a> {
             expiration_policy: None,
             dead_letter_policy: None,
         };
-        let response = service.create_subscription(request).await?;
+        let response = self.client.subscriber.create_subscription(request).await?;
         let subscription = response.into_inner();
         let name = subscription.name.split('/').last().unwrap_or(name);
 
-        Ok(Subscription::new(self.client, name))
+        Ok(Subscription::new(self.client.clone(), name))
     }
 
     /// Publish a message onto this topic.
-    pub async fn publish(
-        &self,
-        data: impl Into<Vec<u8>>,
-    ) -> Result<(), Box<dyn std::error::Error + 'static>> {
-        let mut service = self.client.publisher.lock().unwrap();
-
+    pub async fn publish(&mut self, data: impl Into<Vec<u8>>) -> Result<(), Error> {
         let request = api::PublishRequest {
             topic: format!(
                 "projects/{0}/topics/{1}",
@@ -98,16 +94,14 @@ impl<'a> Topic<'a> {
                 publish_time: None,
             }],
         };
-        service.publish(request).await?;
+        self.client.publisher.publish(request).await?;
         // let response = response.into_inner();
 
         Ok(())
     }
 
     /// Delete the topic.
-    pub async fn delete(self) -> Result<(), Box<dyn std::error::Error + 'static>> {
-        let mut service = self.client.publisher.lock().unwrap();
-
+    pub async fn delete(mut self) -> Result<(), Error> {
         let request = api::DeleteTopicRequest {
             topic: format!(
                 "projects/{0}/topics/{1}",
@@ -115,7 +109,7 @@ impl<'a> Topic<'a> {
                 self.name,
             ),
         };
-        service.delete_topic(request).await?;
+        self.client.publisher.delete_topic(request).await?;
 
         Ok(())
     }

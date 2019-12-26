@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
-use crate::pubsub::{api, Client};
+use crate::pubsub::api;
+use crate::pubsub::{Client, Error};
 
 /// Represents a received message (from a subscription).
-pub struct Message<'a> {
-    pub(crate) client: &'a Client,
+#[derive(Clone)]
+pub struct Message {
+    pub(crate) client: Client,
     pub(crate) data: Vec<u8>,
     pub(crate) attributes: HashMap<String, String>,
     pub(crate) ack_id: String,
@@ -13,7 +15,7 @@ pub struct Message<'a> {
     pub(crate) subscription_name: String,
 }
 
-impl<'a> Message<'a> {
+impl Message {
     /// The message's unique ID.
     pub fn id(&self) -> &str {
         self.message_id.as_str()
@@ -37,9 +39,7 @@ impl<'a> Message<'a> {
     /// Indicate that this client processed or will process the message successfully.
     ///
     /// If a message isn't acknowledged, it will be redelivered to other subscribers.
-    pub async fn ack(&self) -> Result<(), Box<dyn std::error::Error + 'static>> {
-        let mut service = self.client.subscriber.lock().unwrap();
-
+    pub async fn ack(&mut self) -> Result<(), Error> {
         let request = api::AcknowledgeRequest {
             subscription: format!(
                 "projects/{0}/subscriptions/{1}",
@@ -48,7 +48,7 @@ impl<'a> Message<'a> {
             ),
             ack_ids: vec![self.ack_id.clone()],
         };
-        service.acknowledge(request).await?;
+        self.client.subscriber.acknowledge(request).await?;
 
         Ok(())
     }
@@ -56,9 +56,7 @@ impl<'a> Message<'a> {
     /// Indicate that this client won't process the message.
     ///
     /// This allows Pub/Sub to redeliver the message more quickly than by awaiting the acknowledgement timeout.
-    pub async fn nack(&self) -> Result<(), Box<dyn std::error::Error + 'static>> {
-        let mut service = self.client.subscriber.lock().unwrap();
-
+    pub async fn nack(&mut self) -> Result<(), Error> {
         let request = api::ModifyAckDeadlineRequest {
             subscription: format!(
                 "projects/{0}/subscriptions/{1}",
@@ -68,7 +66,7 @@ impl<'a> Message<'a> {
             ack_ids: vec![self.ack_id.clone()],
             ack_deadline_seconds: 0,
         };
-        service.modify_ack_deadline(request).await?;
+        self.client.subscriber.modify_ack_deadline(request).await?;
 
         Ok(())
     }

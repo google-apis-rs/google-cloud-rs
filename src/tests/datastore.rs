@@ -12,7 +12,7 @@ async fn setup_client() -> Result<datastore::Client, datastore::Error> {
 async fn datastore_puts_data_successfully() {
     let client = setup_client().await;
     assert!(client.is_ok());
-    let client = client.unwrap();
+    let mut client = client.unwrap();
     let key = datastore::Key::new("gcp-rs-tests").namespace("test").id(4);
     let properties = {
         let mut values = HashMap::new();

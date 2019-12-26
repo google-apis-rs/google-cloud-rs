@@ -2,9 +2,11 @@ use std::collections::{HashMap, VecDeque};
 
 use chrono::Duration;
 
-use crate::pubsub::{api, Client, Message};
+use crate::pubsub::api;
+use crate::pubsub::{Client, Error, Message};
 
 /// Represents the subscription's configuration.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscriptionConfig {
     pub(crate) ack_deadline_duration: Duration,
     pub(crate) message_retention_duration: Option<Duration>,
@@ -46,14 +48,15 @@ impl Default for SubscriptionConfig {
 }
 
 /// Represents a subscription, tied to a topic.
-pub struct Subscription<'a> {
-    pub(crate) client: &'a Client,
+#[derive(Clone)]
+pub struct Subscription {
+    pub(crate) client: Client,
     pub(crate) name: String,
     pub(crate) buffer: VecDeque<api::ReceivedMessage>,
 }
 
-impl<'a> Subscription<'a> {
-    pub(crate) fn new(client: &'a Client, name: impl Into<String>) -> Subscription<'a> {
+impl Subscription {
+    pub(crate) fn new(client: Client, name: impl Into<String>) -> Subscription {
         Subscription {
             client,
             name: name.into(),
@@ -62,13 +65,14 @@ impl<'a> Subscription<'a> {
     }
 
     /// Receive the next message from the subscription.
-    pub async fn receive(&mut self) -> Option<Message<'a>> {
+    pub async fn receive(&mut self) -> Option<Message> {
         loop {
             if let Some(handle) = self.buffer.pop_front() {
                 let message = handle.message.unwrap();
                 let timestamp = message.publish_time.unwrap();
                 let message = Message {
-                    client: self.client,
+                    client: self.client.clone(),
+                    subscription_name: self.name.clone(),
                     data: message.data,
                     message_id: message.message_id,
                     ack_id: handle.ack_id,
@@ -77,7 +81,6 @@ impl<'a> Subscription<'a> {
                         timestamp.seconds,
                         timestamp.nanos as u32,
                     ),
-                    subscription_name: self.name.clone(),
                 };
                 break Some(message);
             } else {
@@ -90,9 +93,7 @@ impl<'a> Subscription<'a> {
     }
 
     /// Delete the subscription.
-    pub async fn delete(self) -> Result<(), Box<dyn std::error::Error + 'static>> {
-        let mut service = self.client.subscriber.lock().unwrap();
-
+    pub async fn delete(mut self) -> Result<(), Error> {
         let request = api::DeleteSubscriptionRequest {
             subscription: format!(
                 "projects/{0}/subscriptions/{1}",
@@ -100,16 +101,12 @@ impl<'a> Subscription<'a> {
                 self.name,
             ),
         };
-        service.delete_subscription(request).await?;
+        self.client.subscriber.delete_subscription(request).await?;
 
         Ok(())
     }
 
-    pub(crate) async fn pull(
-        &self,
-    ) -> Result<Vec<api::ReceivedMessage>, Box<dyn std::error::Error + 'static>> {
-        let mut service = self.client.subscriber.lock().unwrap();
-
+    pub(crate) async fn pull(&mut self) -> Result<Vec<api::ReceivedMessage>, Error> {
         let request = api::PullRequest {
             subscription: format!(
                 "projects/{0}/subscriptions/{1}",
@@ -119,7 +116,7 @@ impl<'a> Subscription<'a> {
             return_immediately: false,
             max_messages: 5,
         };
-        let response = service.pull(request).await?;
+        let response = self.client.subscriber.pull(request).await?;
         let response = response.into_inner();
 
         Ok(response.received_messages)
