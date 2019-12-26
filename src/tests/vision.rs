@@ -5,22 +5,22 @@ use serde::{Deserialize, Serialize};
 use crate::authorize::ApplicationCredentials;
 use crate::vision;
 
-async fn setup_client() -> vision::Client {
-    let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))
-        .expect("invalid GCP credentials format");
-    let client = vision::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await;
-
-    client.expect("could not create vision client")
+async fn setup_client() -> Result<vision::Client, vision::Error> {
+    let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))?;
+    vision::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await
 }
 
 #[tokio::test]
 async fn vision_connects_successfully() {
-    let _client = setup_client().await;
+    let client = setup_client().await;
+    assert!(client.is_ok());
 }
 
 #[tokio::test]
 async fn vision_detects_text_successfully() {
     let client = setup_client().await;
+    assert!(client.is_ok());
+    let client = client.unwrap();
 
     let bytes = tokio::fs::read("samples/placeholder.png").await.unwrap();
     let image = vision::Image::from_bytes(bytes);
