@@ -11,4 +11,5 @@ pub use self::message::*;
 pub use self::subscription::*;
 pub use self::topic::*;
 
-pub type Error = Box<dyn std::error::Error + 'static>;
+/// The error type for the PubSub module.
+pub type Error = crate::error::Error;

@@ -5,6 +5,8 @@ mod utils;
 
 /// Authorization/authentication related utilities.
 pub mod authorize;
+/// Error handling utilities.
+pub mod error;
 
 /// Datastore bindings.
 #[cfg(feature = "datastore")]

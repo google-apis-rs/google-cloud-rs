@@ -22,4 +22,5 @@ pub use self::key::*;
 pub use self::query::*;
 pub use self::value::*;
 
-pub type Error = Box<dyn std::error::Error + 'static>;
+/// The error type for the Datastore module.
+pub type Error = crate::error::Error;
