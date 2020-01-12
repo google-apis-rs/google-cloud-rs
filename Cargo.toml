@@ -17,7 +17,7 @@ prost = { git = "https://github.com/danburkert/prost", rev = "60eac4b" }
 prost-types = { git = "https://github.com/danburkert/prost", rev = "60eac4b" }
 
 http = { version = "0.2.0" }
-bytes = { version = "0.4.12" }
+bytes = { version = "0.5.3" }
 chrono = { version = "0.4.10" }
 
 serde = { version = "1.0.104", features = ["derive"] }
