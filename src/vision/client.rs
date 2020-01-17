@@ -1,9 +1,10 @@
 use std::convert::TryFrom;
 use std::env;
+use std::fs::File;
 use std::sync::{Arc, Mutex};
 
-use http::HeaderValue;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
+use tonic::{Request, Status};
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::vision::api;
@@ -13,7 +14,7 @@ use crate::vision::{
     Error, FaceAnnotation, FaceDetectionConfig, Image, TextAnnotation, TextDetectionConfig,
 };
 
-/// The Pub/Sub client, tied to a specific project.
+/// The Cloud Vision client, tied to a specific project.
 #[derive(Clone)]
 pub struct Client {
     pub(crate) project_name: String,
@@ -29,12 +30,24 @@ impl Client {
         "https://www.googleapis.com/auth/cloud-vision",
     ];
 
+    pub(crate) fn interceptor(
+        token_manager: Arc<Mutex<TokenManager>>,
+    ) -> impl Fn(Request<()>) -> Result<Request<()>, Status> {
+        move |mut request: Request<()>| {
+            let mut manager = token_manager.lock().unwrap();
+            let token = manager.token();
+            let metadata = request.metadata_mut();
+            metadata.insert("authorization", token.parse().unwrap());
+            Ok(request)
+        }
+    }
+
     /// Create a new client for the specified project.
     ///
     /// Credentials are looked up in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
     pub async fn new(project_name: impl Into<String>) -> Result<Client, Error> {
         let path = env::var("GOOGLE_APPLICATION_CREDENTIALS")?;
-        let file = std::fs::File::open(path)?;
+        let file = File::open(path)?;
         let creds = json::from_reader(file)?;
 
         Client::from_credentials(project_name, creds).await
@@ -55,20 +68,20 @@ impl Client {
         )));
 
         let channel = Channel::from_static(Client::ENDPOINT)
-            .intercept_headers(move |headers| {
-                let mut manager = token_manager.lock().unwrap();
-                let token = manager.token();
-                let value = HeaderValue::from_str(token.as_str()).unwrap();
-                headers.insert("authorization", value);
-            })
             .tls_config(tls_config)
             .connect()
             .await?;
 
         Ok(Client {
             project_name: project_name.into(),
-            img_annotator: ImageAnnotatorClient::new(channel.clone()),
-            product_search: ProductSearchClient::new(channel),
+            img_annotator: ImageAnnotatorClient::with_interceptor(
+                channel.clone(),
+                Client::interceptor(token_manager.clone()),
+            ),
+            product_search: ProductSearchClient::with_interceptor(
+                channel,
+                Client::interceptor(token_manager),
+            ),
         })
     }
 

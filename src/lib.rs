@@ -17,6 +17,9 @@ pub mod pubsub;
 /// Cloud Vision bindings.
 #[cfg(feature = "vision")]
 pub mod vision;
+/// Cloud Storage bindings.
+#[cfg(feature = "storage")]
+pub mod storage;
 
 #[cfg(test)]
 mod tests;

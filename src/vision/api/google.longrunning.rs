@@ -175,6 +175,10 @@ pub mod operations_client {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
+            Self { inner }
+        }
         #[doc = " Lists operations that match the specified filter in the request. If the"]
         #[doc = " server doesn't support this method, it returns `UNIMPLEMENTED`."]
         #[doc = ""]

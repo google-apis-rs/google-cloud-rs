@@ -2,6 +2,7 @@ use std::fmt;
 
 use json::json;
 use serde::{Deserialize, Serialize};
+use isahc::http::Request;
 
 pub(crate) const TLS_CERTS: &[u8] = include_bytes!("../../roots.pem");
 
@@ -92,15 +93,15 @@ impl TokenManager {
                     r#"grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion={}"#,
                     token.unwrap(),
                 );
-                let request = isahc::http::Request::post(AUTH_ENDPOINT)
+                let request = Request::post(AUTH_ENDPOINT)
                     .header("content-type", "application/x-www-form-urlencoded")
                     .body(body)
                     .unwrap();
                 let response = isahc::send(request)
-                    .unwrap()
+                    .expect("failed request to obtain an OAuth token")
                     .body_mut()
                     .json::<AuthResponse>()
-                    .unwrap();
+                    .expect("failed to deserialize OAuth response");
                 let value = TokenValue::Bearer(response.access_token);
                 let token = value.to_string();
                 self.current_token = Some(Token { expiry, value });

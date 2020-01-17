@@ -902,6 +902,10 @@ pub mod datastore_client {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
+            Self { inner }
+        }
         #[doc = " Looks up entities by key."]
         pub async fn lookup(
             &mut self,

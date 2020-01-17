@@ -4,3 +4,5 @@ mod datastore;
 mod pubsub;
 #[cfg(feature = "vision")]
 mod vision;
+#[cfg(feature = "storage")]
+mod storage;

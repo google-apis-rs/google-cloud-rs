@@ -21,4 +21,7 @@ pub enum Error {
     /// An environment-related error (missing variable).
     #[error("environment error: {0}")]
     Env(#[from] env::VarError),
+    /// Reqwest error (HTTP errors).
+    #[error("HTTP error: {0}")]
+    Reqwest(#[from] reqwest::Error),
 }

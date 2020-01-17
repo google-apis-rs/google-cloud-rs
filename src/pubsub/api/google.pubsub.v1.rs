@@ -815,6 +815,10 @@ pub mod publisher_client {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
+            Self { inner }
+        }
         #[doc = " Creates the given topic with the given name. See the"]
         #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/admin#resource_names\">"]
         #[doc = " resource name rules</a>."]
@@ -995,6 +999,10 @@ pub mod subscriber_client {
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
             Self { inner }
         }
         #[doc = " Creates a subscription to a given topic. See the"]

@@ -687,6 +687,10 @@ pub mod product_search_client {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
+            Self { inner }
+        }
         #[doc = " Creates and returns a new ProductSet resource."]
         #[doc = ""]
         #[doc = " Possible errors:"]
@@ -2516,6 +2520,10 @@ pub mod image_annotator_client {
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
             Self { inner }
         }
         #[doc = " Run image detection and annotation for a batch of images."]
