@@ -14,7 +14,7 @@ async fn datastore_puts_data_successfully() {
     let client = setup_client().await;
     assert!(client.is_ok());
     let mut client = client.unwrap();
-    let key = datastore::Key::new("gcp-rs-tests").namespace("test").id(4);
+    let key = datastore::Key::new("google-cloud-tests").namespace("test").id(4);
     let properties = {
         let mut values = HashMap::new();
         values.insert(String::from("hello"), "world !".into_value());

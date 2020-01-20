@@ -1,4 +1,4 @@
-use gcp_derive::{FromValue, IntoValue};
+use google_cloud_derive::{FromValue, IntoValue};
 
 #[derive(FromValue, IntoValue)]
 pub struct Foo {

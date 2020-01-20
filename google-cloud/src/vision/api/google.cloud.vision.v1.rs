@@ -644,7 +644,7 @@ pub mod purge_products_request {
         DeleteOrphanProducts(bool),
     }
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod product_search_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
@@ -2490,7 +2490,7 @@ pub enum Likelihood {
     /// It is very likely.
     VeryLikely = 5,
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod image_annotator_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;

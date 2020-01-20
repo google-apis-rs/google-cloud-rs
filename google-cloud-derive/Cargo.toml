@@ -1,7 +1,7 @@
 [package]
-name = "gcp-derive"
+name = "google-cloud-derive"
 version = "0.1.0"
-description = "Derive macros for the gcp-rs library"
+description = "Derive macros for the `google-cloud` library"
 authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
 edition = "2018"
 
@@ -18,4 +18,4 @@ quote = "1.0.2"
 
 [dev-dependencies]
 trybuild = "1.0.19"
-gcp = { path = "../gcp", features = ["derive"] }
+google-cloud = { path = "../google-cloud", features = ["derive"] }

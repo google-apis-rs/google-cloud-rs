@@ -137,7 +137,7 @@ pub struct OperationInfo {
     #[prost(string, tag = "2")]
     pub metadata_type: std::string::String,
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod operations_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;

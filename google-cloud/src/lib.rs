@@ -1,8 +1,8 @@
 #![warn(missing_docs)]
 //! Asynchronous Rust bindings for Google Cloud Platform gRPC APIs.
 
-#[cfg(feature = "gcp-derive")]
-extern crate gcp_derive;
+#[cfg(feature = "google-cloud-derive")]
+extern crate google_cloud_derive;
 
 mod utils;
 

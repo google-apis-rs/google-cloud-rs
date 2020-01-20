@@ -5,9 +5,9 @@ use crate::datastore::api::value::ValueType;
 use crate::datastore::Key;
 use crate::error::ConvertError;
 
-#[cfg(feature = "gcp-derive")]
+#[cfg(feature = "google-cloud-derive")]
 #[doc(hidden)]
-pub use gcp_derive::{FromValue, IntoValue};
+pub use google_cloud_derive::{FromValue, IntoValue};
 
 /// A value, as stored in Datastore.
 #[derive(Debug, Clone, PartialEq)]

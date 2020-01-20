@@ -1,5 +1,5 @@
-gcp-rs
-======
+google-cloud
+============
 
 Asynchronous Rust bindings for Google Cloud Platform gRPC APIs.
 

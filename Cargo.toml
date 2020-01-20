@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "gcp",
-    "gcp-derive",
+    "google-cloud",
+    "google-cloud-derive",
 ]

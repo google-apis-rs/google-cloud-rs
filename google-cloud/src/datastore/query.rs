@@ -44,7 +44,7 @@ impl Query {
     /// Construct a new empty Query.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
+    /// # use google_cloud::datastore::Query;
     /// let query = Query::new("users");
     /// ```
     pub fn new(kind: impl Into<String>) -> Query {
@@ -67,7 +67,7 @@ impl Query {
     /// It only has an effect on ancestor queries.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
+    /// # use google_cloud::datastore::Query;
     /// let query = Query::new("users")
     ///     .eventually_consistent();
     /// ```
@@ -80,7 +80,7 @@ impl Query {
     /// It has no effects on projected queries.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
+    /// # use google_cloud::datastore::Query;
     /// let query = Query::new("users").keys_only();
     /// ```
     pub fn keys_only(mut self) -> Query {
@@ -91,7 +91,7 @@ impl Query {
     /// Skip any number of keys before returning results.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
+    /// # use google_cloud::datastore::Query;
     /// let query = Query::new("users").offset(14);
     /// ```
     pub fn offset(mut self, offset: i32) -> Query {
@@ -102,7 +102,7 @@ impl Query {
     /// Limit the number of results to send back.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
+    /// # use google_cloud::datastore::Query;
     /// let query = Query::new("users").limit(25);
     /// ```
     pub fn limit(mut self, limit: i32) -> Query {
@@ -113,8 +113,8 @@ impl Query {
     /// Appends an ancestor filter to the query.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
-    /// use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Query;
+    /// use google_cloud::datastore::Key;
     ///
     /// let key = Key::new("dev").id(10);
     /// let query = Query::new("users").ancestor(key);
@@ -127,7 +127,7 @@ impl Query {
     /// Associates the query with a namespace.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
+    /// # use google_cloud::datastore::Query;
     /// let query = Query::new("users").namespace("dev");
     /// ```
     pub fn namespace(mut self, namespace: impl Into<String>) -> Query {
@@ -138,7 +138,7 @@ impl Query {
     /// Ask to only yield the given fields.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
+    /// # use google_cloud::datastore::Query;
     /// let fields: Vec<String> = vec![
     ///     "firstname".into(),
     ///     "lastname".into(),
@@ -160,7 +160,7 @@ impl Query {
     /// Ask to yield de-duplicated results.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
+    /// # use google_cloud::datastore::Query;
     /// let fields: Vec<String> = vec!["email".into()];
     /// let query = Query::new("users").distinct_on(fields);
     /// ```
@@ -178,8 +178,8 @@ impl Query {
     /// Multiple filters are combined with an 'AND'.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
-    /// use gcp::datastore::{Filter, Value, IntoValue};
+    /// # use google_cloud::datastore::Query;
+    /// use google_cloud::datastore::{Filter, Value, IntoValue};
     ///
     /// let query = Query::new("users")
     ///     .filter(Filter::GreaterThan("age".into(), 10.into_value()))
@@ -194,8 +194,8 @@ impl Query {
     /// Multiple orderings are applied in the order they are added.
     ///
     /// ```
-    /// # use gcp::datastore::Query;
-    /// use gcp::datastore::Order;
+    /// # use google_cloud::datastore::Query;
+    /// use google_cloud::datastore::Order;
     ///
     /// let query = Query::new("users")
     ///     .order(Order::Asc("age".into()))

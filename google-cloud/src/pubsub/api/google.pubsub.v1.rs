@@ -784,7 +784,7 @@ pub mod seek_request {
 /// Response for the `Seek` method (this response is empty).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SeekResponse {}
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod publisher_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
@@ -969,7 +969,7 @@ pub mod publisher_client {
         }
     }
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod subscriber_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;

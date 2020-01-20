@@ -32,7 +32,7 @@ async fn storage_create_and_delete_bucket() {
     let mut bucket = bucket.unwrap();
     println!("created bucket: {}", bucket.name());
     let object = bucket
-        .create_object("sample.json", r#"{"type":"sample","from":"gcp-rs"}"#)
+        .create_object("sample.json", r#"{"type":"sample","from":"google-cloud"}"#)
         .await;
     let object = object.map_err(|err| {
         eprintln!("{}", err);

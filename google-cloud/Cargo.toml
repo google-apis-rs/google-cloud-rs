@@ -1,5 +1,5 @@
 [package]
-name = "gcp"
+name = "google-cloud"
 description = "Asynchronous Rust bindings for Google Cloud Platform gRPC APIs"
 version = "0.1.0"
 authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
@@ -9,7 +9,7 @@ keywords = ["grpc", "futures", "async", "protobuf", "google", "cloud"]
 
 [dependencies]
 # Derive macros
-gcp-derive = { version = "=0.1.0", path = "../gcp-derive", optional = true }
+google-cloud-derive = { version = "=0.1.0", path = "../google-cloud-derive", optional = true }
 
 tonic = { version = "0.1.0", features = ["tls", "prost"] }
 tokio = { version = "0.2.9", features = ["macros", "fs"] }
@@ -39,4 +39,4 @@ pubsub = []
 datastore = []
 vision = []
 storage = []
-derive = ["datastore", "gcp-derive"]
+derive = ["datastore", "google-cloud-derive"]

@@ -20,7 +20,7 @@ impl KeyID {
     /// Is this ID incomplete ?
     ///
     /// ```
-    /// # use gcp::datastore::KeyID;
+    /// # use google_cloud::datastore::KeyID;
     /// let id1 = KeyID::Incomplete;
     /// let id2 = KeyID::IntID(10);
     /// assert!(id1.is_incomplete());
@@ -64,7 +64,7 @@ impl From<IdType> for KeyID {
 /// Represents an entity's key.
 ///
 /// ```
-/// # use gcp::datastore::Key;
+/// # use google_cloud::datastore::Key;
 /// let key = Key::new("kind").id("entity-name");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -79,7 +79,7 @@ impl Key {
     /// Create a new incomplete key.
     ///
     /// ```
-    /// # use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Key;
     /// let incomplete_key = Key::new("kind");
     /// ```
     pub fn new(kind: impl Into<String>) -> Key {
@@ -94,7 +94,7 @@ impl Key {
     /// Get the key's kind.
     ///
     /// ```
-    /// # use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Key;
     /// let key = Key::new("kind").id(10);
     /// assert_eq!(key.get_kind(), "kind");
     /// ```
@@ -105,7 +105,7 @@ impl Key {
     /// Attach an ID to the key.
     ///
     /// ```
-    /// # use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Key;
     /// let int_key = Key::new("kind").id(10);
     /// let string_key = Key::new("kind").id("entity-name");
     /// ```
@@ -117,7 +117,7 @@ impl Key {
     /// Get the key's ID.
     ///
     /// ```
-    /// # use gcp::datastore::{Key, KeyID};
+    /// # use google_cloud::datastore::{Key, KeyID};
     /// let key = Key::new("kind").id(10);
     /// assert_eq!(key.get_id(), &KeyID::IntID(10));
     /// ```
@@ -128,7 +128,7 @@ impl Key {
     /// Attach an ancestor key to the key.
     ///
     /// ```
-    /// # use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Key;
     /// let ancestor = Key::new("kind").id(10);
     /// let key = Key::new("kind").parent(ancestor);
     /// ```
@@ -140,7 +140,7 @@ impl Key {
     /// Get the key's ancestor key, if any.
     ///
     /// ```
-    /// # use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Key;
     /// let ancestor = Key::new("kind").id(10);
     /// let key = Key::new("kind").id("name").parent(ancestor.clone());
     /// assert_eq!(key.get_parent(), Some(&ancestor));
@@ -153,7 +153,7 @@ impl Key {
     /// Attach a namespace to the key (for multitenancy purposes).
     ///
     /// ```
-    /// # use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Key;
     /// let key = Key::new("kind").namespace("dev");
     /// ```
     pub fn namespace(mut self, namespace: impl Into<String>) -> Key {
@@ -164,7 +164,7 @@ impl Key {
     /// Get the key's namespace, if any.
     ///
     /// ```
-    /// # use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Key;
     /// let key1 = Key::new("kind").id(10);
     /// let key2 = Key::new("kind").namespace("dev").id(10);
     /// assert_eq!(key1.get_namespace(), None);
@@ -177,7 +177,7 @@ impl Key {
     /// Is the key incomplete (missing an ID) ?
     ///
     /// ```
-    /// # use gcp::datastore::Key;
+    /// # use google_cloud::datastore::Key;
     /// let key1 = Key::new("kind").namespace("dev");
     /// let key2 = Key::new("kind").id(10);
     /// assert!(key1.is_incomplete());

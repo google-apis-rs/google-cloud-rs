@@ -27,11 +27,11 @@ pub fn derive_into_value(input: TokenStream) -> TokenStream {
     let capacity = LitInt::new(keys.len().to_string().as_str(), name.span());
 
     let tokens = quote! {
-        impl ::gcp::datastore::IntoValue for #name {
-            fn into_value(self) -> ::gcp::datastore::Value {
+        impl ::google_cloud::datastore::IntoValue for #name {
+            fn into_value(self) -> ::google_cloud::datastore::Value {
                 let mut props = ::std::collections::HashMap::with_capacity(#capacity);
                 #(props.insert(String::from(#keys), self.#fields.into_value());)*
-                ::gcp::datastore::Value::EntityValue(props)
+                ::google_cloud::datastore::Value::EntityValue(props)
             }
         }
     };
@@ -59,11 +59,11 @@ pub fn derive_from_value(input: TokenStream) -> TokenStream {
     };
 
     let tokens = quote! {
-        impl ::gcp::datastore::FromValue for #name {
-            fn from_value(value: ::gcp::datastore::Value) -> std::result::Result<#name, ::gcp::error::ConvertError> {
+        impl ::google_cloud::datastore::FromValue for #name {
+            fn from_value(value: ::google_cloud::datastore::Value) -> std::result::Result<#name, ::google_cloud::error::ConvertError> {
                 let mut props = match value {
-                    ::gcp::datastore::Value::EntityValue(props) => props,
-                    _ => return Err(::gcp::error::ConvertError::UnexpectedPropertyType {
+                    ::google_cloud::datastore::Value::EntityValue(props) => props,
+                    _ => return Err(::google_cloud::error::ConvertError::UnexpectedPropertyType {
                         expected: String::from("entity"),
                         got: String::from(value.type_name()),
                     }),
@@ -73,9 +73,9 @@ pub fn derive_from_value(input: TokenStream) -> TokenStream {
                         let prop = props
                             .remove(#keys)
                             .ok_or_else(|| {
-                                ::gcp::error::ConvertError::MissingProperty(String::from(#keys))
+                                ::google_cloud::error::ConvertError::MissingProperty(String::from(#keys))
                             })?;
-                        let value = ::gcp::datastore::FromValue::from_value(prop)?;
+                        let value = ::google_cloud::datastore::FromValue::from_value(prop)?;
                         value
                     },)*
                 };
