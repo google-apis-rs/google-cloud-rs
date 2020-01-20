@@ -24,8 +24,7 @@ async fn datastore_puts_data_successfully() {
         );
         values
     };
-    let entity = properties.into_value();
-    let outcome = client.put((key, properties)).await;
+    let outcome = client.put((key.clone(), properties)).await;
     assert!(outcome.is_ok());
     let outcome = client.delete(key).await;
     assert!(outcome.is_ok());

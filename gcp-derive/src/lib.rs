@@ -3,11 +3,10 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_macro_input;
-use syn::{Fields, FieldsNamed, Ident, ItemStruct, LitStr};
+use syn::{Fields, FieldsNamed, Ident, ItemStruct, LitInt, LitStr};
 
 #[proc_macro_derive(IntoValue)]
 pub fn derive_into_value(input: TokenStream) -> TokenStream {
-    // input
     let input = parse_macro_input!(input as ItemStruct);
 
     let name = &input.ident;
@@ -25,10 +24,12 @@ pub fn derive_into_value(input: TokenStream) -> TokenStream {
         todo!()
     };
 
+    let capacity = LitInt::new(keys.len().to_string().as_str(), name.span());
+
     let tokens = quote! {
         impl ::gcp::datastore::IntoValue for #name {
             fn into_value(self) -> ::gcp::datastore::Value {
-                let mut props = ::std::collections::HashMap::new();
+                let mut props = ::std::collections::HashMap::with_capacity(#capacity);
                 #(props.insert(String::from(#keys), self.#fields.into_value());)*
                 ::gcp::datastore::Value::EntityValue(props)
             }
@@ -40,7 +41,6 @@ pub fn derive_into_value(input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(FromValue)]
 pub fn derive_from_value(input: TokenStream) -> TokenStream {
-    // input
     let input = parse_macro_input!(input as ItemStruct);
 
     let name = &input.ident;
