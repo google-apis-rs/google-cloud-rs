@@ -29,6 +29,8 @@ jwt = { package = "frank_jwt", version = "3.1.2" }
 
 thiserror = "1.0.9"
 
+bytes = { version = "0.5.3", optional = true }
+
 [build-dependencies]
 tonic-build = "0.1.0"
 

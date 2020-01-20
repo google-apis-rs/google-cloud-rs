@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
+use chrono::NaiveDateTime;
+
+#[cfg(feature = "bytes")]
+use bytes::Bytes;
+
 use crate::datastore::api::value::ValueType;
 use crate::datastore::Key;
 use crate::error::ConvertError;
@@ -130,6 +135,19 @@ impl IntoValue for Key {
     }
 }
 
+impl IntoValue for NaiveDateTime {
+    fn into_value(self) -> Value {
+        Value::TimestampValue(self)
+    }
+}
+
+#[cfg(feature = "bytes")]
+impl IntoValue for Bytes {
+    fn into_value(self) -> Value {
+        Value::BlobValue(self.to_vec())
+    }
+}
+
 impl<T> IntoValue for Vec<T>
 where
     T: IntoValue,
@@ -226,6 +244,31 @@ impl FromValue for Key {
     }
 }
 
+impl FromValue for NaiveDateTime {
+    fn from_value(value: Value) -> Result<NaiveDateTime, ConvertError> {
+        match value {
+            Value::TimestampValue(value) => Ok(value),
+            _ => Err(ConvertError::UnexpectedPropertyType {
+                expected: String::from("timestamp"),
+                got: String::from(value.type_name()),
+            }),
+        }
+    }
+}
+
+#[cfg(feature = "bytes")]
+impl FromValue for Bytes {
+    fn from_value(value: Value) -> Result<Bytes, ConvertError> {
+        match value {
+            Value::BlobValue(value) => Ok(Bytes::from(value)),
+            _ => Err(ConvertError::UnexpectedPropertyType {
+                expected: String::from("blob"),
+                got: String::from(value.type_name()),
+            }),
+        }
+    }
+}
+
 impl<T> FromValue for Vec<T>
 where
     T: FromValue,
@@ -240,7 +283,7 @@ where
                 Ok(values)
             }
             _ => Err(ConvertError::UnexpectedPropertyType {
-                expected: String::from("key"),
+                expected: String::from("array"),
                 got: String::from(value.type_name()),
             }),
         }
@@ -254,9 +297,9 @@ impl From<ValueType> for Value {
             ValueType::BooleanValue(val) => Value::BooleanValue(val),
             ValueType::IntegerValue(val) => Value::IntegerValue(val),
             ValueType::DoubleValue(val) => Value::DoubleValue(val),
-            ValueType::TimestampValue(val) => Value::TimestampValue(
-                chrono::NaiveDateTime::from_timestamp(val.seconds, val.nanos as u32),
-            ),
+            ValueType::TimestampValue(val) => {
+                Value::TimestampValue(NaiveDateTime::from_timestamp(val.seconds, val.nanos as u32))
+            }
             ValueType::KeyValue(key) => Value::KeyValue(Key::from(key)),
             ValueType::StringValue(val) => Value::StringValue(val),
             ValueType::BlobValue(val) => Value::BlobValue(val),
