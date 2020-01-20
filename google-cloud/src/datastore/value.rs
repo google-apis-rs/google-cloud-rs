@@ -5,7 +5,7 @@ use crate::datastore::api::value::ValueType;
 use crate::datastore::Key;
 use crate::error::ConvertError;
 
-#[cfg(feature = "google-cloud-derive")]
+#[cfg(feature = "datastore-derive")]
 #[doc(hidden)]
 pub use google_cloud_derive::{FromValue, IntoValue};
 

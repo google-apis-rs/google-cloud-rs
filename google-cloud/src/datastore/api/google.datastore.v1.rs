@@ -866,7 +866,7 @@ pub mod transaction_options {
         ReadOnly(ReadOnly),
     }
 }
-#[doc = r" Generated client implementations."]
+#[doc = r" Generated server implementations."]
 pub mod datastore_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
