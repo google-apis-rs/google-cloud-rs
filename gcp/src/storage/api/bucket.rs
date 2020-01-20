@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::storage::api::bucket_acl::BucketAclResource;
 use crate::storage::api::object_acl::ObjectAclResource;

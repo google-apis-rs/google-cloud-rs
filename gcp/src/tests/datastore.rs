@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::authorize::ApplicationCredentials;
 use crate::datastore;
+use crate::datastore::IntoValue;
 
 async fn setup_client() -> Result<datastore::Client, datastore::Error> {
     let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))?;
@@ -16,15 +17,15 @@ async fn datastore_puts_data_successfully() {
     let key = datastore::Key::new("gcp-rs-tests").namespace("test").id(4);
     let properties = {
         let mut values = HashMap::new();
-        values.insert("hello".into(), "world !".into());
+        values.insert(String::from("hello"), "world !".into_value());
         values.insert(
-            "time".into(),
+            String::from("time"),
             datastore::Value::TimestampValue(chrono::Local::now().naive_local()),
         );
         values
     };
-    let entity = datastore::Entity::new(key.clone(), properties);
-    let outcome = client.put(entity).await;
+    let entity = properties.into_value();
+    let outcome = client.put((key, properties)).await;
     assert!(outcome.is_ok());
     let outcome = client.delete(key).await;
     assert!(outcome.is_ok());

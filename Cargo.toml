@@ -1,37 +1,5 @@
-[package]
-name = "gcp"
-description = "Asynchronous Rust bindings for Google Cloud Platform gRPC APIs"
-version = "0.1.0"
-authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
-edition = "2018"
-categories = ["web-programming", "network-programming", "asynchronous"]
-keywords = ["grpc", "futures", "async", "protobuf", "google", "cloud"]
-
-[dependencies]
-tonic = { version = "0.1.0", features = ["tls", "prost"] }
-tokio = { version = "0.2.9", features = ["macros", "fs"] }
-isahc = { version = "0.8.2", features = ["json"] }
-reqwest = { version = "0.10.1", features = ["blocking", "json", "rustls-tls"] }
-futures = "0.3.1"
-
-prost = "0.6.1"
-prost-types = "0.6.1"
-
-http = "0.2.0"
-chrono = "0.4.10"
-
-serde = { version = "1.0.104", features = ["derive"] }
-json = { package = "serde_json", version = "1.0.44" }
-jwt = { package = "frank_jwt", version = "3.1.2" }
-
-thiserror = "1.0.9"
-
-[build-dependencies]
-tonic-build = "0.1.0"
-
-[features]
-default = ["pubsub", "datastore", "vision", "storage"]
-pubsub = []
-datastore = []
-vision = []
-storage = []
+[workspace]
+members = [
+    "gcp",
+    "gcp-derive",
+]

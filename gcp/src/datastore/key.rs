@@ -6,7 +6,7 @@ use crate::datastore::api::key::path_element::IdType;
 /// Represents a key's ID.
 ///
 /// It can either be a integer key, a string/named key or an incomplete key.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum KeyID {
     /// A string/named key ID.
     StringID(String),
@@ -67,7 +67,7 @@ impl From<IdType> for KeyID {
 /// # use gcp::datastore::Key;
 /// let key = Key::new("kind").id("entity-name");
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Key {
     pub(crate) kind: String,
     pub(crate) id: KeyID,

@@ -1,8 +1,8 @@
 use std::fmt;
 
+use isahc::http::Request;
 use json::json;
 use serde::{Deserialize, Serialize};
-use isahc::http::Request;
 
 pub(crate) const TLS_CERTS: &[u8] = include_bytes!("../../roots.pem");
 

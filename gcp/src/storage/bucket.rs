@@ -22,7 +22,11 @@ impl Bucket {
     }
 
     /// Insert a new object into the bucket.
-    pub async fn create_object(&mut self, name: &str, data: impl Into<Vec<u8>>) -> Result<Object, Error> {
+    pub async fn create_object(
+        &mut self,
+        name: &str,
+        data: impl Into<Vec<u8>>,
+    ) -> Result<Object, Error> {
         let client = &mut self.client;
         let inner = &client.client;
         let uri = format!("{}/b/{}/o", Client::ENDPOINT, self.name);

@@ -1,0 +1,21 @@
+[package]
+name = "gcp-derive"
+version = "0.1.0"
+description = "Derive macros for the gcp-rs library"
+authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[[test]]
+name = "tests"
+path = "tests/tests.rs"
+
+[dependencies]
+syn = { version = "1.0.13", features = ["full", "extra-traits"] }
+quote = "1.0.2"
+
+[dev-dependencies]
+trybuild = "1.0.19"
+gcp = { path = "../gcp", features = ["derive"] }
