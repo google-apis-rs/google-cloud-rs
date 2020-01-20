@@ -179,11 +179,11 @@ impl Query {
     ///
     /// ```
     /// # use gcp::datastore::Query;
-    /// use gcp::datastore::{Filter, Value};
+    /// use gcp::datastore::{Filter, Value, IntoValue};
     ///
     /// let query = Query::new("users")
-    ///     .filter(Filter::GreaterThan("age".into(), 10.into()))
-    ///     .filter(Filter::Equal("firstname".into(), "john".into()));
+    ///     .filter(Filter::GreaterThan("age".into(), 10.into_value()))
+    ///     .filter(Filter::Equal("firstname".into(), "john".into_value()));
     /// ```
     pub fn filter(mut self, filter: Filter) -> Query {
         self.filters.push(filter);
