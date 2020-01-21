@@ -16,6 +16,7 @@ use crate::datastore::{
 };
 
 /// The Datastore client, tied to a specific project.
+#[derive(Clone)]
 pub struct Client {
     pub(crate) project_name: String,
     pub(crate) service: DatastoreClient<Channel>,
