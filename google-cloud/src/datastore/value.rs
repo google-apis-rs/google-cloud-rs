@@ -290,6 +290,30 @@ where
     }
 }
 
+impl<T> FromValue for HashMap<String, T>
+where
+    T: FromValue,
+{
+    fn from_value(value: Value) -> Result<HashMap<String, T>, ConvertError> {
+        match value {
+            Value::EntityValue(values) => {
+                let values = values
+                    .into_iter()
+                    .map(|(k, v)| {
+                        let v = FromValue::from_value(v)?;
+                        Ok((k, v))
+                    })
+                    .collect::<Result<HashMap<String, T>, ConvertError>>()?;
+                Ok(values)
+            }
+            _ => Err(ConvertError::UnexpectedPropertyType {
+                expected: String::from("entity"),
+                got: String::from(value.type_name()),
+            }),
+        }
+    }
+}
+
 impl From<ValueType> for Value {
     fn from(value: ValueType) -> Value {
         match value {
