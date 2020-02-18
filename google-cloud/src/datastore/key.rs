@@ -196,9 +196,13 @@ impl From<api::Key> for Key {
                 None => KeyID::Incomplete,
                 Some(id_type) => KeyID::from(id_type),
             };
-            let key = Key::new(el.kind)
-                .namespace(data.namespace_id.as_str())
-                .id(key_id);
+            let key = Key::new(el.kind);
+            let key = if data.namespace_id.is_empty() {
+                key
+            } else {
+                key.namespace(data.namespace_id.as_str())
+            };
+            let key = key.id(key_id);
 
             if let Some(ancestor) = acc {
                 Some(key.parent(ancestor))

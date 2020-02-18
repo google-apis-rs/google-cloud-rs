@@ -11,12 +11,15 @@ async fn setup_client() -> Result<datastore::Client, datastore::Error> {
 
 #[tokio::test]
 async fn datastore_puts_data_successfully() {
+    //? Setup test client.
     let client = setup_client().await;
     assert!(client.is_ok());
     let mut client = client.unwrap();
+
+    //? Prepare Datastore key and value.
     let key = datastore::Key::new("google-cloud-tests")
         .namespace("test")
-        .id(4);
+        .id("test-id");
     let properties = {
         let mut values = HashMap::new();
         values.insert(String::from("hello"), "world !".into_value());
@@ -26,8 +29,16 @@ async fn datastore_puts_data_successfully() {
         );
         values
     };
+
+    //? Store value in Datastore.
     let outcome = client.put((key.clone(), properties)).await;
     assert!(outcome.is_ok());
+
+    //? Get value back from Datastore.
+    let outcome: Result<Option<datastore::Value>, _> = client.get(&key).await;
+    assert!(outcome.is_ok());
+
+    //? Delete that value from Datastore.
     let outcome = client.delete(key).await;
     assert!(outcome.is_ok());
 }

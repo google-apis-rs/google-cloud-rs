@@ -28,5 +28,5 @@ async fn vision_detects_text_successfully() {
 
     let config = vision::TextDetectionConfig::default();
     let detected = client.detect_document_text(image, config).await;
-    assert!(dbg!(detected).is_ok());
+    assert!(detected.is_ok());
 }

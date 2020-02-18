@@ -19,6 +19,8 @@ pub struct Client {
 impl Client {
     pub(crate) const DOMAIN_NAME: &'static str = "storage.googleapis.com";
     pub(crate) const ENDPOINT: &'static str = "https://storage.googleapis.com/storage/v1";
+    /// Cloud Storage uses a slightly different endpoint for uploads.
+    pub(crate) const UPLOAD_ENDPOINT: &'static str = "https://storage.googleapis.com/upload/storage/v1";
     pub(crate) const SCOPES: [&'static str; 2] = [
         "https://www.googleapis.com/auth/cloud-platform",
         "https://www.googleapis.com/auth/devstorage.full_control",

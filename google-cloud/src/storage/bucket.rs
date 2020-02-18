@@ -26,21 +26,24 @@ impl Bucket {
         &mut self,
         name: &str,
         data: impl Into<Vec<u8>>,
+        mime_type: impl AsRef<str>,
     ) -> Result<Object, Error> {
         let client = &mut self.client;
         let inner = &client.client;
-        let uri = format!("{}/b/{}/o", Client::ENDPOINT, self.name);
+        let uri = format!("{}/b/{}/o", Client::UPLOAD_ENDPOINT, self.name);
 
+        let data = data.into();
         let request = inner
             .post(uri.as_str())
             .query(&[("uploadType", "media"), ("name", name)])
             .header("authorization", client.token_manager.token())
-            .header("content-type", "application/octet-stream")
-            .body(data.into())
+            .header("content-type", mime_type.as_ref())
+            .header("content-length", data.len())
+            .body(data)
             .send();
         let response = request.await?;
         let string = response.error_for_status()?.text().await?;
-        let resource = json::from_str::<ObjectResource>(dbg!(string).as_str())?;
+        let resource = json::from_str::<ObjectResource>(string.as_str())?;
 
         Ok(Object::new(
             client.clone(),
@@ -61,7 +64,7 @@ impl Bucket {
             .send();
         let response = request.await?;
         let string = response.error_for_status()?.text().await?;
-        let resource = json::from_str::<ObjectResource>(dbg!(string).as_str())?;
+        let resource = json::from_str::<ObjectResource>(string.as_str())?;
 
         Ok(Object::new(
             client.clone(),

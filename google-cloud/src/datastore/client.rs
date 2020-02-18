@@ -85,7 +85,11 @@ impl Client {
         T: FromValue,
     {
         let results = self.get_all(Some(key.borrow())).await?;
-        Ok(results.into_iter().next().map(T::from_value).transpose()?)
+        Ok(results
+            .into_iter()
+            .next()
+            .map(T::from_value)
+            .transpose()?)
     }
 
     /// Gets multiple entities from multiple keys.
@@ -308,7 +312,7 @@ fn convert_key(project_name: &str, key: &Key) -> api::Key {
     api::Key {
         partition_id: Some(api::PartitionId {
             project_id: String::from(project_name),
-            namespace_id: String::from(key.get_namespace().unwrap_or_default()),
+            namespace_id: key.get_namespace().map(String::from).unwrap_or_default(),
         }),
         path: {
             let mut key = Some(key);
