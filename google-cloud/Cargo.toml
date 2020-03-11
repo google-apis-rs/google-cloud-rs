@@ -13,7 +13,7 @@ google-cloud-derive = { version = "=0.1.0", path = "../google-cloud-derive", opt
 
 tonic = { version = "0.1.0", features = ["tls", "prost"] }
 tokio = { version = "0.2.9", features = ["macros", "fs"] }
-isahc = { version = "0.8.2", features = ["json"] }
+isahc = { version = "0.9.1", features = ["json"] }
 reqwest = { version = "0.10.1", features = ["blocking", "json", "rustls-tls"] }
 futures = "0.3.1"
 
