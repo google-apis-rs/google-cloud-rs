@@ -85,11 +85,7 @@ impl Client {
         T: FromValue,
     {
         let results = self.get_all(Some(key.borrow())).await?;
-        Ok(results
-            .into_iter()
-            .next()
-            .map(T::from_value)
-            .transpose()?)
+        Ok(results.into_iter().next().map(T::from_value).transpose()?)
     }
 
     /// Gets multiple entities from multiple keys.
