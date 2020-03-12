@@ -1,6 +1,7 @@
 use std::fmt;
 
 use isahc::http::Request;
+use isahc::ResponseExt;
 use json::json;
 use serde::{Deserialize, Serialize};
 
