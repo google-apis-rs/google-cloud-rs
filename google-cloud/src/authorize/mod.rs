@@ -100,7 +100,6 @@ impl TokenManager {
                     .unwrap();
                 let response = isahc::send(request)
                     .expect("failed request to obtain an OAuth token")
-                    .body_mut()
                     .json::<AuthResponse>()
                     .expect("failed to deserialize OAuth response");
                 let value = TokenValue::Bearer(response.access_token);
