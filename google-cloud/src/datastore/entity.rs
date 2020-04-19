@@ -22,9 +22,19 @@ impl Entity {
         }
     }
 
+    /// Move the inner key out.
+    pub fn into_key(self) -> Key {
+        self.key
+    }
+
     /// Get the entity's key.
     pub fn key(&self) -> &Key {
         &self.key
+    }
+
+    /// Move the inner properties out.
+    pub fn into_properties(self) -> Value {
+        self.properties
     }
 
     /// Get the entity's properties.
