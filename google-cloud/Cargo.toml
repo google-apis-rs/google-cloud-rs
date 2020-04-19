@@ -32,7 +32,7 @@ thiserror = "1.0.9"
 bytes = { version = "0.5.3", optional = true }
 
 [build-dependencies]
-tonic-build = "0.1.0"
+tonic-build = "0.2.0"
 
 [features]
 default = []
