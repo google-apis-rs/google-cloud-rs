@@ -2,23 +2,17 @@ use google_cloud::datastore::{FromValue, IntoValue};
 use google_cloud::error::ConvertError;
 
 #[derive(Debug, FromValue, IntoValue)]
-pub struct Foo {
-    bar: Bar,
-    qux: bool,
-}
-
-#[derive(Debug, FromValue, IntoValue)]
-pub struct Bar {
-    baz: String,
+#[datastore(rename_all = "SCREAMING-KEBAB-CASE")]
+pub enum Foo {
+    Bar,
+    Baz,
+    TrickyOne,
+    AndAnotherOne,
+    AreWeThereYet,
 }
 
 fn main() {
-    let foo = Foo {
-        bar: Bar {
-            baz: String::from("test"),
-        },
-        qux: true,
-    };
+    let foo = Foo::AreWeThereYet;
     println!("original: {:?}", foo);
 
     let converted = foo.into_value();
