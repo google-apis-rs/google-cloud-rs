@@ -137,7 +137,7 @@ pub struct OperationInfo {
     #[prost(string, tag = "2")]
     pub metadata_type: std::string::String,
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod operations_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
@@ -300,6 +300,11 @@ pub mod operations_client {
             Self {
                 inner: self.inner.clone(),
             }
+        }
+    }
+    impl<T> std::fmt::Debug for OperationsClient<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "OperationsClient {{ ... }}")
         }
     }
 }

@@ -12,24 +12,24 @@ keywords = ["grpc", "futures", "async", "protobuf", "google", "cloud"]
 google-cloud-derive = { version = "=0.1.0", path = "../google-cloud-derive", optional = true }
 
 tonic = { version = "0.2.0", features = ["tls", "prost"] }
-tokio = { version = "0.2.9", features = ["macros", "fs"] }
+tokio = { version = "0.2.18", features = ["macros", "fs"] }
 isahc = { version = "0.9.1", features = ["json"] }
-reqwest = { version = "0.10.1", features = ["blocking", "json", "rustls-tls"] }
-futures = "0.3.1"
+reqwest = { version = "0.10.4", features = ["blocking", "json", "rustls-tls"] }
+futures = "0.3.4"
 
 prost = "0.6.1"
 prost-types = "0.6.1"
 
-http = "0.2.0"
-chrono = "0.4.10"
+http = "0.2.1"
+chrono = "0.4.11"
 
-serde = { version = "1.0.104", features = ["derive"] }
-json = { package = "serde_json", version = "1.0.44" }
+serde = { version = "1.0.106", features = ["derive"] }
+json = { package = "serde_json", version = "1.0.51" }
 jwt = { package = "frank_jwt", version = "3.1.2" }
 
-thiserror = "1.0.9"
+thiserror = "1.0.15"
 
-bytes = { version = "0.5.3", optional = true }
+bytes = { version = "0.5.4", optional = true }
 
 [build-dependencies]
 tonic-build = "0.2.0"

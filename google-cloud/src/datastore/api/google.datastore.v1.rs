@@ -866,7 +866,7 @@ pub mod transaction_options {
         ReadOnly(ReadOnly),
     }
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod datastore_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
@@ -1028,6 +1028,11 @@ pub mod datastore_client {
             Self {
                 inner: self.inner.clone(),
             }
+        }
+    }
+    impl<T> std::fmt::Debug for DatastoreClient<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "DatastoreClient {{ ... }}")
         }
     }
 }

@@ -644,7 +644,7 @@ pub mod purge_products_request {
         DeleteOrphanProducts(bool),
     }
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod product_search_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
@@ -1164,6 +1164,11 @@ pub mod product_search_client {
             Self {
                 inner: self.inner.clone(),
             }
+        }
+    }
+    impl<T> std::fmt::Debug for ProductSearchClient<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "ProductSearchClient {{ ... }}")
         }
     }
 }
@@ -2490,7 +2495,7 @@ pub enum Likelihood {
     /// It is very likely.
     VeryLikely = 5,
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod image_annotator_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
@@ -2625,6 +2630,11 @@ pub mod image_annotator_client {
             Self {
                 inner: self.inner.clone(),
             }
+        }
+    }
+    impl<T> std::fmt::Debug for ImageAnnotatorClient<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "ImageAnnotatorClient {{ ... }}")
         }
     }
 }

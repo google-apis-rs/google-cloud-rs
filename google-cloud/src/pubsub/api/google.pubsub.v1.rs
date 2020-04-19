@@ -784,7 +784,7 @@ pub mod seek_request {
 /// Response for the `Seek` method (this response is empty).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SeekResponse {}
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod publisher_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
@@ -968,8 +968,13 @@ pub mod publisher_client {
             }
         }
     }
+    impl<T> std::fmt::Debug for PublisherClient<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "PublisherClient {{ ... }}")
+        }
+    }
 }
-#[doc = r" Generated server implementations."]
+#[doc = r" Generated client implementations."]
 pub mod subscriber_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
@@ -1364,6 +1369,11 @@ pub mod subscriber_client {
             Self {
                 inner: self.inner.clone(),
             }
+        }
+    }
+    impl<T> std::fmt::Debug for SubscriberClient<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "SubscriberClient {{ ... }}")
         }
     }
 }
