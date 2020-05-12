@@ -28,6 +28,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           override: true
+          components: rustfmt
 
       - name: check
         uses: actions-rs/cargo@v1
@@ -64,4 +65,5 @@ jobs:
       - name: Check fmt
         uses: actions-rs/cargo@v1
         with:
-          command: check --all -- --check
+          command: fmt
+          args: --all -- --check
