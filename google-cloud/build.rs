@@ -1,31 +1,32 @@
-fn main() {
-    tonic_build::configure()
-        .build_client(true)
-        .build_server(false)
-        .format(true)
-        .out_dir("src/pubsub/api")
-        .compile(&["protos/google/pubsub/v1/pubsub.proto"], &["protos"])
-        .unwrap();
-    println!("cargo:rerun-if-changed=protos/google/pubsub/v1/pubsub.proto");
+use std::fs;
 
-    tonic_build::configure()
-        .build_client(true)
-        .build_server(false)
-        .format(true)
-        .out_dir("src/datastore/api")
-        .compile(&["protos/google/datastore/v1/datastore.proto"], &["protos"])
-        .unwrap();
-    println!("cargo:rerun-if-changed=protos/google/datastore/v1/datastore.proto");
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let protos = [
+        (["protos/google/pubsub/v1/pubsub.proto"], "src/pubsub/api"),
+        (
+            ["protos/google/datastore/v1/datastore.proto"],
+            "src/datastore/api",
+        ),
+        (
+            ["protos/google/cloud/vision/v1/image_annotator.proto"],
+            "src/vision/api",
+        ),
+    ];
 
-    tonic_build::configure()
-        .build_client(true)
-        .build_server(false)
-        .format(true)
-        .out_dir("src/vision/api")
-        .compile(
-            &["protos/google/cloud/vision/v1/image_annotator.proto"],
-            &["protos"],
-        )
-        .unwrap();
-    println!("cargo:rerun-if-changed=protos/google/cloud/vision/v1/image_annotator.proto");
+    for (proto_files, out_dir) in protos.iter() {
+        fs::create_dir_all(&out_dir)?;
+
+        tonic_build::configure()
+            .build_client(true)
+            .build_server(false)
+            .format(true)
+            .out_dir(&out_dir)
+            .compile(proto_files, &["protos"])?;
+
+        for file in proto_files {
+            println!("cargo:rerun-if-changed={}", &file);
+        }
+    }
+
+    Ok(())
 }
