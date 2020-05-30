@@ -417,12 +417,12 @@ pub enum FieldBehavior {
 ///
 /// The ResourceDescriptor Yaml config will look like:
 ///
-///    resources:
-///    - type: "pubsub.googleapis.com/Topic"
-///      name_descriptor:
-///        - pattern: "projects/{project}/topics/{topic}"
-///          parent_type: "cloudresourcemanager.googleapis.com/Project"
-///          parent_name_extractor: "projects/{project}"
+///     resources:
+///     - type: "pubsub.googleapis.com/Topic"
+///       name_descriptor:
+///         - pattern: "projects/{project}/topics/{topic}"
+///           parent_type: "cloudresourcemanager.googleapis.com/Project"
+///           parent_name_extractor: "projects/{project}"
 ///
 /// Sometimes, resources have multiple patterns, typically because they can
 /// live under multiple parents.
@@ -607,11 +607,11 @@ pub struct ResourceReference {
     ///
     /// Example:
     ///
-    ///   message ListLogEntriesRequest {
-    ///     string parent = 1 [(google.api.resource_reference) = {
-    ///       child_type: "logging.googleapis.com/LogEntry"
-    ///     };
-    ///   }
+    ///     message ListLogEntriesRequest {
+    ///       string parent = 1 [(google.api.resource_reference) = {
+    ///         child_type: "logging.googleapis.com/LogEntry"
+    ///       };
+    ///     }
     #[prost(string, tag = "2")]
     pub child_type: std::string::String,
 }

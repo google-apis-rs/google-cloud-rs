@@ -1,3 +1,4 @@
+/// A policy constraining the storage of messages published to the topic.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MessageStoragePolicy {
     /// A list of IDs of GCP regions where messages that are published to the topic
@@ -11,7 +12,7 @@ pub struct MessageStoragePolicy {
 /// A topic resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Topic {
-    /// The name of the topic. It must have the format
+    /// Required. The name of the topic. It must have the format
     /// `"projects/{project}/topics/{topic}"`. `{topic}` must start with a letter,
     /// and contain only letters (`[A-Za-z]`), numbers (`[0-9]`), dashes (`-`),
     /// underscores (`_`), periods (`.`), tildes (`~`), plus (`+`) or percent
@@ -49,7 +50,8 @@ pub struct PubsubMessage {
     /// at least one attribute.
     #[prost(bytes, tag = "1")]
     pub data: std::vec::Vec<u8>,
-    /// Optional attributes for this message.
+    /// Attributes for this message. If this field is empty, the message must
+    /// contain non-empty data.
     #[prost(map = "string, string", tag = "2")]
     pub attributes: ::std::collections::HashMap<std::string::String, std::string::String>,
     /// ID of this message, assigned by the server when the message is published.
@@ -63,10 +65,12 @@ pub struct PubsubMessage {
     /// publisher in a `Publish` call.
     #[prost(message, optional, tag = "4")]
     pub publish_time: ::std::option::Option<::prost_types::Timestamp>,
-    /// Identifies related messages for which publish order should be respected.
-    /// If a `Subscription` has `enable_message_ordering` set to `true`, messages
-    /// published with the same `ordering_key` value will be delivered to
-    /// subscribers in the order in which they are received by the Pub/Sub system.
+    /// If non-empty, identifies related messages for which publish order should be
+    /// respected. If a `Subscription` has `enable_message_ordering` set to `true`,
+    /// messages published with the same non-empty `ordering_key` value will be
+    /// delivered to subscribers in the order in which they are received by the
+    /// Pub/Sub system. All `PubsubMessage`s published in a given `PublishRequest`
+    /// must specify the same `ordering_key` value.
     /// <b>EXPERIMENTAL:</b> This feature is part of a closed alpha release. This
     /// API might be changed in backward-incompatible ways and is not recommended
     /// for production use. It is not subject to any SLA or deprecation policy.
@@ -76,7 +80,7 @@ pub struct PubsubMessage {
 /// Request for the GetTopic method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetTopicRequest {
-    /// The name of the topic to get.
+    /// Required. The name of the topic to get.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: std::string::String,
@@ -84,25 +88,25 @@ pub struct GetTopicRequest {
 /// Request for the UpdateTopic method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateTopicRequest {
-    /// The updated topic object.
+    /// Required. The updated topic object.
     #[prost(message, optional, tag = "1")]
     pub topic: ::std::option::Option<Topic>,
-    /// Indicates which fields in the provided topic to update. Must be specified
-    /// and non-empty. Note that if `update_mask` contains
-    /// "message_storage_policy" then the new value will be determined based on the
-    /// policy configured at the project or organization level. The
-    /// `message_storage_policy` must not be set in the `topic` provided above.
+    /// Required. Indicates which fields in the provided topic to update. Must be
+    /// specified and non-empty. Note that if `update_mask` contains
+    /// "message_storage_policy" but the `message_storage_policy` is not set in
+    /// the `topic` provided above, then the updated value is determined by the
+    /// policy configured at the project or organization level.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::std::option::Option<::prost_types::FieldMask>,
 }
 /// Request for the Publish method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PublishRequest {
-    /// The messages in the request will be published on this topic.
+    /// Required. The messages in the request will be published on this topic.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: std::string::String,
-    /// The messages to publish.
+    /// Required. The messages to publish.
     #[prost(message, repeated, tag = "2")]
     pub messages: ::std::vec::Vec<PubsubMessage>,
 }
@@ -118,7 +122,7 @@ pub struct PublishResponse {
 /// Request for the `ListTopics` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTopicsRequest {
-    /// The name of the project in which to list topics.
+    /// Required. The name of the project in which to list topics.
     /// Format is `projects/{project-id}`.
     #[prost(string, tag = "1")]
     pub project: std::string::String,
@@ -145,7 +149,7 @@ pub struct ListTopicsResponse {
 /// Request for the `ListTopicSubscriptions` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTopicSubscriptionsRequest {
-    /// The name of the topic that subscriptions are attached to.
+    /// Required. The name of the topic that subscriptions are attached to.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: std::string::String,
@@ -161,7 +165,7 @@ pub struct ListTopicSubscriptionsRequest {
 /// Response for the `ListTopicSubscriptions` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTopicSubscriptionsResponse {
-    /// The names of the subscriptions that match the request.
+    /// The names of subscriptions attached to the topic specified in the request.
     #[prost(string, repeated, tag = "1")]
     pub subscriptions: ::std::vec::Vec<std::string::String>,
     /// If not empty, indicates that there may be more subscriptions that match
@@ -173,7 +177,7 @@ pub struct ListTopicSubscriptionsResponse {
 /// Request for the `ListTopicSnapshots` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTopicSnapshotsRequest {
-    /// The name of the topic that snapshots are attached to.
+    /// Required. The name of the topic that snapshots are attached to.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: std::string::String,
@@ -201,15 +205,27 @@ pub struct ListTopicSnapshotsResponse {
 /// Request for the `DeleteTopic` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteTopicRequest {
-    /// Name of the topic to delete.
+    /// Required. Name of the topic to delete.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: std::string::String,
 }
+/// Request for the DetachSubscription method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DetachSubscriptionRequest {
+    /// Required. The subscription to detach.
+    /// Format is `projects/{project}/subscriptions/{subscription}`.
+    #[prost(string, tag = "1")]
+    pub subscription: std::string::String,
+}
+/// Response for the DetachSubscription method.
+/// Reserved for future use.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DetachSubscriptionResponse {}
 /// A subscription resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Subscription {
-    /// The name of the subscription. It must have the format
+    /// Required. The name of the subscription. It must have the format
     /// `"projects/{project}/subscriptions/{subscription}"`. `{subscription}` must
     /// start with a letter, and contain only letters (`[A-Za-z]`), numbers
     /// (`[0-9]`), dashes (`-`), underscores (`_`), periods (`.`), tildes (`~`),
@@ -217,10 +233,9 @@ pub struct Subscription {
     /// in length, and it must not start with `"goog"`.
     #[prost(string, tag = "1")]
     pub name: std::string::String,
-    /// The name of the topic from which this subscription is receiving messages.
-    /// Format is `projects/{project}/topics/{topic}`.
-    /// The value of this field will be `_deleted-topic_` if the topic has been
-    /// deleted.
+    /// Required. The name of the topic from which this subscription is receiving
+    /// messages. Format is `projects/{project}/topics/{topic}`. The value of this
+    /// field will be `_deleted-topic_` if the topic has been deleted.
     #[prost(string, tag = "2")]
     pub topic: std::string::String,
     /// If push delivery is used with this subscription, this field is
@@ -288,6 +303,12 @@ pub struct Subscription {
     /// value for `expiration_policy.ttl` is 1 day.
     #[prost(message, optional, tag = "11")]
     pub expiration_policy: ::std::option::Option<ExpirationPolicy>,
+    /// An expression written in the Cloud Pub/Sub filter language. If non-empty,
+    /// then only `PubsubMessage`s whose `attributes` field matches the filter are
+    /// delivered on this subscription. If empty, then no messages are filtered
+    /// out.
+    #[prost(string, tag = "12")]
+    pub filter: std::string::String,
     /// A policy that specifies the conditions for dead lettering messages in
     /// this subscription. If dead_letter_policy is not set, dead lettering
     /// is disabled.
@@ -296,11 +317,39 @@ pub struct Subscription {
     /// parent project (i.e.,
     /// service-{project_number}@gcp-sa-pubsub.iam.gserviceaccount.com) must have
     /// permission to Acknowledge() messages on this subscription.
-    /// <b>EXPERIMENTAL:</b> This feature is part of a closed alpha release. This
-    /// API might be changed in backward-incompatible ways and is not recommended
-    /// for production use. It is not subject to any SLA or deprecation policy.
     #[prost(message, optional, tag = "13")]
     pub dead_letter_policy: ::std::option::Option<DeadLetterPolicy>,
+    /// A policy that specifies how Pub/Sub retries message delivery for this
+    /// subscription.
+    ///
+    /// If not set, the default retry policy is applied. This generally implies
+    /// that messages will be retried as soon as possible for healthy subscribers.
+    /// RetryPolicy will be triggered on NACKs or acknowledgement deadline
+    /// exceeded events for a given message.
+    #[prost(message, optional, tag = "14")]
+    pub retry_policy: ::std::option::Option<RetryPolicy>,
+}
+/// A policy that specifies how Cloud Pub/Sub retries message delivery.
+///
+/// Retry delay will be exponential based on provided minimum and maximum
+/// backoffs. https://en.wikipedia.org/wiki/Exponential_backoff.
+///
+/// RetryPolicy will be triggered on NACKs or acknowledgement deadline exceeded
+/// events for a given message.
+///
+/// Retry Policy is implemented on a best effort basis. At times, the delay
+/// between consecutive deliveries may not match the configuration. That is,
+/// delay can be more or less than configured backoff.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RetryPolicy {
+    /// The minimum delay between consecutive deliveries of a given message.
+    /// Value should be between 0 and 600 seconds. Defaults to 10 seconds.
+    #[prost(message, optional, tag = "1")]
+    pub minimum_backoff: ::std::option::Option<::prost_types::Duration>,
+    /// The maximum delay between consecutive deliveries of a given message.
+    /// Value should be between 0 and 600 seconds. Defaults to 600 seconds.
+    #[prost(message, optional, tag = "2")]
+    pub maximum_backoff: ::std::option::Option<::prost_types::Duration>,
 }
 /// Dead lettering is done on a best effort basis. The same message might be
 /// dead lettered multiple times.
@@ -353,7 +402,7 @@ pub struct ExpirationPolicy {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PushConfig {
     /// A URL locating the endpoint to which messages should be pushed.
-    /// For example, a Webhook endpoint might use "https://example.com/push".
+    /// For example, a Webhook endpoint might use `https://example.com/push`.
     #[prost(string, tag = "1")]
     pub push_endpoint: std::string::String,
     /// Endpoint configuration attributes that can be used to control different
@@ -431,8 +480,11 @@ pub struct ReceivedMessage {
     /// The message.
     #[prost(message, optional, tag = "2")]
     pub message: ::std::option::Option<PubsubMessage>,
-    /// Delivery attempt counter is 1 + (the sum of number of NACKs and number of
-    /// ack_deadline exceeds) for this message.
+    /// The approximate number of times that Cloud Pub/Sub has attempted to deliver
+    /// the associated message to a subscriber.
+    ///
+    /// More precisely, this is 1 + (number of NACKs) +
+    /// (number of ack_deadline exceeds) for this message.
     ///
     /// A NACK is any call to ModifyAckDeadline with a 0 deadline. An ack_deadline
     /// exceeds event is whenever a message is not acknowledged within
@@ -440,20 +492,17 @@ pub struct ReceivedMessage {
     /// Subscription.ackDeadlineSeconds, but may get extended automatically by
     /// the client library.
     ///
-    /// The first delivery of a given message will have this value as 1. The value
-    /// is calculated at best effort and is approximate.
+    /// Upon the first delivery of a given message, `delivery_attempt` will have a
+    /// value of 1. The value is calculated at best effort and is approximate.
     ///
     /// If a DeadLetterPolicy is not set on the subscription, this will be 0.
-    /// <b>EXPERIMENTAL:</b> This feature is part of a closed alpha release. This
-    /// API might be changed in backward-incompatible ways and is not recommended
-    /// for production use. It is not subject to any SLA or deprecation policy.
     #[prost(int32, tag = "3")]
     pub delivery_attempt: i32,
 }
 /// Request for the GetSubscription method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSubscriptionRequest {
-    /// The name of the subscription to get.
+    /// Required. The name of the subscription to get.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: std::string::String,
@@ -461,10 +510,10 @@ pub struct GetSubscriptionRequest {
 /// Request for the UpdateSubscription method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateSubscriptionRequest {
-    /// The updated subscription object.
+    /// Required. The updated subscription object.
     #[prost(message, optional, tag = "1")]
     pub subscription: ::std::option::Option<Subscription>,
-    /// Indicates which fields in the provided subscription to update.
+    /// Required. Indicates which fields in the provided subscription to update.
     /// Must be specified and non-empty.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::std::option::Option<::prost_types::FieldMask>,
@@ -472,7 +521,7 @@ pub struct UpdateSubscriptionRequest {
 /// Request for the `ListSubscriptions` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSubscriptionsRequest {
-    /// The name of the project in which to list subscriptions.
+    /// Required. The name of the project in which to list subscriptions.
     /// Format is `projects/{project-id}`.
     #[prost(string, tag = "1")]
     pub project: std::string::String,
@@ -500,7 +549,7 @@ pub struct ListSubscriptionsResponse {
 /// Request for the DeleteSubscription method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteSubscriptionRequest {
-    /// The subscription to delete.
+    /// Required. The subscription to delete.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: std::string::String,
@@ -508,11 +557,11 @@ pub struct DeleteSubscriptionRequest {
 /// Request for the ModifyPushConfig method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ModifyPushConfigRequest {
-    /// The name of the subscription.
+    /// Required. The name of the subscription.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: std::string::String,
-    /// The push configuration for future deliveries.
+    /// Required. The push configuration for future deliveries.
     ///
     /// An empty `pushConfig` indicates that the Pub/Sub system should
     /// stop pushing messages from the given subscription and allow
@@ -524,18 +573,21 @@ pub struct ModifyPushConfigRequest {
 /// Request for the `Pull` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PullRequest {
-    /// The subscription from which messages should be pulled.
+    /// Required. The subscription from which messages should be pulled.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: std::string::String,
-    /// If this field set to true, the system will respond immediately even if
-    /// it there are no messages available to return in the `Pull` response.
-    /// Otherwise, the system may wait (for a bounded amount of time) until at
-    /// least one message is available, rather than returning no messages.
+    /// Optional. If this field set to true, the system will respond immediately
+    /// even if it there are no messages available to return in the `Pull`
+    /// response. Otherwise, the system may wait (for a bounded amount of time)
+    /// until at least one message is available, rather than returning no messages.
+    /// Warning: setting this field to `true` is discouraged because it adversely
+    /// impacts the performance of `Pull` operations. We recommend that users do
+    /// not set this field.
     #[prost(bool, tag = "2")]
     pub return_immediately: bool,
-    /// The maximum number of messages to return for this request. Must be a
-    /// positive integer. The Pub/Sub system may return fewer than the number
+    /// Required. The maximum number of messages to return for this request. Must
+    /// be a positive integer. The Pub/Sub system may return fewer than the number
     /// specified.
     #[prost(int32, tag = "3")]
     pub max_messages: i32,
@@ -553,17 +605,17 @@ pub struct PullResponse {
 /// Request for the ModifyAckDeadline method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ModifyAckDeadlineRequest {
-    /// The name of the subscription.
+    /// Required. The name of the subscription.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: std::string::String,
-    /// List of acknowledgment IDs.
+    /// Required. List of acknowledgment IDs.
     #[prost(string, repeated, tag = "4")]
     pub ack_ids: ::std::vec::Vec<std::string::String>,
-    /// The new ack deadline with respect to the time this request was sent to
-    /// the Pub/Sub system. For example, if the value is 10, the new
-    /// ack deadline will expire 10 seconds after the `ModifyAckDeadline` call
-    /// was made. Specifying zero might immediately make the message available for
+    /// Required. The new ack deadline with respect to the time this request was
+    /// sent to the Pub/Sub system. For example, if the value is 10, the new ack
+    /// deadline will expire 10 seconds after the `ModifyAckDeadline` call was
+    /// made. Specifying zero might immediately make the message available for
     /// delivery to another subscriber client. This typically results in an
     /// increase in the rate of message redeliveries (that is, duplicates).
     /// The minimum deadline you can specify is 0 seconds.
@@ -574,12 +626,13 @@ pub struct ModifyAckDeadlineRequest {
 /// Request for the Acknowledge method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AcknowledgeRequest {
-    /// The subscription whose message is being acknowledged.
+    /// Required. The subscription whose message is being acknowledged.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: std::string::String,
-    /// The acknowledgment ID for the messages being acknowledged that was returned
-    /// by the Pub/Sub system in the `Pull` response. Must not be empty.
+    /// Required. The acknowledgment ID for the messages being acknowledged that
+    /// was returned by the Pub/Sub system in the `Pull` response. Must not be
+    /// empty.
     #[prost(string, repeated, tag = "2")]
     pub ack_ids: ::std::vec::Vec<std::string::String>,
 }
@@ -588,8 +641,8 @@ pub struct AcknowledgeRequest {
 /// deadline modifications from the client to the server.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StreamingPullRequest {
-    /// The subscription for which to initialize the new stream. This must be
-    /// provided in the first request on the stream, and must not be set in
+    /// Required. The subscription for which to initialize the new stream. This
+    /// must be provided in the first request on the stream, and must not be set in
     /// subsequent requests from client to server.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
@@ -621,12 +674,20 @@ pub struct StreamingPullRequest {
     /// processing was interrupted.
     #[prost(string, repeated, tag = "4")]
     pub modify_deadline_ack_ids: ::std::vec::Vec<std::string::String>,
-    /// The ack deadline to use for the stream. This must be provided in the
-    /// first request on the stream, but it can also be updated on subsequent
+    /// Required. The ack deadline to use for the stream. This must be provided in
+    /// the first request on the stream, but it can also be updated on subsequent
     /// requests from client to server. The minimum deadline you can specify is 10
     /// seconds. The maximum deadline you can specify is 600 seconds (10 minutes).
     #[prost(int32, tag = "5")]
     pub stream_ack_deadline_seconds: i32,
+    /// A unique identifier that is used to distinguish client instances from each
+    /// other. Only needs to be provided on the initial request. When a stream
+    /// disconnects and reconnects for the same stream, the client_id should be set
+    /// to the same value so that state associated with the old stream can be
+    /// transferred to the new stream. The same client_id should not be used for
+    /// different client instances.
+    #[prost(string, tag = "6")]
+    pub client_id: std::string::String,
 }
 /// Response for the `StreamingPull` method. This response is used to stream
 /// messages from the server to the client.
@@ -639,16 +700,15 @@ pub struct StreamingPullResponse {
 /// Request for the `CreateSnapshot` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateSnapshotRequest {
-    /// Optional user-provided name for this snapshot.
-    /// If the name is not provided in the request, the server will assign a random
-    /// name for this snapshot on the same project as the subscription.
-    /// Note that for REST API requests, you must specify a name.  See the
-    /// <a href="https://cloud.google.com/pubsub/docs/admin#resource_names">
-    /// resource name rules</a>.
-    /// Format is `projects/{project}/snapshots/{snap}`.
+    /// Required. User-provided name for this snapshot. If the name is not provided
+    /// in the request, the server will assign a random name for this snapshot on
+    /// the same project as the subscription. Note that for REST API requests, you
+    /// must specify a name.  See the <a
+    /// href="https://cloud.google.com/pubsub/docs/admin#resource_names"> resource
+    /// name rules</a>. Format is `projects/{project}/snapshots/{snap}`.
     #[prost(string, tag = "1")]
     pub name: std::string::String,
-    /// The subscription whose backlog the snapshot retains.
+    /// Required. The subscription whose backlog the snapshot retains.
     /// Specifically, the created snapshot is guaranteed to retain:
     ///  (a) The existing backlog on the subscription. More precisely, this is
     ///      defined as the messages in the subscription's backlog that are
@@ -667,10 +727,10 @@ pub struct CreateSnapshotRequest {
 /// Request for the UpdateSnapshot method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateSnapshotRequest {
-    /// The updated snapshot object.
+    /// Required. The updated snapshot object.
     #[prost(message, optional, tag = "1")]
     pub snapshot: ::std::option::Option<Snapshot>,
-    /// Indicates which fields in the provided snapshot to update.
+    /// Required. Indicates which fields in the provided snapshot to update.
     /// Must be specified and non-empty.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::std::option::Option<::prost_types::FieldMask>,
@@ -709,7 +769,7 @@ pub struct Snapshot {
 /// Request for the GetSnapshot method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSnapshotRequest {
-    /// The name of the snapshot to get.
+    /// Required. The name of the snapshot to get.
     /// Format is `projects/{project}/snapshots/{snap}`.
     #[prost(string, tag = "1")]
     pub snapshot: std::string::String,
@@ -717,7 +777,7 @@ pub struct GetSnapshotRequest {
 /// Request for the `ListSnapshots` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSnapshotsRequest {
-    /// The name of the project in which to list snapshots.
+    /// Required. The name of the project in which to list snapshots.
     /// Format is `projects/{project-id}`.
     #[prost(string, tag = "1")]
     pub project: std::string::String,
@@ -744,7 +804,7 @@ pub struct ListSnapshotsResponse {
 /// Request for the `DeleteSnapshot` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteSnapshotRequest {
-    /// The name of the snapshot to delete.
+    /// Required. The name of the snapshot to delete.
     /// Format is `projects/{project}/snapshots/{snap}`.
     #[prost(string, tag = "1")]
     pub snapshot: std::string::String,
@@ -752,7 +812,7 @@ pub struct DeleteSnapshotRequest {
 /// Request for the `Seek` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SeekRequest {
-    /// The subscription to affect.
+    /// Required. The subscription to affect.
     #[prost(string, tag = "1")]
     pub subscription: std::string::String,
     #[prost(oneof = "seek_request::Target", tags = "2, 3")]
@@ -901,7 +961,7 @@ pub mod publisher_client {
                 http::uri::PathAndQuery::from_static("/google.pubsub.v1.Publisher/ListTopics");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists the names of the subscriptions on this topic."]
+        #[doc = " Lists the names of the attached subscriptions on this topic."]
         pub async fn list_topic_subscriptions(
             &mut self,
             request: impl tonic::IntoRequest<super::ListTopicSubscriptionsRequest>,
@@ -958,6 +1018,26 @@ pub mod publisher_client {
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.pubsub.v1.Publisher/DeleteTopic");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Detaches a subscription from this topic. All messages retained in the"]
+        #[doc = " subscription are dropped. Subsequent `Pull` and `StreamingPull` requests"]
+        #[doc = " will return FAILED_PRECONDITION. If the subscription is a push"]
+        #[doc = " subscription, pushes to the endpoint will stop."]
+        pub async fn detach_subscription(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DetachSubscriptionRequest>,
+        ) -> Result<tonic::Response<super::DetachSubscriptionResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.pubsub.v1.Publisher/DetachSubscription",
+            );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }

@@ -2090,7 +2090,7 @@ pub struct ImageContext {
     /// setting a hint will help get better results (although it will be a
     /// significant hindrance if the hint is wrong). Text detection returns an
     /// error if one or more of the specified languages is not one of the
-    /// [supported languages](/vision/docs/languages).
+    /// [supported languages](https://cloud.google.com/vision/docs/languages).
     #[prost(string, repeated, tag = "2")]
     pub language_hints: ::std::vec::Vec<std::string::String>,
     /// Parameters for crop hints annotation request.
