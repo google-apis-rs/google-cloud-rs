@@ -22,6 +22,7 @@ pub enum Error {
     #[error("environment error: {0}")]
     Env(#[from] env::VarError),
     /// Reqwest error (HTTP errors).
+    #[cfg(feature = "storage")]
     #[error("HTTP error: {0}")]
     Reqwest(#[from] reqwest::Error),
     /// conversion error (`try_from(..)` or `try_into(..)` errors).
