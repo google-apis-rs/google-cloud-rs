@@ -22,6 +22,7 @@ pub enum Error {
     #[error("environment error: {0}")]
     Env(#[from] env::VarError),
     /// Reqwest error (HTTP errors).
+    #[cfg(feature = "storage")]
     #[error("HTTP error: {0}")]
     Reqwest(#[from] reqwest::Error),
     /// conversion error (`try_from(..)` or `try_into(..)` errors).
@@ -57,7 +58,10 @@ pub enum AuthError {
     /// A JSON (de)serialization error.
     #[error("JSON error: {0}")]
     JSON(#[from] json::Error),
-    /// Reqwest error (HTTP errors).
-    #[error("HTTP error: {0}")]
-    Reqwest(#[from] reqwest::Error),
+    /// HTTP errors
+    #[error("Hyper error: {0}")]
+    Http(#[from] http::Error),
+    /// Hyper errors
+    #[error("Hyper error: {0}")]
+    Hyper(#[from] hyper::Error),
 }
