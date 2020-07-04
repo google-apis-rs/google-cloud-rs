@@ -27,6 +27,9 @@ pub enum Error {
     /// conversion error (`try_from(..)` or `try_into(..)` errors).
     #[error("conversion error: {0}")]
     Convert(#[from] ConvertError),
+    /// authentication-related error.
+    #[error("authentication error: {0}")]
+    Auth(#[from] AuthError),
 }
 
 /// The error type for value conversions.
@@ -43,4 +46,18 @@ pub enum ConvertError {
         /// The name of the actual encountered type.
         got: String,
     },
+}
+
+/// The error type for value conversions.
+#[derive(Debug, Error)]
+pub enum AuthError {
+    /// A JWT-related error.
+    #[error("JWT error: {0}")]
+    JWT(#[from] jwt::Error),
+    /// A JSON (de)serialization error.
+    #[error("JSON error: {0}")]
+    JSON(#[from] json::Error),
+    /// Reqwest error (HTTP errors).
+    #[error("HTTP error: {0}")]
+    Reqwest(#[from] reqwest::Error),
 }

@@ -101,6 +101,7 @@ impl Subscription {
                 self.name,
             ),
         };
+        let request = self.client.construct_request(request).await?;
         self.client.subscriber.delete_subscription(request).await?;
 
         Ok(())
@@ -116,6 +117,7 @@ impl Subscription {
             return_immediately: false,
             max_messages: 5,
         };
+        let request = self.client.construct_request(request).await?;
         let response = self.client.subscriber.pull(request).await?;
         let response = response.into_inner();
 

@@ -48,6 +48,7 @@ impl Message {
             ),
             ack_ids: vec![self.ack_id.clone()],
         };
+        let request = self.client.construct_request(request).await?;
         self.client.subscriber.acknowledge(request).await?;
 
         Ok(())
@@ -66,6 +67,7 @@ impl Message {
             ack_ids: vec![self.ack_id.clone()],
             ack_deadline_seconds: 0,
         };
+        let request = self.client.construct_request(request).await?;
         self.client.subscriber.modify_ack_deadline(request).await?;
 
         Ok(())

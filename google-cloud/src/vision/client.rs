@@ -1,10 +1,11 @@
 use std::convert::TryFrom;
 use std::env;
 use std::fs::File;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
+use tokio::sync::Mutex;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
-use tonic::{Request, Status};
+use tonic::{IntoRequest, Request};
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::vision::api;
@@ -20,6 +21,7 @@ pub struct Client {
     pub(crate) project_name: String,
     pub(crate) img_annotator: ImageAnnotatorClient<Channel>,
     pub(crate) product_search: ProductSearchClient<Channel>,
+    pub(crate) token_manager: Arc<Mutex<TokenManager>>,
 }
 
 impl Client {
@@ -30,16 +32,15 @@ impl Client {
         "https://www.googleapis.com/auth/cloud-vision",
     ];
 
-    pub(crate) fn interceptor(
-        token_manager: Arc<Mutex<TokenManager>>,
-    ) -> impl Fn(Request<()>) -> Result<Request<()>, Status> {
-        move |mut request: Request<()>| {
-            let mut manager = token_manager.lock().unwrap();
-            let token = manager.token();
-            let metadata = request.metadata_mut();
-            metadata.insert("authorization", token.parse().unwrap());
-            Ok(request)
-        }
+    pub(crate) async fn construct_request<T: IntoRequest<T>>(
+        &mut self,
+        request: T,
+    ) -> Result<Request<T>, Error> {
+        let mut request = request.into_request();
+        let token = self.token_manager.lock().await.token().await?;
+        let metadata = request.metadata_mut();
+        metadata.insert("authorization", token.parse().unwrap());
+        Ok(request)
     }
 
     /// Create a new client for the specified project.
@@ -62,11 +63,6 @@ impl Client {
             .ca_certificate(Certificate::from_pem(TLS_CERTS))
             .domain_name(Client::DOMAIN_NAME);
 
-        let token_manager = Arc::new(Mutex::new(TokenManager::new(
-            creds,
-            Client::SCOPES.as_ref(),
-        )));
-
         let channel = Channel::from_static(Client::ENDPOINT)
             .tls_config(tls_config)
             .connect()
@@ -74,14 +70,12 @@ impl Client {
 
         Ok(Client {
             project_name: project_name.into(),
-            img_annotator: ImageAnnotatorClient::with_interceptor(
-                channel.clone(),
-                Client::interceptor(token_manager.clone()),
-            ),
-            product_search: ProductSearchClient::with_interceptor(
-                channel,
-                Client::interceptor(token_manager),
-            ),
+            img_annotator: ImageAnnotatorClient::new(channel.clone()),
+            product_search: ProductSearchClient::new(channel),
+            token_manager: Arc::new(Mutex::new(TokenManager::new(
+                creds,
+                Client::SCOPES.as_ref(),
+            ))),
         })
     }
 
@@ -104,6 +98,7 @@ impl Client {
             requests: vec![request],
             parent: String::default(), // TODO: Make this configurable (specifying computation region).
         };
+        let request = self.construct_request(request).await?;
         let response = self.img_annotator.batch_annotate_images(request).await?;
         let response = response.into_inner();
         let response = response.responses.into_iter().next().unwrap();
@@ -135,6 +130,7 @@ impl Client {
             requests: vec![request],
             parent: String::default(), // TODO: Make this configurable (specifying computation region).
         };
+        let request = self.construct_request(request).await?;
         let response = self.img_annotator.batch_annotate_images(request).await?;
         let response = response.into_inner();
         let response = response.responses.into_iter().next().unwrap();

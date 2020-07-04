@@ -1,9 +1,10 @@
 use std::env;
 use std::fs::File;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
+use tokio::sync::Mutex;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
-use tonic::{Request, Status};
+use tonic::{IntoRequest, Request};
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::pubsub::api;
@@ -17,6 +18,7 @@ pub struct Client {
     pub(crate) project_name: String,
     pub(crate) publisher: PublisherClient<Channel>,
     pub(crate) subscriber: SubscriberClient<Channel>,
+    pub(crate) token_manager: Arc<Mutex<TokenManager>>,
 }
 
 impl Client {
@@ -27,16 +29,15 @@ impl Client {
         "https://www.googleapis.com/auth/pubsub",
     ];
 
-    pub(crate) fn interceptor(
-        token_manager: Arc<Mutex<TokenManager>>,
-    ) -> impl Fn(Request<()>) -> Result<Request<()>, Status> {
-        move |mut request: Request<()>| {
-            let mut manager = token_manager.lock().unwrap();
-            let token = manager.token();
-            let metadata = request.metadata_mut();
-            metadata.insert("authorization", token.parse().unwrap());
-            Ok(request)
-        }
+    pub(crate) async fn construct_request<T: IntoRequest<T>>(
+        &mut self,
+        request: T,
+    ) -> Result<Request<T>, Error> {
+        let mut request = request.into_request();
+        let token = self.token_manager.lock().await.token().await?;
+        let metadata = request.metadata_mut();
+        metadata.insert("authorization", token.parse().unwrap());
+        Ok(request)
     }
 
     /// Create a new client for the specified project.
@@ -59,11 +60,6 @@ impl Client {
             .ca_certificate(Certificate::from_pem(TLS_CERTS))
             .domain_name(Client::DOMAIN_NAME);
 
-        let token_manager = Arc::new(Mutex::new(TokenManager::new(
-            creds,
-            Client::SCOPES.as_ref(),
-        )));
-
         let channel = Channel::from_static(Client::ENDPOINT)
             .tls_config(tls_config)
             .connect()
@@ -71,14 +67,12 @@ impl Client {
 
         Ok(Client {
             project_name: project_name.into(),
-            publisher: PublisherClient::with_interceptor(
-                channel.clone(),
-                Client::interceptor(token_manager.clone()),
-            ),
-            subscriber: SubscriberClient::with_interceptor(
-                channel,
-                Client::interceptor(token_manager),
-            ),
+            publisher: PublisherClient::new(channel.clone()),
+            subscriber: SubscriberClient::new(channel),
+            token_manager: Arc::new(Mutex::new(TokenManager::new(
+                creds,
+                Client::SCOPES.as_ref(),
+            ))),
         })
     }
 
@@ -98,6 +92,7 @@ impl Client {
             message_storage_policy: None,
             kms_key_name: String::new(),
         };
+        let request = self.construct_request(request).await?;
         let response = self.publisher.create_topic(request).await?;
         let topic = response.into_inner();
         let name = topic.name.split('/').last().unwrap_or(topic_name);
@@ -117,6 +112,7 @@ impl Client {
                 page_size,
                 page_token,
             };
+            let request = self.construct_request(request).await?;
             let response = self.publisher.list_topics(request).await?;
             let response = response.into_inner();
             page_token = response.next_page_token;
@@ -141,6 +137,7 @@ impl Client {
                 topic_name
             ),
         };
+        let request = self.construct_request(request).await?;
         let response = self.publisher.get_topic(request).await?;
         let topic = response.into_inner();
         let name = topic.name.split('/').last().unwrap_or(topic_name);
@@ -160,6 +157,7 @@ impl Client {
                 page_size,
                 page_token,
             };
+            let request = self.construct_request(request).await?;
             let response = self.subscriber.list_subscriptions(request).await?;
             let response = response.into_inner();
             page_token = response.next_page_token;
@@ -187,6 +185,7 @@ impl Client {
                 subscription_name
             ),
         };
+        let request = self.construct_request(request).await?;
         let response = self.subscriber.get_subscription(request).await?;
         let subscription = response.into_inner();
         let name = subscription.name.split('/').last();

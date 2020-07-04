@@ -55,7 +55,7 @@ async fn storage_create_and_delete_bucket() {
     println!("got object: {} (into: {})", object.name(), object.bucket());
 
     //? Read the object's data back.
-    let data = object.read().await;
+    let data = object.get().await;
     assert!(data.is_ok());
     let data = data.unwrap();
     let expected: json::Value = json::from_str(object_data).unwrap();
