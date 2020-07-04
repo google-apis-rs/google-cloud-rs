@@ -2,8 +2,6 @@ use std::fmt;
 
 use chrono::offset::Utc;
 use chrono::DateTime;
-// use isahc::http::Request;
-// use isahc::ResponseExt;
 use json::json;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
