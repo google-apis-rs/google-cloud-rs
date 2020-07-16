@@ -126,17 +126,17 @@ pub struct BucketRule {
 pub struct BucketRuleAction {
     #[serde(rename = "type")]
     pub action_type: String,
-    pub storage_class: String,
+    pub storage_class: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BucketRuleCondition {
     pub age: i32,
-    pub created_before: String,
-    pub is_live: bool,
-    pub matches_storage_class: Vec<String>,
-    pub num_newer_versions: i32,
+    pub created_before: Option<String>,
+    pub is_live: Option<bool>,
+    pub matches_storage_class: Option<Vec<String>>,
+    pub num_newer_versions: Option<i32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
