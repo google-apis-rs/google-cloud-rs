@@ -36,13 +36,13 @@ jobs:
         env:
           GCP_TEST_CREDENTIALS: ${{ secrets.GCP_TEST_CREDENTIALS }}
           GCP_TEST_PROJECT: ${{ secrets.GCP_TEST_PROJECT }}
-          GCP_TEST_BUCKET: ${{ secrets.GCP_TEST_BUCKET }}-${{ github.sha }}-${{ matrix.os }}
-          GCP_TEST_OBJECT: ${{ secrets.GCP_TEST_OBJECT }}-${{ github.sha }}-${{ matrix.os }}
-          GCP_TEST_TOPIC: ${{ secrets.GCP_TEST_TOPIC }}-${{ github.sha }}-${{ matrix.os }}
-          GCP_TEST_SUBSCRIPTION: ${{ secrets.GCP_TEST_SUBSCRIPTION }}-${{ github.sha }}-${{ matrix.os }}
+          GCP_TEST_BUCKET: ${{ secrets.GCP_TEST_BUCKET }}-${{ github.run_number }}-${{ matrix.os }}
+          GCP_TEST_OBJECT: ${{ secrets.GCP_TEST_OBJECT }}-${{ github.run_number }}-${{ matrix.os }}
+          GCP_TEST_TOPIC: ${{ secrets.GCP_TEST_TOPIC }}-${{ github.run_number }}-${{ matrix.os }}
+          GCP_TEST_SUBSCRIPTION: ${{ secrets.GCP_TEST_SUBSCRIPTION }}-${{ github.run_number }}-${{ matrix.os }}
         with:
           command: test
-          args: --all --all-features
+          args: --all --lib --all-features
   check_fmt:
     name: Checking code formatting
     runs-on: ubuntu-latest
