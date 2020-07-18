@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::AuthError;
 
+#[allow(unused)]
 pub(crate) const TLS_CERTS: &[u8] = include_bytes!("../../roots.pem");
 
 const AUTH_ENDPOINT: &str = "https://oauth2.googleapis.com/token";
