@@ -4,6 +4,17 @@ use crate::authorize::ApplicationCredentials;
 use crate::datastore;
 use crate::datastore::IntoValue;
 
+macro_rules! assert_ok {
+    ($expr:expr) => {
+        match $expr {
+            Ok(value) => value,
+            Err(err) => {
+                panic!("asserted result is an error: {}", err);
+            }
+        }
+    };
+}
+
 async fn setup_client() -> Result<datastore::Client, datastore::Error> {
     let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))?;
     datastore::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await
@@ -12,9 +23,7 @@ async fn setup_client() -> Result<datastore::Client, datastore::Error> {
 #[tokio::test]
 async fn datastore_puts_data_successfully() {
     //? Setup test client.
-    let client = setup_client().await;
-    assert!(client.is_ok());
-    let mut client = client.unwrap();
+    let mut client = assert_ok!(setup_client().await);
 
     //? Prepare Datastore key and value.
     let key = datastore::Key::new("google-cloud-tests")
@@ -31,14 +40,12 @@ async fn datastore_puts_data_successfully() {
     };
 
     //? Store value in Datastore.
-    let outcome = client.put((key.clone(), properties)).await;
-    assert!(outcome.is_ok());
+    assert_ok!(client.put((key.clone(), properties)).await);
 
     //? Get value back from Datastore.
-    let outcome: Result<Option<datastore::Value>, _> = client.get(&key).await;
-    assert!(outcome.is_ok());
+    let outcome = assert_ok!(client.get::<datastore::Value, _>(&key).await);
+    assert!(outcome.is_some());
 
     //? Delete that value from Datastore.
-    let outcome = client.delete(key).await;
-    assert!(outcome.is_ok());
+    assert_ok!(client.delete(key).await);
 }
