@@ -63,7 +63,7 @@ async fn storage_create_and_delete_bucket() {
     assert!(got.is_ok());
     let got = got.unwrap();
     assert_eq!(expected, got);
-    println!("object contents is identical.");
+    println!("object contents are identical.");
 
     //? Delete that object.
     let result = object.delete().await;
