@@ -1,10 +1,14 @@
 use std::fmt;
 
-use isahc::http::Request;
-use isahc::ResponseExt;
+use chrono::offset::Utc;
+use chrono::DateTime;
 use json::json;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
+use crate::error::AuthError;
+
+#[allow(unused)]
 pub(crate) const TLS_CERTS: &[u8] = include_bytes!("../../roots.pem");
 
 const AUTH_ENDPOINT: &str = "https://oauth2.googleapis.com/token";
@@ -42,13 +46,14 @@ impl fmt::Display for TokenValue {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Token {
     value: TokenValue,
-    expiry: chrono::DateTime<chrono::offset::Utc>,
+    expiry: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub(crate) struct TokenManager {
-    creds: ApplicationCredentials,
+    client: Client,
     scopes: String,
+    creds: ApplicationCredentials,
     current_token: Option<Token>,
 }
 
@@ -61,16 +66,17 @@ impl TokenManager {
     pub(crate) fn new(creds: ApplicationCredentials, scopes: &[&str]) -> TokenManager {
         TokenManager {
             creds,
+            client: Client::new(),
             scopes: scopes.join(" "),
             current_token: None,
         }
     }
 
-    pub(crate) fn token(&mut self) -> String {
+    pub(crate) async fn token(&mut self) -> Result<String, AuthError> {
         let hour = chrono::Duration::minutes(45);
         let current_time = chrono::Utc::now();
         match self.current_token {
-            Some(ref token) if token.expiry >= current_time => token.value.to_string(),
+            Some(ref token) if token.expiry >= current_time => Ok(token.value.to_string()),
             _ => {
                 let expiry = current_time + hour;
                 let header = json!({
@@ -89,23 +95,26 @@ impl TokenManager {
                     &self.creds.private_key.as_str(),
                     &payload,
                     jwt::Algorithm::RS256,
-                );
-                let body = format!(
-                    r#"grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion={}"#,
-                    token.unwrap(),
-                );
-                let request = Request::post(AUTH_ENDPOINT)
-                    .header("content-type", "application/x-www-form-urlencoded")
-                    .body(body)
-                    .unwrap();
-                let response = isahc::send(request)
-                    .expect("failed request to obtain an OAuth token")
-                    .json::<AuthResponse>()
-                    .expect("failed to deserialize OAuth response");
+                )?;
+                let body = [
+                    ("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
+                    ("assertion", token.as_str()),
+                ];
+
+                let response: AuthResponse = self
+                    .client
+                    .post(AUTH_ENDPOINT)
+                    .form(&body)
+                    .send()
+                    .await?
+                    .json()
+                    .await?;
+
                 let value = TokenValue::Bearer(response.access_token);
                 let token = value.to_string();
                 self.current_token = Some(Token { expiry, value });
-                token
+
+                Ok(token)
             }
         }
     }

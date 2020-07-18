@@ -71,6 +71,7 @@ impl Topic {
             expiration_policy: None,
             dead_letter_policy: None,
         };
+        let request = self.client.construct_request(request).await?;
         let response = self.client.subscriber.create_subscription(request).await?;
         let subscription = response.into_inner();
         let name = subscription.name.split('/').last().unwrap_or(name);
@@ -94,8 +95,8 @@ impl Topic {
                 publish_time: None,
             }],
         };
+        let request = self.client.construct_request(request).await?;
         self.client.publisher.publish(request).await?;
-        // let response = response.into_inner();
 
         Ok(())
     }
@@ -109,6 +110,7 @@ impl Topic {
                 self.name,
             ),
         };
+        let request = self.client.construct_request(request).await?;
         self.client.publisher.delete_topic(request).await?;
 
         Ok(())

@@ -3,6 +3,7 @@ use std::fs::File;
 use std::sync::Arc;
 
 use json::json;
+use tokio::sync::Mutex;
 
 use crate::authorize::{ApplicationCredentials, TokenManager};
 use crate::storage::api::bucket::{BucketResource, BucketResources};
@@ -13,10 +14,11 @@ use crate::storage::{Bucket, Error};
 pub struct Client {
     pub(crate) project_name: String,
     pub(crate) client: Arc<reqwest::Client>,
-    pub(crate) token_manager: TokenManager,
+    pub(crate) token_manager: Arc<Mutex<TokenManager>>,
 }
 
 impl Client {
+    #[allow(unused)]
     pub(crate) const DOMAIN_NAME: &'static str = "storage.googleapis.com";
     pub(crate) const ENDPOINT: &'static str = "https://storage.googleapis.com/storage/v1";
     /// Cloud Storage uses a slightly different endpoint for uploads.
@@ -51,16 +53,18 @@ impl Client {
         project_name: impl Into<String>,
         creds: ApplicationCredentials,
     ) -> Result<Client, Error> {
-        let token_manager = TokenManager::new(creds, Client::SCOPES.as_ref());
         // let certificate = reqwest::Certificate::from_pem(TLS_CERTS)?;
         let client = reqwest::Client::builder()
             // .add_root_certificate(certificate)
             .build()?;
 
         Ok(Client {
-            token_manager,
             client: Arc::new(client),
             project_name: project_name.into(),
+            token_manager: Arc::new(Mutex::new(TokenManager::new(
+                creds,
+                Client::SCOPES.as_ref(),
+            ))),
         })
     }
 
@@ -69,9 +73,10 @@ impl Client {
         let inner = &self.client;
         let uri = format!("{}/b/{}", Client::ENDPOINT, name);
 
+        let token = self.token_manager.lock().await.token().await?;
         let request = inner
             .get(uri.as_str())
-            .header("authorization", self.token_manager.token())
+            .header("authorization", token)
             .send();
         let response = request.await?;
         let bucket = response
@@ -87,10 +92,11 @@ impl Client {
         let inner = &self.client;
         let uri = format!("{}/b", Client::ENDPOINT);
 
+        let token = self.token_manager.lock().await.token().await?;
         let request = inner
             .get(uri.as_str())
             .query(&[("project", self.project_name.as_str())])
-            .header("authorization", self.token_manager.token())
+            .header("authorization", token)
             .send();
         let response = request.await?;
         let resources = response
@@ -116,10 +122,11 @@ impl Client {
             "kind": "storage#bucket",
             "name": name,
         });
+        let token = self.token_manager.lock().await.token().await?;
         let request = inner
             .post(uri.as_str())
             .query(&[("project", self.project_name.as_str())])
-            .header("authorization", self.token_manager.token())
+            .header("authorization", token)
             .json(&body)
             .send();
         let response = request.await?;

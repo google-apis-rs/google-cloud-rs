@@ -1,6 +1,17 @@
 use crate::authorize::ApplicationCredentials;
 use crate::storage;
 
+macro_rules! assert_ok {
+    ($expr:expr) => {
+        match $expr {
+            Ok(value) => value,
+            Err(err) => {
+                panic!("asserted result is an error: {}", err);
+            }
+        }
+    };
+}
+
 async fn setup_client() -> Result<storage::Client, storage::Error> {
     let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))?;
     storage::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await
@@ -9,14 +20,10 @@ async fn setup_client() -> Result<storage::Client, storage::Error> {
 #[tokio::test]
 async fn storage_lists_buckets() {
     //? Setup test client.
-    let client = setup_client().await;
-    assert!(client.is_ok());
-    let mut client = client.unwrap();
+    let mut client = assert_ok!(setup_client().await);
 
     //? List all buckets of the project.
-    let buckets = client.buckets().await;
-    assert!(buckets.is_ok());
-    let buckets = buckets.unwrap();
+    let buckets = assert_ok!(client.buckets().await);
 
     //? Print their names to stdout.
     for bucket in buckets.iter() {
@@ -27,17 +34,15 @@ async fn storage_lists_buckets() {
 #[tokio::test]
 async fn storage_create_and_delete_bucket() {
     //? Setup test client.
-    let client = setup_client().await;
-    assert!(client.is_ok());
-    let mut client = client.unwrap();
+    let mut client = assert_ok!(setup_client().await);
 
     //? Access existing bucket or create it, if non-existant.
-    let bucket = match client.bucket(env!("GCP_TEST_BUCKET")).await {
+    let bucket_name = env!("GCP_TEST_BUCKET").to_lowercase();
+    let bucket = match client.bucket(bucket_name.as_str()).await {
         Ok(bucket) => Ok(bucket),
-        Err(_) => client.create_bucket(env!("GCP_TEST_BUCKET")).await,
+        Err(_) => client.create_bucket(bucket_name.as_str()).await,
     };
-    assert!(bucket.is_ok());
-    let mut bucket = bucket.unwrap();
+    let mut bucket = assert_ok!(bucket);
     println!("got bucket: {}", bucket.name());
 
     //? Access existing object in that bucket or create it, if non-existant.
@@ -50,28 +55,19 @@ async fn storage_create_and_delete_bucket() {
                 .await
         }
     };
-    assert!(object.is_ok());
-    let mut object = object.unwrap();
+    let mut object = assert_ok!(object);
     println!("got object: {} (into: {})", object.name(), object.bucket());
 
     //? Read the object's data back.
-    let data = object.read().await;
-    assert!(data.is_ok());
-    let data = data.unwrap();
-    let expected: json::Value = json::from_str(object_data).unwrap();
-    let got: Result<json::Value, json::Error> = json::from_slice(data.as_slice());
-    assert!(got.is_ok());
-    let got = got.unwrap();
+    let data = assert_ok!(object.get().await);
+    let expected: json::Value = assert_ok!(json::from_str(object_data));
+    let got: json::Value = assert_ok!(json::from_slice(data.as_slice()));
     assert_eq!(expected, got);
-    println!("object contents is identical.");
+    println!("object contents are identical.");
 
     //? Delete that object.
-    let result = object.delete().await;
-    assert!(result.is_ok());
-    let _ = result.unwrap();
+    assert_ok!(object.delete().await);
 
     //? Delete the bucket.
-    let result = bucket.delete().await;
-    assert!(result.is_ok());
-    let _ = result.unwrap();
+    assert_ok!(bucket.delete().await);
 }
