@@ -37,9 +37,10 @@ async fn storage_create_and_delete_bucket() {
     let mut client = assert_ok!(setup_client().await);
 
     //? Access existing bucket or create it, if non-existant.
-    let bucket = match client.bucket(env!("GCP_TEST_BUCKET")).await {
+    let bucket_name = env!("GCP_TEST_BUCKET").to_lowercase();
+    let bucket = match client.bucket(bucket_name.as_str()).await {
         Ok(bucket) => Ok(bucket),
-        Err(_) => client.create_bucket(env!("GCP_TEST_BUCKET")).await,
+        Err(_) => client.create_bucket(bucket_name.as_str()).await,
     };
     let mut bucket = assert_ok!(bucket);
     println!("got bucket: {}", bucket.name());
