@@ -79,11 +79,7 @@ impl TokenManager {
             Some(ref token) if token.expiry >= current_time => Ok(token.value.to_string()),
             _ => {
                 let expiry = current_time + hour;
-                let header = json!({
-                    "alg": "RS256",
-                    "typ": "JWT",
-                });
-                let payload = json!({
+                let claims = json!({
                     "iss": self.creds.client_email.as_str(),
                     "scope": self.scopes.as_str(),
                     "aud": AUTH_ENDPOINT,
@@ -91,10 +87,9 @@ impl TokenManager {
                     "iat": current_time.timestamp(),
                 });
                 let token = jwt::encode(
-                    header,
-                    &self.creds.private_key.as_str(),
-                    &payload,
-                    jwt::Algorithm::RS256,
+                    &jwt::Header::new(jwt::Algorithm::RS256),
+                    &claims,
+                    &jwt::EncodingKey::from_rsa_pem(&self.creds.private_key.as_bytes())?,
                 )?;
                 let body = [
                     ("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
