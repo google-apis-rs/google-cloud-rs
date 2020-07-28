@@ -54,7 +54,7 @@ pub enum ConvertError {
 pub enum AuthError {
     /// A JWT-related error.
     #[error("JWT error: {0}")]
-    JWT(#[from] jwt::Error),
+    JWT(#[from] jwt::errors::Error),
     /// A JSON (de)serialization error.
     #[error("JSON error: {0}")]
     JSON(#[from] json::Error),

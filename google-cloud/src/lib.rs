@@ -4,8 +4,6 @@
 #[cfg(feature = "google-cloud-derive")]
 extern crate google_cloud_derive;
 
-mod utils;
-
 /// Authorization/authentication related utilities.
 pub mod authorize;
 /// Error handling utilities.
