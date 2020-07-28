@@ -11,9 +11,11 @@ keywords = ["grpc", "futures", "async", "protobuf", "google", "cloud"]
 # Derive macros
 google-cloud-derive = { version = "=0.1.0", path = "../google-cloud-derive", optional = true }
 
-tonic = { version = "0.2.0", features = ["tls", "prost"] }
+tonic = { version = "0.3.0", features = ["tls", "prost"] }
 tokio = { version = "0.2.18", features = ["macros", "fs"] }
-reqwest = { version = "0.10.4", features = ["blocking", "json", "rustls-tls"] }
+reqwest = { version = "0.10.4", optional = true, default_features = false, features = ["blocking", "json", "rustls-tls"] }
+hyper = { version = "0.13.7" }
+hyper-rustls = { version = "0.21.0" }
 futures = "0.3.4"
 
 prost = "0.6.1"
@@ -31,7 +33,7 @@ thiserror = "1.0.15"
 bytes = { version = "0.5.4", optional = true }
 
 [build-dependencies]
-tonic-build = "0.2.0"
+tonic-build = "0.3.0"
 
 [features]
 default = []
@@ -41,5 +43,5 @@ pubsub = []
 datastore = []
 datastore-derive = ["datastore", "google-cloud-derive"]
 vision = []
-storage = []
+storage = ["reqwest"]
 derive = ["datastore-derive"]

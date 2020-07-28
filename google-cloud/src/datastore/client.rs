@@ -64,7 +64,7 @@ impl Client {
             .domain_name(Client::DOMAIN_NAME);
 
         let channel = Channel::from_static(Client::ENDPOINT)
-            .tls_config(tls_config)
+            .tls_config(tls_config)?
             .connect()
             .await?;
 
