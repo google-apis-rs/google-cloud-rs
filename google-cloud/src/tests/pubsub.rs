@@ -2,7 +2,6 @@ use std::io::{self, Write};
 
 use serde::{Deserialize, Serialize};
 
-use crate::authorize::ApplicationCredentials;
 use crate::pubsub;
 
 macro_rules! assert_ok {
@@ -28,7 +27,7 @@ macro_rules! assert_some {
 }
 
 async fn setup_client() -> Result<pubsub::Client, pubsub::Error> {
-    let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))?;
+    let creds = super::load_creds();
     pubsub::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await
 }
 

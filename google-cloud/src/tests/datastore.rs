@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use crate::authorize::ApplicationCredentials;
 use crate::datastore;
 use crate::datastore::IntoValue;
 
@@ -16,7 +15,7 @@ macro_rules! assert_ok {
 }
 
 async fn setup_client() -> Result<datastore::Client, datastore::Error> {
-    let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))?;
+    let creds = super::load_creds();
     datastore::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await
 }
 
