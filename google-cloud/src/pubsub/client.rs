@@ -79,14 +79,14 @@ impl Client {
     /// Create a new topic.
     pub async fn create_topic(
         &mut self,
-        topic_name: &str,
+        topic_id: &str,
         config: TopicConfig,
     ) -> Result<Topic, Error> {
         let request = api::Topic {
             name: format!(
                 "projects/{0}/topics/{1}",
                 self.project_name.as_str(),
-                topic_name,
+                topic_id,
             ),
             labels: config.labels,
             message_storage_policy: None,
@@ -95,9 +95,8 @@ impl Client {
         let request = self.construct_request(request).await?;
         let response = self.publisher.create_topic(request).await?;
         let topic = response.into_inner();
-        let name = topic.name.split('/').last().unwrap_or(topic_name);
 
-        Ok(Topic::new(self.clone(), name))
+        Ok(Topic::new(self.clone(), topic.name))
     }
 
     /// List all exisiting topics.
@@ -116,10 +115,12 @@ impl Client {
             let response = self.publisher.list_topics(request).await?;
             let response = response.into_inner();
             page_token = response.next_page_token;
-            topics.extend(response.topics.into_iter().map(|topic| {
-                let name = topic.name.split('/').last().unwrap();
-                Topic::new(self.clone(), name)
-            }));
+            topics.extend(
+                response
+                    .topics
+                    .into_iter()
+                    .map(|topic| Topic::new(self.clone(), topic.name)),
+            );
             if page_token.is_empty() {
                 break;
             }
@@ -129,20 +130,15 @@ impl Client {
     }
 
     /// Get a handle to a specific topic.
-    pub async fn topic(&mut self, topic_name: &str) -> Result<Option<Topic>, Error> {
+    pub async fn topic(&mut self, id: &str) -> Result<Option<Topic>, Error> {
         let request = api::GetTopicRequest {
-            topic: format!(
-                "projects/{0}/topics/{1}",
-                self.project_name.as_str(),
-                topic_name
-            ),
+            topic: format!("projects/{0}/topics/{1}", self.project_name.as_str(), id),
         };
         let request = self.construct_request(request).await?;
         let response = self.publisher.get_topic(request).await?;
         let topic = response.into_inner();
-        let name = topic.name.split('/').last().unwrap_or(topic_name);
 
-        Ok(Some(Topic::new(self.clone(), name)))
+        Ok(Some(Topic::new(self.clone(), topic.name)))
     }
 
     /// List all existing subscriptions (to any topic).
@@ -161,10 +157,12 @@ impl Client {
             let response = self.subscriber.list_subscriptions(request).await?;
             let response = response.into_inner();
             page_token = response.next_page_token;
-            subscriptions.extend(response.subscriptions.into_iter().map(|subscription| {
-                let name = subscription.name.split('/').last().unwrap();
-                Subscription::new(self.clone(), name)
-            }));
+            subscriptions.extend(
+                response
+                    .subscriptions
+                    .into_iter()
+                    .map(|subscription| Subscription::new(self.clone(), subscription.name)),
+            );
             if page_token.is_empty() {
                 break;
             }
@@ -174,23 +172,18 @@ impl Client {
     }
 
     /// Get a handle of a specific subscription.
-    pub async fn subscription(
-        &mut self,
-        subscription_name: &str,
-    ) -> Result<Option<Subscription>, Error> {
+    pub async fn subscription(&mut self, id: &str) -> Result<Option<Subscription>, Error> {
         let request = api::GetSubscriptionRequest {
             subscription: format!(
                 "projects/{0}/subscriptions/{1}",
                 self.project_name.as_str(),
-                subscription_name
+                id,
             ),
         };
         let request = self.construct_request(request).await?;
         let response = self.subscriber.get_subscription(request).await?;
         let subscription = response.into_inner();
-        let name = subscription.name.split('/').last();
-        let name = name.unwrap_or(subscription_name);
 
-        Ok(Some(Subscription::new(self.clone(), name)))
+        Ok(Some(Subscription::new(self.clone(), subscription.name)))
     }
 }

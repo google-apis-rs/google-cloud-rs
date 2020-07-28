@@ -40,23 +40,24 @@ impl Topic {
         }
     }
 
+    /// Returns the unique identifier within its project
+    pub fn id(&self) -> &str {
+        self.name.rsplit('/').next().unwrap()
+    }
+
     /// Create a subscription tied to this topic.
     pub async fn create_subscription(
         &mut self,
-        name: &str,
+        id: &str,
         config: SubscriptionConfig,
     ) -> Result<Subscription, Error> {
         let request = api::Subscription {
             name: format!(
                 "projects/{0}/subscriptions/{1}",
                 self.client.project_name.as_str(),
-                name,
+                id,
             ),
-            topic: format!(
-                "projects/{0}/topics/{1}",
-                self.client.project_name.as_str(),
-                self.name,
-            ),
+            topic: self.name.clone(),
             ack_deadline_seconds: config.ack_deadline_duration.num_seconds() as i32,
             retain_acked_messages: config.message_retention_duration.is_some(),
             message_retention_duration: config.message_retention_duration.map(|mut dur| {
@@ -74,19 +75,14 @@ impl Topic {
         let request = self.client.construct_request(request).await?;
         let response = self.client.subscriber.create_subscription(request).await?;
         let subscription = response.into_inner();
-        let name = subscription.name.split('/').last().unwrap_or(name);
 
-        Ok(Subscription::new(self.client.clone(), name))
+        Ok(Subscription::new(self.client.clone(), subscription.name))
     }
 
     /// Publish a message onto this topic.
     pub async fn publish(&mut self, data: impl Into<Vec<u8>>) -> Result<(), Error> {
         let request = api::PublishRequest {
-            topic: format!(
-                "projects/{0}/topics/{1}",
-                self.client.project_name.as_str(),
-                self.name,
-            ),
+            topic: self.name.clone(),
             messages: vec![api::PubsubMessage {
                 data: data.into(),
                 attributes: HashMap::new(),
@@ -104,11 +100,7 @@ impl Topic {
     /// Delete the topic.
     pub async fn delete(mut self) -> Result<(), Error> {
         let request = api::DeleteTopicRequest {
-            topic: format!(
-                "projects/{0}/topics/{1}",
-                self.client.project_name.as_str(),
-                self.name,
-            ),
+            topic: self.name.clone(),
         };
         let request = self.client.construct_request(request).await?;
         self.client.publisher.delete_topic(request).await?;
