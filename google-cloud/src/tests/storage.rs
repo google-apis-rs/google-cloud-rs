@@ -1,4 +1,3 @@
-use crate::authorize::ApplicationCredentials;
 use crate::storage;
 
 macro_rules! assert_ok {
@@ -13,7 +12,7 @@ macro_rules! assert_ok {
 }
 
 async fn setup_client() -> Result<storage::Client, storage::Error> {
-    let creds = json::from_str::<ApplicationCredentials>(env!("GCP_TEST_CREDENTIALS"))?;
+    let creds = super::load_creds();
     storage::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await
 }
 
