@@ -41,11 +41,7 @@ impl Message {
     /// If a message isn't acknowledged, it will be redelivered to other subscribers.
     pub async fn ack(&mut self) -> Result<(), Error> {
         let request = api::AcknowledgeRequest {
-            subscription: format!(
-                "projects/{0}/subscriptions/{1}",
-                self.client.project_name.as_str(),
-                self.subscription_name,
-            ),
+            subscription: self.subscription_name.clone(),
             ack_ids: vec![self.ack_id.clone()],
         };
         let request = self.client.construct_request(request).await?;
@@ -59,11 +55,7 @@ impl Message {
     /// This allows Pub/Sub to redeliver the message more quickly than by awaiting the acknowledgement timeout.
     pub async fn nack(&mut self) -> Result<(), Error> {
         let request = api::ModifyAckDeadlineRequest {
-            subscription: format!(
-                "projects/{0}/subscriptions/{1}",
-                self.client.project_name.as_str(),
-                self.subscription_name,
-            ),
+            subscription: self.subscription_name.clone(),
             ack_ids: vec![self.ack_id.clone()],
             ack_deadline_seconds: 0,
         };
