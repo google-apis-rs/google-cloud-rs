@@ -37,10 +37,11 @@ tonic-build = "0.3.0"
 
 [features]
 default = []
-full = ["pubsub", "datastore", "vision", "storage"]
-full-derive = ["pubsub", "datastore-derive", "vision", "storage"]
+full = ["pubsub", "datastore", "vision", "storage", "tasks"]
+full-derive = ["pubsub", "datastore-derive", "vision", "storage", "tasks"]
 pubsub = []
 datastore = []
+tasks = []
 datastore-derive = ["datastore", "google-cloud-derive"]
 vision = []
 storage = ["reqwest"]
