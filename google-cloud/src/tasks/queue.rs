@@ -1,4 +1,4 @@
-use crate::tasks::{api, TaskConfig};
+use crate::tasks::{api, TaskConfig, ROUTING_METADATA_KEY};
 use crate::tasks::{Client, Error, Task};
 
 /// Represents a Queue
@@ -21,17 +21,6 @@ impl Queue {
         self.name.rsplit('/').next().unwrap()
     }
 
-    /// Delete the queue.
-    pub async fn delete(mut self) -> Result<(), Error> {
-        let request = api::DeleteQueueRequest {
-            name: self.name.clone(),
-        };
-        let request = self.client.construct_request(request).await?;
-        self.client.service.delete_queue(request).await?;
-
-        Ok(())
-    }
-
     /// Create a new task in this queue
     /// Requires the following roles on service account:
     /// - roles/cloudtasks.viewer
@@ -42,7 +31,8 @@ impl Queue {
             task: Some(config.into()),
             response_view: 0
         };
-        let request = self.client.construct_request(request).await?;
+        let mut request = self.client.construct_request(request).await?;
+        request.metadata_mut().insert(ROUTING_METADATA_KEY, MetadataValue::from_str(format!("parent={}", self.name.clone()).as_str()).unwrap());
         let response = self.client.service.create_task(request).await?;
         let task = response.into_inner();
         Ok((self.client.clone(), task).into())

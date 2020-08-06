@@ -12,7 +12,7 @@ use crate::tasks::api;
 use crate::tasks::api::cloud_tasks_client::CloudTasksClient;
 use crate::tasks::{Error, Queue};
 
-const ROUTING_METADATA_KEY: &str = "x-goog-request-params";
+pub(crate) const ROUTING_METADATA_KEY: &str = "x-goog-request-params";
 
 /// The Cloud Tasks client, tied to a specific project and location.
 #[derive(Clone)]
@@ -112,7 +112,7 @@ impl Client {
     }
 
     /// Get a queue by name.
-    pub async fn queue(&mut self, id: &str) -> Result<Option<Queue>, Error> {
+    pub async fn queue(&mut self, id: &str) -> Result<Queue, Error> {
         let name = format!(
             "projects/{0}/locations/{1}/queues/{2}",
             self.project_name.as_str(),
@@ -128,6 +128,6 @@ impl Client {
         let response = self.service.get_queue(request).await?;
         let queue = response.into_inner();
 
-        Ok(Some(Queue::new(self.clone(), queue.name)))
+        Ok(Queue::new(self.clone(), queue.name))
     }
 }
