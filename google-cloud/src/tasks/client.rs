@@ -3,9 +3,9 @@ use std::fs::File;
 use std::sync::Arc;
 
 use tokio::sync::Mutex;
+use tonic::metadata::MetadataValue;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 use tonic::{IntoRequest, Request};
-use tonic::metadata::MetadataValue;
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::tasks::api;
@@ -45,7 +45,10 @@ impl Client {
     /// Create a new client for the specified project.
     ///
     /// Credentials are looked up in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
-    pub async fn new(project_name: impl Into<String>, location_id: impl Into<String>) -> Result<Client, Error> {
+    pub async fn new(
+        project_name: impl Into<String>,
+        location_id: impl Into<String>,
+    ) -> Result<Client, Error> {
         let path = env::var("GOOGLE_APPLICATION_CREDENTIALS")?;
         let file = File::open(path)?;
         let creds = json::from_reader(file)?;
@@ -88,7 +91,11 @@ impl Client {
 
         loop {
             let request = api::ListQueuesRequest {
-                parent: format!("projects/{0}/locations/{1}", self.project_name.as_str(), self.location_id.as_str()),
+                parent: format!(
+                    "projects/{0}/locations/{1}",
+                    self.project_name.as_str(),
+                    self.location_id.as_str()
+                ),
                 filter: filter.to_string(),
                 page_size,
                 page_token,
@@ -119,12 +126,13 @@ impl Client {
             self.location_id.as_str(),
             id,
         );
-        let request = api::GetQueueRequest {
-            name: name.clone(),
-        };
+        let request = api::GetQueueRequest { name: name.clone() };
         let mut request = self.construct_request(request).await?;
         // Add routing metadata
-        request.metadata_mut().insert(ROUTING_METADATA_KEY, MetadataValue::from_str(format!("name={}", name).as_str()).unwrap());
+        request.metadata_mut().insert(
+            ROUTING_METADATA_KEY,
+            MetadataValue::from_str(format!("name={}", name).as_str()).unwrap(),
+        );
         let response = self.service.get_queue(request).await?;
         let queue = response.into_inner();
 

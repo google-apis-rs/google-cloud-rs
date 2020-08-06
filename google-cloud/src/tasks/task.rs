@@ -1,6 +1,10 @@
-use crate::tasks::{api, PayloadTypeConfig, PayloadType, AppEngineHttpRequestConfig, HttpRequestConfig, timestamp_to_prost, duration_to_prost, prost_to_timestamp, convert_status, prost_to_duration};
 use crate::tasks::Client;
-use chrono::{NaiveDateTime, Duration};
+use crate::tasks::{
+    api, convert_status, duration_to_prost, prost_to_duration, prost_to_timestamp,
+    timestamp_to_prost, AppEngineHttpRequestConfig, HttpRequestConfig, PayloadType,
+    PayloadTypeConfig,
+};
+use chrono::{Duration, NaiveDateTime};
 use tonic::Status;
 
 /// Type of task view - basic or full
@@ -23,9 +27,9 @@ pub enum View {
     Full,
 }
 
-impl From<View> for api::task::View{
+impl From<View> for api::task::View {
     fn from(item: View) -> Self {
-        match item{
+        match item {
             View::Unspecified => api::task::View::Unspecified,
             View::Basic => api::task::View::Basic,
             View::Full => api::task::View::Full,
@@ -33,9 +37,9 @@ impl From<View> for api::task::View{
     }
 }
 
-impl From<api::task::View> for View{
+impl From<api::task::View> for View {
     fn from(item: api::task::View) -> Self {
-        match item{
+        match item {
             api::task::View::Unspecified => View::Unspecified,
             api::task::View::Basic => View::Basic,
             api::task::View::Full => View::Full,
@@ -64,7 +68,7 @@ pub struct TaskConfig {
 
 impl From<TaskConfig> for api::Task {
     fn from(item: TaskConfig) -> Self {
-        Self{
+        Self {
             name: item.id.unwrap_or("".to_string()),
             schedule_time: item.schedule_time.map(timestamp_to_prost),
             create_time: None,
@@ -74,28 +78,28 @@ impl From<TaskConfig> for api::Task {
             first_attempt: None,
             last_attempt: None,
             view: 0,
-            payload_type: Some(item.payload_type.into())
+            payload_type: Some(item.payload_type.into()),
         }
     }
 }
 
-impl TaskConfig{
+impl TaskConfig {
     /// Create new AppEngine HTTP task
-    pub fn new_appengine_http_task(task: AppEngineHttpRequestConfig) -> Self{
-        Self{
+    pub fn new_appengine_http_task(task: AppEngineHttpRequestConfig) -> Self {
+        Self {
             id: None,
             schedule_time: None,
             dispatch_deadline: None,
-            payload_type: PayloadTypeConfig::AppEngineHttpRequest(task)
+            payload_type: PayloadTypeConfig::AppEngineHttpRequest(task),
         }
     }
     /// Create new HTTP task
-    pub fn new_http_task(task: HttpRequestConfig) -> Self{
-        Self{
+    pub fn new_http_task(task: HttpRequestConfig) -> Self {
+        Self {
             id: None,
             schedule_time: None,
             dispatch_deadline: None,
-            payload_type: PayloadTypeConfig::HttpRequest(task)
+            payload_type: PayloadTypeConfig::HttpRequest(task),
         }
     }
     /// Set Task ID
@@ -126,18 +130,18 @@ pub struct Attempt {
     pub(crate) response_status: Option<Status>,
 }
 
-impl From<api::Attempt> for Attempt{
+impl From<api::Attempt> for Attempt {
     fn from(item: api::Attempt) -> Self {
-        Self{
+        Self {
             schedule_time: item.schedule_time.map(prost_to_timestamp),
             dispatch_time: item.dispatch_time.map(prost_to_timestamp),
             response_time: item.response_time.map(prost_to_timestamp),
-            response_status: item.response_status.map(convert_status)
+            response_status: item.response_status.map(convert_status),
         }
     }
 }
 
-impl Attempt{
+impl Attempt {
     ///The time that this attempt was scheduled.
     pub fn schedule_time(&self) -> Option<NaiveDateTime> {
         self.schedule_time
@@ -172,11 +176,11 @@ pub struct Task {
     pub(crate) payload_type: Option<PayloadType>,
 }
 
-impl From<(Client, api::Task)> for Task{
+impl From<(Client, api::Task)> for Task {
     fn from(item: (Client, api::Task)) -> Self {
         let (client, task) = item;
         let view = task.view();
-        Self{
+        Self {
             client,
             name: task.name,
             schedule_time: task.schedule_time.map(prost_to_timestamp),
@@ -187,7 +191,7 @@ impl From<(Client, api::Task)> for Task{
             first_attempt: task.first_attempt.map(Attempt::from),
             last_attempt: task.last_attempt.map(Attempt::from),
             view: view.into(),
-            payload_type: task.payload_type.map(PayloadType::from)
+            payload_type: task.payload_type.map(PayloadType::from),
         }
     }
 }

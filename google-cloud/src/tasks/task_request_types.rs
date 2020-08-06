@@ -1,5 +1,5 @@
+use crate::tasks::{api, AuthorizationHeader};
 use std::collections::HashMap;
-use crate::tasks::{AuthorizationHeader, api};
 
 /// All supported HTTP methods for Cloud Tasks
 #[derive(Clone, Copy, Debug)]
@@ -22,9 +22,9 @@ pub enum HttpMethod {
     Options,
 }
 
-impl From<api::HttpMethod> for HttpMethod{
+impl From<api::HttpMethod> for HttpMethod {
     fn from(item: api::HttpMethod) -> Self {
-        match item{
+        match item {
             api::HttpMethod::Unspecified => HttpMethod::Unspecified,
             api::HttpMethod::Post => HttpMethod::Post,
             api::HttpMethod::Get => HttpMethod::Get,
@@ -37,9 +37,9 @@ impl From<api::HttpMethod> for HttpMethod{
     }
 }
 
-impl From<HttpMethod> for api::HttpMethod{
+impl From<HttpMethod> for api::HttpMethod {
     fn from(item: HttpMethod) -> Self {
-        match item{
+        match item {
             HttpMethod::Unspecified => api::HttpMethod::Unspecified,
             HttpMethod::Post => api::HttpMethod::Post,
             HttpMethod::Get => api::HttpMethod::Get,
@@ -67,13 +67,13 @@ pub struct AppEngineRoutingConfig {
     pub version: Option<String>,
 }
 
-impl From<AppEngineRoutingConfig> for api::AppEngineRouting{
+impl From<AppEngineRoutingConfig> for api::AppEngineRouting {
     fn from(item: AppEngineRoutingConfig) -> Self {
-        Self{
+        Self {
             service: item.service.unwrap_or("".to_string()),
             version: item.version.unwrap_or("".to_string()),
             instance: "".to_string(),
-            host: "".to_string()
+            host: "".to_string(),
         }
     }
 }
@@ -87,13 +87,13 @@ pub struct AppEngineRouting {
     pub(crate) host: String,
 }
 
-impl From<api::AppEngineRouting> for AppEngineRouting{
+impl From<api::AppEngineRouting> for AppEngineRouting {
     fn from(item: api::AppEngineRouting) -> Self {
-        Self{
+        Self {
             service: item.service,
             version: item.version,
             instance: item.instance,
-            host: item.host
+            host: item.host,
         }
     }
 }
@@ -178,21 +178,21 @@ pub struct AppEngineHttpRequestConfig {
     body: Vec<u8>,
 }
 
-impl From<AppEngineHttpRequestConfig> for api::AppEngineHttpRequest{
+impl From<AppEngineHttpRequestConfig> for api::AppEngineHttpRequest {
     fn from(item: AppEngineHttpRequestConfig) -> Self {
-        let mut request = Self{
+        let mut request = Self {
             http_method: 0,
             app_engine_routing: item.app_engine_routing.map(|routing| routing.into()),
             relative_uri: item.relative_uri,
             headers: item.headers,
-            body: item.body
+            body: item.body,
         };
         request.set_http_method(item.http_method.into());
         request
     }
 }
 
-impl AppEngineHttpRequestConfig{
+impl AppEngineHttpRequestConfig {
     /// Create new App Engine HTTP request
     pub fn new() -> Self {
         Self {
@@ -200,7 +200,7 @@ impl AppEngineHttpRequestConfig{
             app_engine_routing: None,
             relative_uri: "".to_string(),
             headers: Default::default(),
-            body: vec![]
+            body: vec![],
         }
     }
     /// Set http method
@@ -240,14 +240,14 @@ pub struct AppEngineHttpRequest {
     body: Vec<u8>,
 }
 
-impl From<api::AppEngineHttpRequest> for AppEngineHttpRequest{
+impl From<api::AppEngineHttpRequest> for AppEngineHttpRequest {
     fn from(item: api::AppEngineHttpRequest) -> Self {
-        Self{
+        Self {
             http_method: item.http_method().into(),
             app_engine_routing: item.app_engine_routing.map(AppEngineRouting::from),
             relative_uri: item.relative_uri,
             headers: item.headers,
-            body: item.body
+            body: item.body,
         }
     }
 }
@@ -328,21 +328,21 @@ pub struct HttpRequestConfig {
     authorization_header: Option<AuthorizationHeader>,
 }
 
-impl From<HttpRequestConfig> for api::HttpRequest{
+impl From<HttpRequestConfig> for api::HttpRequest {
     fn from(item: HttpRequestConfig) -> Self {
-        let mut request = Self{
+        let mut request = Self {
             url: item.url,
             http_method: 0,
             headers: item.headers,
             body: item.body,
-            authorization_header: item.authorization_header.map(|header| header.into())
+            authorization_header: item.authorization_header.map(|header| header.into()),
         };
         request.set_http_method(item.http_method.into());
         request
     }
 }
 
-impl HttpRequestConfig{
+impl HttpRequestConfig {
     /// Create new HttpRequest. URI must be specified at a minimum
     pub fn new(url: &str) -> Self {
         Self {
@@ -350,7 +350,7 @@ impl HttpRequestConfig{
             http_method: HttpMethod::Post,
             headers: Default::default(),
             body: vec![],
-            authorization_header: None
+            authorization_header: None,
         }
     }
     /// Set http method
@@ -385,15 +385,15 @@ pub struct HttpRequest {
     pub(crate) authorization_header: Option<AuthorizationHeader>,
 }
 
-impl From<api::HttpRequest> for HttpRequest{
+impl From<api::HttpRequest> for HttpRequest {
     fn from(item: api::HttpRequest) -> Self {
         let method = item.http_method();
-        Self{
+        Self {
             url: item.url,
             http_method: method.into(),
             headers: item.headers,
             body: item.body,
-            authorization_header: item.authorization_header.map(AuthorizationHeader::from)
+            authorization_header: item.authorization_header.map(AuthorizationHeader::from),
         }
     }
 }
@@ -427,11 +427,15 @@ pub(crate) enum PayloadTypeConfig {
     HttpRequest(HttpRequestConfig),
 }
 
-impl From<PayloadTypeConfig> for api::task::PayloadType{
+impl From<PayloadTypeConfig> for api::task::PayloadType {
     fn from(item: PayloadTypeConfig) -> Self {
         match item {
-            PayloadTypeConfig::HttpRequest(request) => api::task::PayloadType::HttpRequest(request.into()),
-            PayloadTypeConfig::AppEngineHttpRequest(request) => api::task::PayloadType::AppEngineHttpRequest(request.into()),
+            PayloadTypeConfig::HttpRequest(request) => {
+                api::task::PayloadType::HttpRequest(request.into())
+            }
+            PayloadTypeConfig::AppEngineHttpRequest(request) => {
+                api::task::PayloadType::AppEngineHttpRequest(request.into())
+            }
         }
     }
 }
@@ -445,11 +449,15 @@ pub enum PayloadType {
     HttpRequest(HttpRequest),
 }
 
-impl From<api::task::PayloadType> for PayloadType{
+impl From<api::task::PayloadType> for PayloadType {
     fn from(item: api::task::PayloadType) -> Self {
-        match item{
-            api::task::PayloadType::AppEngineHttpRequest(request) => PayloadType::AppEngineHttpRequest(request.into()),
-            api::task::PayloadType::HttpRequest(request) => PayloadType::HttpRequest(request.into()),
+        match item {
+            api::task::PayloadType::AppEngineHttpRequest(request) => {
+                PayloadType::AppEngineHttpRequest(request.into())
+            }
+            api::task::PayloadType::HttpRequest(request) => {
+                PayloadType::HttpRequest(request.into())
+            }
         }
     }
 }

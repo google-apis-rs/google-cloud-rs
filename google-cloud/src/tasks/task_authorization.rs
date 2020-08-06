@@ -19,20 +19,28 @@ pub enum AuthorizationHeader {
     OidcToken(OidcToken),
 }
 
-impl From<AuthorizationHeader> for api::http_request::AuthorizationHeader{
+impl From<AuthorizationHeader> for api::http_request::AuthorizationHeader {
     fn from(item: AuthorizationHeader) -> Self {
-        match item{
-            AuthorizationHeader::OauthToken(token_config) => api::http_request::AuthorizationHeader::OauthToken(token_config.into()),
-            AuthorizationHeader::OidcToken(token_config) => api::http_request::AuthorizationHeader::OidcToken(token_config.into()),
+        match item {
+            AuthorizationHeader::OauthToken(token_config) => {
+                api::http_request::AuthorizationHeader::OauthToken(token_config.into())
+            }
+            AuthorizationHeader::OidcToken(token_config) => {
+                api::http_request::AuthorizationHeader::OidcToken(token_config.into())
+            }
         }
     }
 }
 
-impl From<api::http_request::AuthorizationHeader> for AuthorizationHeader{
+impl From<api::http_request::AuthorizationHeader> for AuthorizationHeader {
     fn from(item: api::http_request::AuthorizationHeader) -> Self {
-        match item{
-            api::http_request::AuthorizationHeader::OauthToken(token_config) => AuthorizationHeader::OauthToken(token_config.into()),
-            api::http_request::AuthorizationHeader::OidcToken(token_config) => AuthorizationHeader::OidcToken(token_config.into()),
+        match item {
+            api::http_request::AuthorizationHeader::OauthToken(token_config) => {
+                AuthorizationHeader::OauthToken(token_config.into())
+            }
+            api::http_request::AuthorizationHeader::OidcToken(token_config) => {
+                AuthorizationHeader::OidcToken(token_config.into())
+            }
         }
     }
 }
@@ -52,15 +60,21 @@ pub struct OAuthToken {
     pub scope: String,
 }
 
-impl From<OAuthToken> for api::OAuthToken{
+impl From<OAuthToken> for api::OAuthToken {
     fn from(item: OAuthToken) -> Self {
-        Self{ service_account_email: item.service_account_email, scope: item.scope }
+        Self {
+            service_account_email: item.service_account_email,
+            scope: item.scope,
+        }
     }
 }
 
-impl From<api::OAuthToken> for OAuthToken{
+impl From<api::OAuthToken> for OAuthToken {
     fn from(item: api::OAuthToken) -> Self {
-        Self{ service_account_email: item.service_account_email, scope: item.scope }
+        Self {
+            service_account_email: item.service_account_email,
+            scope: item.scope,
+        }
     }
 }
 
@@ -78,15 +92,20 @@ pub struct OidcToken {
     pub audience: String,
 }
 
-impl From<OidcToken> for api::OidcToken{
+impl From<OidcToken> for api::OidcToken {
     fn from(item: OidcToken) -> Self {
-        Self{ service_account_email: item.service_account_email, audience: item.audience }
+        Self {
+            service_account_email: item.service_account_email,
+            audience: item.audience,
+        }
     }
 }
 
-impl From<api::OidcToken> for OidcToken{
+impl From<api::OidcToken> for OidcToken {
     fn from(item: api::OidcToken) -> Self {
-        Self{ service_account_email: item.service_account_email, audience: item.audience }
+        Self {
+            service_account_email: item.service_account_email,
+            audience: item.audience,
+        }
     }
 }
-

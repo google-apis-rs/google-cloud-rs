@@ -1,11 +1,11 @@
-mod utils;
-mod task_request_types;
-mod task_authorization;
 mod client;
-mod task;
 mod queue;
+mod task;
+mod task_authorization;
+mod task_request_types;
+mod utils;
 mod api {
-    pub mod google{
+    pub mod google {
         pub mod api {
             include!("api/google.api.rs");
         }
@@ -35,8 +35,8 @@ mod api {
 }
 
 pub use self::client::*;
-pub use self::task::*;
 pub use self::queue::*;
+pub use self::task::*;
 pub use self::task_authorization::*;
 pub use self::task_request_types::*;
 pub(crate) use self::utils::*;

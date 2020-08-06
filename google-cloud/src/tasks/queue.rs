@@ -25,14 +25,17 @@ impl Queue {
     /// Requires the following roles on service account:
     /// - roles/cloudtasks.viewer
     /// - roles/cloudtasks.enqueuer
-    pub async fn new_task(&mut self, config: TaskConfig) -> Result<Task, Error>{
-        let request = api::CreateTaskRequest{
+    pub async fn new_task(&mut self, config: TaskConfig) -> Result<Task, Error> {
+        let request = api::CreateTaskRequest {
             parent: self.name.clone(),
             task: Some(config.into()),
-            response_view: 0
+            response_view: 0,
         };
         let mut request = self.client.construct_request(request).await?;
-        request.metadata_mut().insert(ROUTING_METADATA_KEY, MetadataValue::from_str(format!("parent={}", self.name.clone()).as_str()).unwrap());
+        request.metadata_mut().insert(
+            ROUTING_METADATA_KEY,
+            MetadataValue::from_str(format!("parent={}", self.name.clone()).as_str()).unwrap(),
+        );
         let response = self.client.service.create_task(request).await?;
         let task = response.into_inner();
         Ok((self.client.clone(), task).into())
