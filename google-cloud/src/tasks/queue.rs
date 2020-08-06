@@ -1,4 +1,4 @@
-use crate::tasks::api;
+use crate::tasks::{api, TaskConfig};
 use crate::tasks::{Client, Error, Task};
 
 /// Represents a Queue
@@ -33,12 +33,15 @@ impl Queue {
     }
 
     /// Create a new task in this queue
-    pub async fn new_task(&mut self) -> Result<Task, Error>{
+    pub async fn new_task(&mut self, config: TaskConfig) -> Result<Task, Error>{
         let request = api::CreateTaskRequest{
             parent: self.name.clone(),
-            task: None,
+            task: Some(config.into()),
             response_view: 0
         };
-        todo!()
+        let request = self.client.construct_request(request).await?;
+        let response = self.client.service.create_task(request).await?;
+        let task = response.into_inner();
+        Ok((self.client.clone(), task).into())
     }
 }
