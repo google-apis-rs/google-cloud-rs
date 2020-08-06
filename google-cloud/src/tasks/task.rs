@@ -1,4 +1,4 @@
-use crate::tasks::{api, PayloadTypeConfig, PayloadType, AppEngineHttpRequestConfig, HttpRequestConfig, convert_timestamp, convert_duration};
+use crate::tasks::{api, PayloadTypeConfig, PayloadType, AppEngineHttpRequestConfig, HttpRequestConfig, timestamp_to_prost, duration_to_prost, prost_to_timestamp, convert_status, prost_to_duration};
 use crate::tasks::Client;
 use chrono::{NaiveDateTime, Duration};
 use tonic::Status;
@@ -66,9 +66,9 @@ impl From<TaskConfig> for api::Task {
     fn from(item: TaskConfig) -> Self {
         Self{
             name: item.id.unwrap_or("".to_string()),
-            schedule_time: item.schedule_time.map(convert_timestamp),
+            schedule_time: item.schedule_time.map(timestamp_to_prost),
             create_time: None,
-            dispatch_deadline: item.dispatch_deadline.map(convert_duration),
+            dispatch_deadline: item.dispatch_deadline.map(duration_to_prost),
             dispatch_count: 0,
             response_count: 0,
             first_attempt: None,
@@ -126,6 +126,17 @@ pub struct Attempt {
     pub(crate) response_status: Option<Status>,
 }
 
+impl From<api::Attempt> for Attempt{
+    fn from(item: api::Attempt) -> Self {
+        Self{
+            schedule_time: item.schedule_time.map(prost_to_timestamp),
+            dispatch_time: item.dispatch_time.map(prost_to_timestamp),
+            response_time: item.response_time.map(prost_to_timestamp),
+            response_status: item.response_status.map(convert_status)
+        }
+    }
+}
+
 impl Attempt{
     ///The time that this attempt was scheduled.
     pub fn schedule_time(&self) -> Option<NaiveDateTime> {
@@ -159,6 +170,26 @@ pub struct Task {
     pub(crate) last_attempt: Option<Attempt>,
     pub(crate) view: View,
     pub(crate) payload_type: Option<PayloadType>,
+}
+
+impl From<(Client, api::Task)> for Task{
+    fn from(item: (Client, api::Task)) -> Self {
+        let (client, task) = item;
+        let view = task.view();
+        Self{
+            client,
+            name: task.name,
+            schedule_time: task.schedule_time.map(prost_to_timestamp),
+            create_time: task.create_time.map(prost_to_timestamp),
+            dispatch_deadline: task.dispatch_deadline.map(prost_to_duration),
+            dispatch_count: task.dispatch_count,
+            response_count: task.response_count,
+            first_attempt: task.first_attempt.map(Attempt::from),
+            last_attempt: task.last_attempt.map(Attempt::from),
+            view: view.into(),
+            payload_type: task.payload_type.map(PayloadType::from)
+        }
+    }
 }
 
 impl Task {

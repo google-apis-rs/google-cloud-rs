@@ -240,6 +240,18 @@ pub struct AppEngineHttpRequest {
     body: Vec<u8>,
 }
 
+impl From<api::AppEngineHttpRequest> for AppEngineHttpRequest{
+    fn from(item: api::AppEngineHttpRequest) -> Self {
+        Self{
+            http_method: item.http_method().into(),
+            app_engine_routing: item.app_engine_routing.map(AppEngineRouting::from),
+            relative_uri: item.relative_uri,
+            headers: item.headers,
+            body: item.body
+        }
+    }
+}
+
 impl AppEngineHttpRequest {
     /// The HTTP method of this request.
     pub fn http_method(&self) -> HttpMethod {
@@ -373,6 +385,19 @@ pub struct HttpRequest {
     pub(crate) authorization_header: Option<AuthorizationHeader>,
 }
 
+impl From<api::HttpRequest> for HttpRequest{
+    fn from(item: api::HttpRequest) -> Self {
+        let method = item.http_method();
+        Self{
+            url: item.url,
+            http_method: method.into(),
+            headers: item.headers,
+            body: item.body,
+            authorization_header: item.authorization_header.map(AuthorizationHeader::from)
+        }
+    }
+}
+
 impl HttpRequest {
     /// The full url path that the request will be sent to.
     pub fn url(&self) -> &str {
@@ -418,4 +443,13 @@ pub enum PayloadType {
     AppEngineHttpRequest(AppEngineHttpRequest),
     /// HTTP request that targets any public URI
     HttpRequest(HttpRequest),
+}
+
+impl From<api::task::PayloadType> for PayloadType{
+    fn from(item: api::task::PayloadType) -> Self {
+        match item{
+            api::task::PayloadType::AppEngineHttpRequest(request) => PayloadType::AppEngineHttpRequest(request.into()),
+            api::task::PayloadType::HttpRequest(request) => PayloadType::HttpRequest(request.into()),
+        }
+    }
 }
