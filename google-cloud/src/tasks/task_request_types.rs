@@ -1,6 +1,7 @@
 use std::collections::HashMap;
-use crate::tasks::AuthorizationHeader;
+use crate::tasks::{AuthorizationHeader, api};
 
+/// All supported HTTP methods for Cloud Tasks
 #[derive(Clone, Copy, Debug)]
 pub enum HttpMethod {
     /// HTTP method unspecified
@@ -21,6 +22,37 @@ pub enum HttpMethod {
     Options,
 }
 
+impl From<api::HttpMethod> for HttpMethod{
+    fn from(item: api::HttpMethod) -> Self {
+        match item{
+            api::HttpMethod::Unspecified => HttpMethod::Unspecified,
+            api::HttpMethod::Post => HttpMethod::Post,
+            api::HttpMethod::Get => HttpMethod::Get,
+            api::HttpMethod::Head => HttpMethod::Head,
+            api::HttpMethod::Put => HttpMethod::Put,
+            api::HttpMethod::Delete => HttpMethod::Delete,
+            api::HttpMethod::Patch => HttpMethod::Patch,
+            api::HttpMethod::Options => HttpMethod::Options,
+        }
+    }
+}
+
+impl From<HttpMethod> for api::HttpMethod{
+    fn from(item: HttpMethod) -> Self {
+        match item{
+            HttpMethod::Unspecified => api::HttpMethod::Unspecified,
+            HttpMethod::Post => api::HttpMethod::Post,
+            HttpMethod::Get => api::HttpMethod::Get,
+            HttpMethod::Head => api::HttpMethod::Head,
+            HttpMethod::Put => api::HttpMethod::Put,
+            HttpMethod::Delete => api::HttpMethod::Delete,
+            HttpMethod::Patch => api::HttpMethod::Patch,
+            HttpMethod::Options => api::HttpMethod::Options,
+        }
+    }
+}
+
+/// Configuration to create custom AppEngine target for AppEngine HTTP request
 #[derive(Clone, Debug)]
 pub struct AppEngineRoutingConfig {
     /// App service.
@@ -35,6 +67,18 @@ pub struct AppEngineRoutingConfig {
     pub version: Option<String>,
 }
 
+impl From<AppEngineRoutingConfig> for api::AppEngineRouting{
+    fn from(item: AppEngineRoutingConfig) -> Self {
+        Self{
+            service: item.service.unwrap_or("".to_string()),
+            version: item.version.unwrap_or("".to_string()),
+            instance: "".to_string(),
+            host: "".to_string()
+        }
+    }
+}
+
+/// Target configuration for AppEngine HTTP request
 #[derive(Clone, Debug)]
 pub struct AppEngineRouting {
     pub(crate) service: String,
@@ -43,34 +87,50 @@ pub struct AppEngineRouting {
     pub(crate) host: String,
 }
 
+impl From<api::AppEngineRouting> for AppEngineRouting{
+    fn from(item: api::AppEngineRouting) -> Self {
+        Self{
+            service: item.service,
+            version: item.version,
+            instance: item.instance,
+            host: item.host
+        }
+    }
+}
+
 impl AppEngineRouting {
+    /// Target service
     pub fn service(&self) -> &str {
         self.service.as_str()
     }
+    /// Target app version.
     pub fn version(&self) -> &str {
         self.version.as_str()
     }
+    /// Target app instance.
     pub fn instance(&self) -> &str {
         self.instance.as_str()
     }
+    /// The host that the task is sent to.
     pub fn host(&self) -> &str {
         self.host.as_str()
     }
 }
 
+/// Configuration to create new AppEngine HTTP request
 #[derive(Clone, Debug)]
 pub struct AppEngineHttpRequestConfig {
-    /// The HTTP method to use for the request.
-    pub http_method: HttpMethod,
+    /// The HTTP method to use for the request. The default is POST.
+    http_method: HttpMethod,
     /// Task-level setting for App Engine routing.
-    pub app_engine_routing: AppEngineRoutingConfig,
+    app_engine_routing: Option<AppEngineRoutingConfig>,
     /// The relative URI.
     ///
     /// The relative URI must begin with "/" and must be a valid HTTP relative URI.
     /// It can contain a path and query string arguments.
     /// If the relative URI is empty, then the root path "/" will be used.
     /// No spaces are allowed, and the maximum length allowed is 2083 characters.
-    pub relative_uri: String,
+    relative_uri: String,
     /// HTTP request headers.
     ///
     /// This map contains the header field names and values.
@@ -110,21 +170,74 @@ pub struct AppEngineHttpRequestConfig {
     ///
     /// Although there is no specific limit for the maximum number of headers or
     /// the size, there is a limit on the maximum size of the Task.
-    pub headers: HashMap<String, String>,
+    headers: HashMap<String, String>,
     /// HTTP request body.
     ///
     /// A request body is allowed only if the HTTP method is POST or PUT. It is
     /// an error to set a body on a task with an incompatible HttpMethod.
-    pub body: Vec<u8>,
+    body: Vec<u8>,
 }
 
+impl From<AppEngineHttpRequestConfig> for api::AppEngineHttpRequest{
+    fn from(item: AppEngineHttpRequestConfig) -> Self {
+        let mut request = Self{
+            http_method: 0,
+            app_engine_routing: item.app_engine_routing.map(|routing| routing.into()),
+            relative_uri: item.relative_uri,
+            headers: item.headers,
+            body: item.body
+        };
+        request.set_http_method(item.http_method.into());
+        request
+    }
+}
+
+impl AppEngineHttpRequestConfig{
+    /// Create new App Engine HTTP request
+    pub fn new() -> Self {
+        Self {
+            http_method: HttpMethod::Post,
+            app_engine_routing: None,
+            relative_uri: "".to_string(),
+            headers: Default::default(),
+            body: vec![]
+        }
+    }
+    /// Set http method
+    pub fn http_method(mut self, method: HttpMethod) -> Self {
+        self.http_method = method;
+        self
+    }
+    /// Configure task-level routing
+    pub fn app_engine_routing(mut self, routing: AppEngineRoutingConfig) -> Self {
+        self.app_engine_routing.replace(routing);
+        self
+    }
+    /// Set uri for the request. Default is `/`
+    pub fn relative_uri(mut self, uri: &str) -> Self {
+        self.relative_uri = uri.to_string();
+        self
+    }
+    /// Add header. Repeated headers are not supported but a header value can contain commas.
+    pub fn header(mut self, key: &str, value: &str) -> Self {
+        self.headers.insert(key.to_string(), value.to_string());
+        self
+    }
+    /// Set request body. Should only be set for POST, PUT and PATCH requests
+    pub fn body<T: Into<Vec<u8>>>(mut self, data: T) -> Self {
+        self.body = data.into();
+        self
+    }
+}
+
+/// Represents HTTP rtequest that targets AppEngine App
 #[derive(Clone, Debug)]
 pub struct AppEngineHttpRequest {
-    pub http_method: HttpMethod,
-    pub app_engine_routing: Option<AppEngineRouting>,
-    pub relative_uri: String,
-    pub headers: HashMap<String, String>,
-    pub body: Vec<u8>,
+    http_method: HttpMethod,
+    app_engine_routing: Option<AppEngineRouting>,
+    relative_uri: String,
+    headers: HashMap<String, String>,
+    body: Vec<u8>,
 }
 
 impl AppEngineHttpRequest {
@@ -134,7 +247,7 @@ impl AppEngineHttpRequest {
     }
     /// Task-level setting for App Engine routing.
     pub fn app_engine_routing(&self) -> Option<&AppEngineRouting> {
-        self.app_engine_routing.as_deref()
+        self.app_engine_routing.as_ref()
     }
     /// The relative URI.
     pub fn relative_uri(&self) -> &str {
@@ -142,7 +255,7 @@ impl AppEngineHttpRequest {
     }
     /// HTTP request headers.
     pub fn headers(&self) -> &HashMap<String, String> {
-        self.headers.as_ref()
+        &self.headers
     }
     /// HTTP request body.
     pub fn body(&self) -> &[u8] {
@@ -150,6 +263,7 @@ impl AppEngineHttpRequest {
     }
 }
 
+/// Configuration to create HTTP request
 #[derive(Clone, Debug)]
 pub struct HttpRequestConfig {
     /// Required. The full url path that the request will be sent to.
@@ -161,9 +275,9 @@ pub struct HttpRequestConfig {
     ///
     /// The `Location` header response from a redirect response [`300` - `399`]
     /// may be followed. The redirect is not counted as a separate attempt.
-    pub url: String,
-    /// The HTTP method to use for the request
-    pub http_method: HttpMethod,
+    url: String,
+    /// The HTTP method to use for the request. The default is POST.
+    http_method: HttpMethod,
     /// HTTP request headers.
     ///
     /// This map contains the header field names and values.
@@ -189,19 +303,67 @@ pub struct HttpRequestConfig {
     /// specified using comma-separated values.
     ///
     /// The size of the headers must be less than 80KB.
-    pub headers: HashMap<String, String>,
+    headers: HashMap<String, String>,
     /// HTTP request body.
     ///
     /// A request body is allowed only if the HTTP method is POST, PUT, or PATCH. It is an
     /// error to set body on a task with an incompatible HttpMethod.
-    pub body: Vec<u8>,
+    body: Vec<u8>,
     /// The mode for generating an `Authorization` header for HTTP requests.
     ///
     /// If specified, all `Authorization` headers in the `HttpRequest.headers`
     /// field will be overridden.
-    pub authorization_header: Option<AuthorizationHeader>,
+    authorization_header: Option<AuthorizationHeader>,
 }
 
+impl From<HttpRequestConfig> for api::HttpRequest{
+    fn from(item: HttpRequestConfig) -> Self {
+        let mut request = Self{
+            url: item.url,
+            http_method: 0,
+            headers: item.headers,
+            body: item.body,
+            authorization_header: item.authorization_header.map(|header| header.into())
+        };
+        request.set_http_method(item.http_method.into());
+        request
+    }
+}
+
+impl HttpRequestConfig{
+    /// Create new HttpRequest. URI must be specified at a minimum
+    pub fn new(url: &str) -> Self {
+        Self {
+            url: url.to_string(),
+            http_method: HttpMethod::Post,
+            headers: Default::default(),
+            body: vec![],
+            authorization_header: None
+        }
+    }
+    /// Set http method
+    pub fn http_method(mut self, method: HttpMethod) -> Self {
+        self.http_method = method;
+        self
+    }
+    /// Add header. Repeated headers are not supported but a header value can contain commas.
+    pub fn header(mut self, key: &str, value: &str) -> Self {
+        self.headers.insert(key.to_string(), value.to_string());
+        self
+    }
+    /// Set request body. Should only be set for POST, PUT and PATCH requests
+    pub fn body<T: Into<Vec<u8>>>(mut self, data: T) -> Self {
+        self.body = data.into();
+        self
+    }
+    /// Allows setting data for Google-generated authorization header
+    pub fn authorization_header(mut self, authorization: AuthorizationHeader) -> Self {
+        self.authorization_header.replace(authorization);
+        self
+    }
+}
+
+/// Represents HTTP Request
 #[derive(Clone, Debug)]
 pub struct HttpRequest {
     pub(crate) url: String,
@@ -222,7 +384,7 @@ impl HttpRequest {
     }
     /// HTTP request headers.
     pub fn headers(&self) -> &HashMap<String, String> {
-        self.headers.as_ref()
+        &self.headers
     }
     /// HTTP request body.
     pub fn body(&self) -> &[u8] {
@@ -230,18 +392,30 @@ impl HttpRequest {
     }
     /// Google-generated authorization headers.
     pub fn authorization_header(&self) -> Option<&AuthorizationHeader> {
-        self.authorization_header.as_deref()
+        self.authorization_header.as_ref()
     }
 }
 
 #[derive(Clone, Debug)]
-pub enum PayloadTypeConfig {
+pub(crate) enum PayloadTypeConfig {
     AppEngineHttpRequest(AppEngineHttpRequestConfig),
     HttpRequest(HttpRequestConfig),
 }
 
+impl From<PayloadTypeConfig> for api::task::PayloadType{
+    fn from(item: PayloadTypeConfig) -> Self {
+        match item {
+            PayloadTypeConfig::HttpRequest(request) => api::task::PayloadType::HttpRequest(request.into()),
+            PayloadTypeConfig::AppEngineHttpRequest(request) => api::task::PayloadType::AppEngineHttpRequest(request.into()),
+        }
+    }
+}
+
+/// Types of CLoud Task payloads
 #[derive(Clone, Debug)]
 pub enum PayloadType {
+    /// HTTP request that targets AppEngine App
     AppEngineHttpRequest(AppEngineHttpRequest),
+    /// HTTP request that targets any public URI
     HttpRequest(HttpRequest),
 }

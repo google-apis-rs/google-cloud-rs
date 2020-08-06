@@ -1,3 +1,6 @@
+use crate::tasks::api;
+
+/// Configuration for Google-generated Authorization header
 #[derive(Clone, Debug)]
 pub enum AuthorizationHeader {
     /// If specified, an OAuth token
@@ -16,6 +19,26 @@ pub enum AuthorizationHeader {
     OidcToken(OidcToken),
 }
 
+impl From<AuthorizationHeader> for api::http_request::AuthorizationHeader{
+    fn from(item: AuthorizationHeader) -> Self {
+        match item{
+            AuthorizationHeader::OauthToken(token_config) => api::http_request::AuthorizationHeader::OauthToken(token_config.into()),
+            AuthorizationHeader::OidcToken(token_config) => api::http_request::AuthorizationHeader::OidcToken(token_config.into()),
+        }
+    }
+}
+
+impl From<api::http_request::AuthorizationHeader> for AuthorizationHeader{
+    fn from(item: api::http_request::AuthorizationHeader) -> Self {
+        match item{
+            api::http_request::AuthorizationHeader::OauthToken(token_config) => AuthorizationHeader::OauthToken(token_config.into()),
+            api::http_request::AuthorizationHeader::OidcToken(token_config) => AuthorizationHeader::OidcToken(token_config.into()),
+        }
+    }
+}
+
+/// Config for google-generated Oauth token
+/// https://cloud.google.com/tasks/docs/creating-http-target-tasks#sa
 #[derive(Clone, Debug)]
 pub struct OAuthToken {
     /// Service account email to be used for generating OAuth token.
@@ -29,6 +52,20 @@ pub struct OAuthToken {
     pub scope: String,
 }
 
+impl From<OAuthToken> for api::OAuthToken{
+    fn from(item: OAuthToken) -> Self {
+        Self{ service_account_email: item.service_account_email, scope: item.scope }
+    }
+}
+
+impl From<api::OAuthToken> for OAuthToken{
+    fn from(item: api::OAuthToken) -> Self {
+        Self{ service_account_email: item.service_account_email, scope: item.scope }
+    }
+}
+
+/// Config for google-generated Oidc token
+/// https://cloud.google.com/tasks/docs/creating-http-target-tasks#token
 #[derive(Clone, Debug)]
 pub struct OidcToken {
     /// Service account email to be used for generating OIDC token.
@@ -39,5 +76,17 @@ pub struct OidcToken {
     /// Audience to be used when generating OIDC token. If not specified, the URI
     /// specified in target will be used.
     pub audience: String,
+}
+
+impl From<OidcToken> for api::OidcToken{
+    fn from(item: OidcToken) -> Self {
+        Self{ service_account_email: item.service_account_email, audience: item.audience }
+    }
+}
+
+impl From<api::OidcToken> for OidcToken{
+    fn from(item: api::OidcToken) -> Self {
+        Self{ service_account_email: item.service_account_email, audience: item.audience }
+    }
 }
 

@@ -9,7 +9,7 @@ use tonic::{IntoRequest, Request};
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::tasks::api;
 use crate::tasks::api::cloud_tasks_client::CloudTasksClient;
-use crate::tasks::{Error, Queue, Task};
+use crate::tasks::{Error, Queue};
 
 /// The Cloud Tasks client, tied to a specific project and location.
 #[derive(Clone)]
@@ -78,7 +78,7 @@ impl Client {
 
     /// List queues
     /// `filter` argument allows returning only a subset of queues, sample filter: "state: PAUSED"
-    pub async fn queues(&mut self, filter: impl Into<String>) -> Result<Vec<Queue>, Error> {
+    pub async fn queues(&mut self, filter: &str) -> Result<Vec<Queue>, Error> {
         let mut queues = Vec::new();
         let page_size = 25;
         let mut page_token = String::default();
@@ -86,7 +86,7 @@ impl Client {
         loop {
             let request = api::ListQueuesRequest {
                 parent: format!("projects/{0}/locations/{1}", self.project_name.as_str(), self.location_id.as_str()),
-                filter: filter.into(),
+                filter: filter.to_string(),
                 page_size,
                 page_token,
             };
@@ -108,7 +108,7 @@ impl Client {
         Ok(queues)
     }
 
-    /// Get a handle of a specific subscription.
+    /// Get a queue by name.
     pub async fn queue(&mut self, id: &str) -> Result<Option<Queue>, Error> {
         let request = api::GetQueueRequest {
             name: format!(

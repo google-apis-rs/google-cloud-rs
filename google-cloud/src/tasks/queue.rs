@@ -1,13 +1,8 @@
-use std::collections::{HashMap, VecDeque};
-
-use chrono::Duration;
-
 use crate::tasks::api;
-use crate::tasks::api::queue::State;
 use crate::tasks::{Client, Error, Task};
 
 /// Represents a Queue
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Queue {
     pub(crate) client: Client,
     pub(crate) name: String,
@@ -37,6 +32,7 @@ impl Queue {
         Ok(())
     }
 
+    /// Create a new task in this queue
     pub async fn new_task(&mut self) -> Result<Task, Error>{
         let request = api::CreateTaskRequest{
             parent: self.name.clone(),

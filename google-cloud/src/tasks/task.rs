@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
-use crate::tasks::{api, PayloadTypeConfig, PayloadType};
-use crate::tasks::{Client, Error};
+use crate::tasks::{api, PayloadTypeConfig, PayloadType, AppEngineHttpRequestConfig, HttpRequestConfig, convert_timestamp, convert_duration};
+use crate::tasks::Client;
 use chrono::{NaiveDateTime, Duration};
 use tonic::Status;
 
+/// Type of task view - basic or full
 #[derive(Clone, Copy, Debug)]
 pub enum View {
     /// Unspecified. Defaults to BASIC.
@@ -24,6 +23,26 @@ pub enum View {
     Full,
 }
 
+impl From<View> for api::task::View{
+    fn from(item: View) -> Self {
+        match item{
+            View::Unspecified => api::task::View::Unspecified,
+            View::Basic => api::task::View::Basic,
+            View::Full => api::task::View::Full,
+        }
+    }
+}
+
+impl From<api::task::View> for View{
+    fn from(item: api::task::View) -> Self {
+        match item{
+            api::task::View::Unspecified => View::Unspecified,
+            api::task::View::Basic => View::Basic,
+            api::task::View::Full => View::Full,
+        }
+    }
+}
+
 /// Configuration for creating a new task
 #[derive(Debug)]
 pub struct TaskConfig {
@@ -33,22 +52,78 @@ pub struct TaskConfig {
     /// An ID is only freed about an hour after the task with the same ID was completed,
     /// so even if there are no task with the same ID in the queue at the moment of call, if
     /// a task with the same ID existed up to an hour earlier, the call will fail
-    pub id: Option<String>,
-    pub schedule_time: Option<NaiveDateTime>,
+    id: Option<String>,
+    schedule_time: Option<NaiveDateTime>,
     /// The deadline for requests sent to the worker. If the worker does not
     /// respond by this deadline then the request is cancelled and the attempt
     /// is marked as a `DEADLINE_EXCEEDED` failure. Cloud Tasks will retry the
     /// task according to the RetryConfig
-    pub dispatch_deadline: Option<NaiveDateTime>,
-    pub payload_type: PayloadTypeConfig,
+    dispatch_deadline: Option<Duration>,
+    payload_type: PayloadTypeConfig,
 }
 
+impl From<TaskConfig> for api::Task {
+    fn from(item: TaskConfig) -> Self {
+        Self{
+            name: item.id.unwrap_or("".to_string()),
+            schedule_time: item.schedule_time.map(convert_timestamp),
+            create_time: None,
+            dispatch_deadline: item.dispatch_deadline.map(convert_duration),
+            dispatch_count: 0,
+            response_count: 0,
+            first_attempt: None,
+            last_attempt: None,
+            view: 0,
+            payload_type: Some(item.payload_type.into())
+        }
+    }
+}
+
+impl TaskConfig{
+    /// Create new AppEngine HTTP task
+    pub fn new_appengine_http_task(task: AppEngineHttpRequestConfig) -> Self{
+        Self{
+            id: None,
+            schedule_time: None,
+            dispatch_deadline: None,
+            payload_type: PayloadTypeConfig::AppEngineHttpRequest(task)
+        }
+    }
+    /// Create new HTTP task
+    pub fn new_http_task(task: HttpRequestConfig) -> Self{
+        Self{
+            id: None,
+            schedule_time: None,
+            dispatch_deadline: None,
+            payload_type: PayloadTypeConfig::HttpRequest(task)
+        }
+    }
+    /// Set Task ID
+    /// Parent is the name of the queue the task should go into
+    /// ID is the ID of the task
+    pub fn id(mut self, parent: &str, id: &str) -> Self {
+        self.id.replace(format!("{}/{}", parent, id));
+        self
+    }
+    /// Schedule Task for a specific time
+    pub fn schedule_time(mut self, time: NaiveDateTime) -> Self {
+        self.schedule_time.replace(time);
+        self
+    }
+    /// Set Dispatch deadline
+    pub fn dispatch_deadline(mut self, deadline: Duration) -> Self {
+        self.dispatch_deadline.replace(deadline);
+        self
+    }
+}
+
+/// Describes Cloud Task delivery attempts
 #[derive(Clone, Debug)]
 pub struct Attempt {
-    pub schedule_time: Option<NaiveDateTime>,
-    pub dispatch_time: Option<NaiveDateTime>,
-    pub response_time: Option<NaiveDateTime>,
-    pub response_status: Option<Status>,
+    pub(crate) schedule_time: Option<NaiveDateTime>,
+    pub(crate) dispatch_time: Option<NaiveDateTime>,
+    pub(crate) response_time: Option<NaiveDateTime>,
+    pub(crate) response_status: Option<Status>,
 }
 
 impl Attempt{
@@ -66,12 +141,12 @@ impl Attempt{
     }
     ///The time that this attempt was scheduled.
     pub fn response_status(&self) -> Option<&Status> {
-        self.response_status.as_deref()
+        self.response_status.as_ref()
     }
 }
 
 /// Represents a task
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Task {
     pub(crate) client: Client,
     pub(crate) name: String,
@@ -113,11 +188,11 @@ impl Task {
     }
     /// The status of the task's first attempt.
     pub fn first_attempt(&self) -> Option<&Attempt> {
-        self.first_attempt.as_deref()
+        self.first_attempt.as_ref()
     }
     /// The status of the task's last attempt.
     pub fn last_attempt(&self) -> Option<&Attempt> {
-        self.last_attempt.as_deref()
+        self.last_attempt.as_ref()
     }
     /// The view specifies which subset of the Task has been returned.
     pub fn view(&self) -> View {
@@ -125,6 +200,6 @@ impl Task {
     }
     /// The message to send to the worker. May be absent in Basic view
     pub fn payload_type(&self) -> Option<&PayloadType> {
-        self.payload_type.as_deref()
+        self.payload_type.as_ref()
     }
 }
