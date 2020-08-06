@@ -3,7 +3,6 @@ use std::fs::File;
 use std::sync::Arc;
 
 use tokio::sync::Mutex;
-use tonic::metadata::MetadataValue;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 use tonic::{IntoRequest, Request};
 
@@ -131,7 +130,7 @@ impl Client {
         // Add routing metadata
         request.metadata_mut().insert(
             ROUTING_METADATA_KEY,
-            MetadataValue::from_str(format!("name={}", name).as_str()).unwrap(),
+            format!("name={}", name).parse().unwrap(),
         );
         let response = self.service.get_queue(request).await?;
         let queue = response.into_inner();

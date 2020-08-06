@@ -34,7 +34,7 @@ impl Queue {
         let mut request = self.client.construct_request(request).await?;
         request.metadata_mut().insert(
             ROUTING_METADATA_KEY,
-            MetadataValue::from_str(format!("parent={}", self.name.clone()).as_str()).unwrap(),
+            format!("parent={}", self.name.clone()).parse().unwrap(),
         );
         let response = self.client.service.create_task(request).await?;
         let task = response.into_inner();
