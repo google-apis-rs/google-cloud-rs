@@ -33,6 +33,9 @@ impl Queue {
     }
 
     /// Create a new task in this queue
+    /// Requires the following roles on service account:
+    /// - roles/cloudtasks.viewer
+    /// - roles/cloudtasks.enqueuer
     pub async fn new_task(&mut self, config: TaskConfig) -> Result<Task, Error>{
         let request = api::CreateTaskRequest{
             parent: self.name.clone(),
