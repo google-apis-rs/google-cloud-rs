@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 use tonic::{IntoRequest, Request};
+use tonic::metadata::MetadataValue;
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::tasks::api;
@@ -123,7 +124,7 @@ impl Client {
         };
         let mut request = self.construct_request(request).await?;
         // Add routing metadata
-        request.metadata_mut().insert(ROUTING_METADATA_KEY, format!("name:{}", name).parse().unwrap());
+        request.metadata_mut().insert(ROUTING_METADATA_KEY, MetadataValue::from_str(format!("name:{}", name).as_str()).unwrap());
         let response = self.service.get_queue(request).await?;
         let queue = response.into_inner();
 
