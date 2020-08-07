@@ -89,17 +89,23 @@ impl Client {
         let mut page_token = String::default();
 
         loop {
+            let parent = format!(
+                "projects/{0}/locations/{1}",
+                self.project_name.as_str(),
+                self.location_id.as_str()
+            );
             let request = api::ListQueuesRequest {
-                parent: format!(
-                    "projects/{0}/locations/{1}",
-                    self.project_name.as_str(),
-                    self.location_id.as_str()
-                ),
+                parent: parent.clone(),
                 filter: filter.to_string(),
                 page_size,
                 page_token,
             };
-            let request = self.construct_request(request).await?;
+            let mut request = self.construct_request(request).await?;
+            // Add routing metadata
+            request.metadata_mut().insert(
+                ROUTING_METADATA_KEY,
+                format!("parent={}", parent).parse().unwrap(),
+            );
             let response = self.service.list_queues(request).await?;
             let response = response.into_inner();
             page_token = response.next_page_token;
