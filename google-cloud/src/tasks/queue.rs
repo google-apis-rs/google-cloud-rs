@@ -42,6 +42,7 @@ impl Queue {
     }
 
     /// Get task from this queue by ID (name)
+    /// Only the `id` part of the task name should be supplied
     pub async fn get_task(&mut self, task_id: &str, view: Option<View>) -> Result<Task, Error> {
         let name = format!("{}/{}", self.name.clone(), task_id);
         let view : api::task::View = view.unwrap_or_default().into();

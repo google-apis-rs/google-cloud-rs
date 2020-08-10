@@ -203,6 +203,11 @@ impl From<(Client, api::Task)> for Task {
 }
 
 impl Task {
+    /// Returns the unique identifier within its queue
+    pub fn id(&self) -> &str {
+        self.name.rsplit('/').next().unwrap()
+    }
+
     /// The task's full name.
     pub fn name(&self) -> &str {
         self.name.as_str()
