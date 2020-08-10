@@ -1,8 +1,8 @@
-use crate::tasks::Client;
+use crate::tasks::{Client, ROUTING_METADATA_KEY};
 use crate::tasks::{
     api, convert_status, duration_to_prost, prost_to_duration, prost_to_timestamp,
     timestamp_to_prost, AppEngineHttpRequestConfig, HttpRequestConfig, PayloadType,
-    PayloadTypeConfig,
+    PayloadTypeConfig, Error
 };
 use chrono::{Duration, NaiveDateTime};
 use tonic::Status;
@@ -25,6 +25,12 @@ pub enum View {
     ///
     /// Authorization for Full requires `cloudtasks.tasks.fullView` permission on the resource.
     Full,
+}
+
+impl Default for View {
+    fn default() -> Self {
+        Self::Unspecified
+    }
 }
 
 impl From<View> for api::task::View {
@@ -236,5 +242,17 @@ impl Task {
     /// The message to send to the worker. May be absent in Basic view
     pub fn payload_type(&self) -> Option<&PayloadType> {
         self.payload_type.as_ref()
+    }
+
+    /// Delete this task
+    pub async fn delete_task(mut self) -> Result<(), Error> {
+        let request = api::DeleteTaskRequest{ name: name.clone() };
+        let mut request = self.client.construct_request(request).await?;
+        request.metadata_mut().insert(
+            ROUTING_METADATA_KEY,
+            format!("name={}", name).parse().unwrap(),
+        );
+        let response = self.client.service.delete_task(request).await?;
+        Ok(response.into_inner())
     }
 }

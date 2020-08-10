@@ -1,4 +1,4 @@
-use crate::tasks::{api, TaskConfig, ROUTING_METADATA_KEY};
+use crate::tasks::{api, TaskConfig, ROUTING_METADATA_KEY, View};
 use crate::tasks::{Client, Error, Task};
 
 /// Represents a Queue
@@ -37,6 +37,21 @@ impl Queue {
             format!("parent={}", self.name.clone()).parse().unwrap(),
         );
         let response = self.client.service.create_task(request).await?;
+        let task = response.into_inner();
+        Ok((self.client.clone(), task).into())
+    }
+
+    /// Get task from this queue by ID (name)
+    pub async fn get_task(&mut self, task_id: &str, view: Option<View>) -> Result<Task, Error> {
+        let name = format!("{}/{}", self.name.clone(), task_id);
+        let view : api::task::View = view.unwrap_or_default().into();
+        let request = api::GetTaskRequest{ name: name.clone(), response_view: view as i32 };
+        let mut request = self.client.construct_request(request).await?;
+        request.metadata_mut().insert(
+            ROUTING_METADATA_KEY,
+            format!("name={}", name).parse().unwrap(),
+        );
+        let response = self.client.service.get_task(request).await?;
         let task = response.into_inner();
         Ok((self.client.clone(), task).into())
     }
