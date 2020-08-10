@@ -4,11 +4,10 @@ mod datastore;
 mod pubsub;
 #[cfg(feature = "storage")]
 mod storage;
-#[cfg(feature = "vision")]
-mod vision;
 #[cfg(feature = "tasks")]
 mod tasks;
-
+#[cfg(feature = "vision")]
+mod vision;
 
 use crate::authorize::ApplicationCredentials;
 

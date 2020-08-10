@@ -1,4 +1,4 @@
-use crate::tasks::{api, TaskConfig, ROUTING_METADATA_KEY, View};
+use crate::tasks::{api, TaskConfig, View, ROUTING_METADATA_KEY};
 use crate::tasks::{Client, Error, Task};
 
 /// Represents a Queue
@@ -45,8 +45,11 @@ impl Queue {
     /// Only the `id` part of the task name should be supplied
     pub async fn get_task(&mut self, task_id: &str, view: Option<View>) -> Result<Task, Error> {
         let name = format!("{}/tasks/{}", self.name.clone(), task_id);
-        let view : api::task::View = view.unwrap_or_default().into();
-        let request = api::GetTaskRequest{ name: name.clone(), response_view: view as i32 };
+        let view: api::task::View = view.unwrap_or_default().into();
+        let request = api::GetTaskRequest {
+            name: name.clone(),
+            response_view: view as i32,
+        };
         let mut request = self.client.construct_request(request).await?;
         request.metadata_mut().insert(
             ROUTING_METADATA_KEY,

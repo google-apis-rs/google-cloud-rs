@@ -1,9 +1,9 @@
-use crate::tasks::{Client, ROUTING_METADATA_KEY};
 use crate::tasks::{
     api, convert_status, duration_to_prost, prost_to_duration, prost_to_timestamp,
-    timestamp_to_prost, AppEngineHttpRequestConfig, HttpRequestConfig, PayloadType,
-    PayloadTypeConfig, Error
+    timestamp_to_prost, AppEngineHttpRequestConfig, Error, HttpRequestConfig, PayloadType,
+    PayloadTypeConfig,
 };
+use crate::tasks::{Client, ROUTING_METADATA_KEY};
 use chrono::{Duration, NaiveDateTime};
 use tonic::Status;
 
@@ -251,7 +251,9 @@ impl Task {
 
     /// Delete this task
     pub async fn delete_task(mut self) -> Result<(), Error> {
-        let request = api::DeleteTaskRequest{ name: self.name.clone() };
+        let request = api::DeleteTaskRequest {
+            name: self.name.clone(),
+        };
         let mut request = self.client.construct_request(request).await?;
         request.metadata_mut().insert(
             ROUTING_METADATA_KEY,
