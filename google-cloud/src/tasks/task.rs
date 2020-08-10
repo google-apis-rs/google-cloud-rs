@@ -246,11 +246,11 @@ impl Task {
 
     /// Delete this task
     pub async fn delete_task(mut self) -> Result<(), Error> {
-        let request = api::DeleteTaskRequest{ name: name.clone() };
+        let request = api::DeleteTaskRequest{ name: self.name.clone() };
         let mut request = self.client.construct_request(request).await?;
         request.metadata_mut().insert(
             ROUTING_METADATA_KEY,
-            format!("name={}", name).parse().unwrap(),
+            format!("name={}", self.name()).parse().unwrap(),
         );
         let response = self.client.service.delete_task(request).await?;
         Ok(response.into_inner())
