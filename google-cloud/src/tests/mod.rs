@@ -6,6 +6,9 @@ mod pubsub;
 mod storage;
 #[cfg(feature = "vision")]
 mod vision;
+#[cfg(feature = "tasks")]
+mod tasks;
+
 
 use crate::authorize::ApplicationCredentials;
 
