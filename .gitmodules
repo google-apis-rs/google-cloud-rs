@@ -1,3 +1,0 @@
-[submodule "protos"]
-	path = google-cloud/protos
-	url = https://github.com/googleapis/googleapis
