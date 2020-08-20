@@ -19,8 +19,6 @@ jobs:
           # - windows-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: true
       - name: Install ${{ matrix.rust }} toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -48,8 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: true
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
