@@ -49,7 +49,7 @@ pub enum ConvertError {
     },
 }
 
-/// The error type for value conversions.
+/// The error type for authentication-related errors.
 #[derive(Debug, Error)]
 pub enum AuthError {
     /// A JWT-related error.
