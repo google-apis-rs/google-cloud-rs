@@ -1,6 +1,11 @@
 google-cloud-derive
 ===================
 
+![CI](https://github.com/google-apis-rs/google-cloud-rs/workflows/CI/badge.svg)
+![version](https://img.shields.io/crates/v/google-cloud-derive)
+![docs](https://docs.rs/google-cloud-derive/badge.svg)
+![license](https://img.shields.io/crates/l/google-cloud-derive)
+
 Derive macros for the [**`google-cloud`**](https://crates.io/crates/google-cloud) crate.
 
 This crate is not intended to be used on its own.  

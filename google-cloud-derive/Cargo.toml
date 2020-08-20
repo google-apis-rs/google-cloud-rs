@@ -6,6 +6,7 @@ authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
 
+[badges]
 maintenance = { status = "actively-developed" }
 
 [lib]
