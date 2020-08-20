@@ -20,9 +20,9 @@ Implemented services
 
 | Service                                               | Feature name | Status          |
 | ----------------------------------------------------- | ------------ | --------------- |
-| [**Pub/Sub**](https://cloud.google.com/pubsub)        | `pubsub`     | **Done**        |
-| [**Datastore**](https://cloud.google.com/datastore)   | `datastore`  | **Done**        |
-| [**Cloud Storage**](https://cloud.google.com/storage) | `storage`    | **Done**        |
+| [**Pub/Sub**](https://cloud.google.com/pubsub)        | `pubsub`     | **Complete**    |
+| [**Datastore**](https://cloud.google.com/datastore)   | `datastore`  | **Complete**    |
+| [**Cloud Storage**](https://cloud.google.com/storage) | `storage`    | **Complete**    |
 | [**Cloud Vision**](https://cloud.google.com/vision)   | `vision`     | **In progress** |
 | [**Cloud Tasks**](https://cloud.google.com/tasks)     | `tasks`      | **In progress** |
 
