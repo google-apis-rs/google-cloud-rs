@@ -50,7 +50,7 @@ impl Entity {
 
 /// Trait for converting a type to a Datastore entity (key + value).
 pub trait IntoEntity {
-    /// Attempts to construct a value of this type from the passed Datastore value.
+    /// Attempts to convert the type to a Datastore entity.
     /// Fails if the top level value is not a `Value::EntityValue`.
     fn into_entity(self) -> Result<Entity, ConvertError>;
 }
