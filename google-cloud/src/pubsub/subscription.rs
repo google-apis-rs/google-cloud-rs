@@ -75,7 +75,7 @@ impl Subscription {
         self.receive_internal(None).await
     }
 
-    /// Receive the next message from the subscription, or until timeout.
+    /// Receive the next message from the subscription, or exits when timeout is reached.
     pub async fn receive_timeout(&mut self, timeout: StdDuration) -> Option<Message> {
         self.receive_internal(Some(timeout)).await
     }
