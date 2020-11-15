@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::time::{Instant, Duration as StdDuration};
 
 use chrono::Duration;
 
@@ -71,7 +72,17 @@ impl Subscription {
 
     /// Receive the next message from the subscription.
     pub async fn receive(&mut self) -> Option<Message> {
-        loop {
+        self.receive_internal(None).await
+    }
+
+    /// Receive the next message from the subscription, or until timeout.
+    pub async fn receive_timeout(&mut self, timeout: StdDuration) -> Option<Message> {
+        self.receive_internal(Some(timeout)).await
+    }
+
+    async fn receive_internal(&mut self, timeout: Option<StdDuration>) -> Option<Message> {
+        let receive_begin = Instant::now();
+        while timeout.is_none() || &receive_begin.elapsed() <= timeout.as_ref().unwrap() {
             if let Some(handle) = self.buffer.pop_front() {
                 let message = handle.message.unwrap();
                 let timestamp = message.publish_time.unwrap();
@@ -87,7 +98,7 @@ impl Subscription {
                         timestamp.nanos as u32,
                     ),
                 };
-                break Some(message);
+                return Some(message);
             } else {
                 let response = self.pull().await;
                 if let Ok(messages) = response {
@@ -95,6 +106,7 @@ impl Subscription {
                 }
             }
         }
+        None
     }
 
     /// Delete the subscription.
