@@ -1,5 +1,5 @@
 use std::collections::{HashMap, VecDeque};
-use std::time::{Instant, Duration as StdDuration};
+use std::time::{Duration as StdDuration, Instant};
 
 use chrono::Duration;
 
