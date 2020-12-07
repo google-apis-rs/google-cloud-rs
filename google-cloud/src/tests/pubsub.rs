@@ -109,6 +109,15 @@ async fn pubsub_sends_and_receives_message_successfully() {
     assert_ok!(json::from_slice::<Message>(received.data()));
     println!("OK !");
 
+    let received = subscription
+        .receive_with_options(pubsub::ReceiveOptions {
+            return_immediately: true,
+            max_messages: 1,
+        })
+        .await;
+    assert_eq!(received.is_none(), true);
+    println!("OK !");
+
     //? Delete the subscription.
     print!("deleting subscription... ");
     io::stdout().flush().unwrap();

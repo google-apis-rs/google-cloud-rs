@@ -47,9 +47,12 @@ impl Default for SubscriptionConfig {
     }
 }
 
+/// Optional parameters for pull.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReceiveOptions {
+    /// return immediately if there are no messages in the subscription
     pub return_immediately: bool,
+    /// Number of messages to retrieve at once
     pub max_messages: i32,
 }
 
@@ -109,8 +112,10 @@ impl Subscription {
                 };
                 break Some(message);
             } else {
-                let response = self.pull(&opts).await;
-                if let Ok(messages) = response {
+                if let Ok(messages) = self.pull(&opts).await {
+                    if messages.is_empty() && opts.return_immediately {
+                        break None;
+                    }
                     self.buffer.extend(messages);
                 }
             }
