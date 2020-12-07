@@ -47,6 +47,21 @@ impl Default for SubscriptionConfig {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReceiveOptions {
+    pub return_immediately: bool,
+    pub max_messages: i32,
+}
+
+impl Default for ReceiveOptions {
+    fn default() -> Self {
+        Self {
+            return_immediately: false,
+            max_messages: 5,
+        }
+    }
+}
+
 /// Represents a subscription, tied to a topic.
 #[derive(Clone)]
 pub struct Subscription {
@@ -71,6 +86,11 @@ impl Subscription {
 
     /// Receive the next message from the subscription.
     pub async fn receive(&mut self) -> Option<Message> {
+        self.receive_with_options(Default::default()).await
+    }
+
+    /// Receive the next message from the subscription with options.
+    pub async fn receive_with_options(&mut self, opts: ReceiveOptions) -> Option<Message> {
         loop {
             if let Some(handle) = self.buffer.pop_front() {
                 let message = handle.message.unwrap();
@@ -89,7 +109,7 @@ impl Subscription {
                 };
                 break Some(message);
             } else {
-                let response = self.pull().await;
+                let response = self.pull(&opts).await;
                 if let Ok(messages) = response {
                     self.buffer.extend(messages);
                 }
@@ -108,11 +128,14 @@ impl Subscription {
         Ok(())
     }
 
-    pub(crate) async fn pull(&mut self) -> Result<Vec<api::ReceivedMessage>, Error> {
+    pub(crate) async fn pull(
+        &mut self,
+        opts: &ReceiveOptions,
+    ) -> Result<Vec<api::ReceivedMessage>, Error> {
         let request = api::PullRequest {
             subscription: self.name.clone(),
-            return_immediately: false,
-            max_messages: 5,
+            return_immediately: opts.return_immediately,
+            max_messages: opts.max_messages,
         };
         let request = self.client.construct_request(request).await?;
         let response = self.client.subscriber.pull(request).await?;
