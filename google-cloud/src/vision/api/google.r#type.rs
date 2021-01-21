@@ -140,7 +140,7 @@ pub struct Color {
     /// If omitted, this color object is to be rendered as a solid color
     /// (as if the alpha value had been explicitly given with a value of 1.0).
     #[prost(message, optional, tag = "4")]
-    pub alpha: ::std::option::Option<f32>,
+    pub alpha: ::core::option::Option<f32>,
 }
 /// An object representing a latitude/longitude pair. This is expressed as a pair
 /// of doubles representing degrees latitude and degrees longitude. Unless

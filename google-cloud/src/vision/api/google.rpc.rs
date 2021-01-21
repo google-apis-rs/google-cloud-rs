@@ -62,9 +62,9 @@ pub struct Status {
     /// [google.rpc.Status.details][google.rpc.Status.details] field, or localized
     /// by the client.
     #[prost(string, tag = "2")]
-    pub message: std::string::String,
+    pub message: ::prost::alloc::string::String,
     /// A list of messages that carry the error details.  There is a common set of
     /// message types for APIs to use.
     #[prost(message, repeated, tag = "3")]
-    pub details: ::std::vec::Vec<::prost_types::Any>,
+    pub details: ::prost::alloc::vec::Vec<::prost_types::Any>,
 }
