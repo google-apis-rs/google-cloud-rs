@@ -21,7 +21,7 @@ use crate::datastore::{
 pub struct Client {
     pub(crate) project_name: String,
     pub(crate) service: DatastoreClient<Channel>,
-    pub(crate) token_manager: Arc<Mutex<TokenManager>>,
+    pub(crate) token_manager: Option<Arc<Mutex<TokenManager>>>,
 }
 
 impl Client {
@@ -37,10 +37,15 @@ impl Client {
         request: T,
     ) -> Result<Request<T>, Error> {
         let mut request = request.into_request();
-        let token = self.token_manager.lock().await.token().await?;
-        let metadata = request.metadata_mut();
-        metadata.insert("authorization", token.parse().unwrap());
-        Ok(request)
+
+        if let Some(token_manager) = &self.token_manager {
+            let token = token_manager.lock().await.token().await?;
+            let metadata = request.metadata_mut();
+            metadata.insert("authorization", token.parse().unwrap());
+            Ok(request)
+        } else {
+            Ok(request)
+        }
     }
 
     /// Creates a new client for the specified project.
@@ -52,6 +57,29 @@ impl Client {
         let creds = json::from_reader(file)?;
 
         Client::from_credentials(project_name, creds).await
+    }
+
+    /// Creates a test client, defaulting to localhost:8077
+    ///
+    /// This constructor allows for alternative endpoints via the GCP_DOMAIN_NAME env var
+    /// It does not use TLS, facilitating use this with local datastore emulators
+    pub async fn new_test_client(project_name: impl Into<String>) -> Result<Client, Error> {
+        let gcp_domain_name = match std::env::var_os("GCP_DOMAIN_NAME") {
+            Some(os_str) => os_str.into_string().unwrap(),
+            None => "localhost:8077".to_string(),
+        };
+        let gcp_endpoint = format!("http://{}", gcp_domain_name);
+
+        let channel = Channel::from_shared(gcp_endpoint)
+            .unwrap()
+            .connect()
+            .await?;
+
+        Ok(Client {
+            project_name: project_name.into(),
+            service: DatastoreClient::new(channel),
+            token_manager: None,
+        })
     }
 
     /// Creates a new client for the specified project with custom credentials.
@@ -71,10 +99,10 @@ impl Client {
         Ok(Client {
             project_name: project_name.into(),
             service: DatastoreClient::new(channel),
-            token_manager: Arc::new(Mutex::new(TokenManager::new(
+            token_manager: Some(Arc::new(Mutex::new(TokenManager::new(
                 creds,
                 Client::SCOPES.as_ref(),
-            ))),
+            )))),
         })
     }
 
