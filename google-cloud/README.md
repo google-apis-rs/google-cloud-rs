@@ -1,10 +1,10 @@
 google-cloud
 ============
 
-![CI](https://github.com/google-apis-rs/google-cloud-rs/workflows/CI/badge.svg)
-![version](https://img.shields.io/crates/v/google-cloud)
-![docs](https://docs.rs/google-cloud/badge.svg)
-![license](https://img.shields.io/crates/l/google-cloud)
+[![CI](https://github.com/google-apis-rs/google-cloud-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/google-apis-rs/google-cloud-rs/actions/workflows/ci.yaml)
+[![version](https://img.shields.io/crates/v/google-cloud)](https://crates.io/crates/google-cloud)
+[![docs](https://docs.rs/google-cloud/badge.svg)](https://docs.rs/google-cloud)
+[![license](https://img.shields.io/crates/l/google-cloud)](https://github.com/google-apis-rs/google-cloud-rs#license)
 
 Asynchronous Rust bindings for Google Cloud Platform gRPC APIs.
 

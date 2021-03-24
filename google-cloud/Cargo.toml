@@ -1,7 +1,7 @@
 [package]
 name = "google-cloud"
+version = "0.2.0"
 description = "Asynchronous Rust bindings for Google Cloud Platform gRPC APIs"
-version = "0.1.0"
 authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
 edition = "2018"
 categories = ["web-programming", "network-programming", "asynchronous"]
@@ -15,7 +15,7 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 # Derive macros
-google-cloud-derive = { version = "=0.1.0", path = "../google-cloud-derive", optional = true }
+google-cloud-derive = { version = "0.2.0", path = "../google-cloud-derive", optional = true }
 
 tonic = { version = "0.4.1", features = ["tls", "prost"] }
 tokio = { version = "1.4.0", features = ["macros", "fs"] }
