@@ -10,6 +10,7 @@ use crate::storage::api::object_acl::ObjectAclResource;
 pub struct BucketResources {
     /// Value: "storage#buckets"
     pub kind: String,
+    #[serde(default)]
     pub items: Vec<BucketResource>,
 }
 
