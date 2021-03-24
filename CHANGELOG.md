@@ -17,6 +17,19 @@ Unreleased
 
 ### Changed
 
+v0.2.1 - 2021-03-24
+-------------------
+
+### Added
+
+### Removed
+
+### Fixed
+
+- [storage] Fixed user values not being percent-encoded (#46)
+
+### Changed
+
 v0.2.0 - 2021-03-24
 -------------------
 

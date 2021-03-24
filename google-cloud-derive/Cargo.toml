@@ -1,6 +1,6 @@
 [package]
 name = "google-cloud-derive"
-version = "0.2.0"
+version = "0.2.1"
 description = "Derive macros for the `google-cloud` library"
 authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
 edition = "2018"
