@@ -60,7 +60,7 @@ impl Default for ReceiveOptions {
     fn default() -> Self {
         Self {
             return_immediately: false,
-            max_messages: 5,
+            max_messages: 1,
         }
     }
 }
