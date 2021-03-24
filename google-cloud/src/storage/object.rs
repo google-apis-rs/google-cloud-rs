@@ -1,3 +1,5 @@
+use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
+
 use crate::storage::{Client, Error};
 
 /// Represents a Cloud Storage bucket.
@@ -45,7 +47,12 @@ impl Object {
     pub async fn get(&mut self) -> Result<Vec<u8>, Error> {
         let client = &mut self.client;
         let inner = &client.client;
-        let uri = format!("{}/b/{}/o/{}", Client::ENDPOINT, self.bucket, self.name);
+        let uri = format!(
+            "{}/b/{}/o/{}",
+            Client::ENDPOINT,
+            utf8_percent_encode(&self.bucket, NON_ALPHANUMERIC),
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
+        );
 
         let token = client.token_manager.lock().await.token().await?;
         let request = inner
@@ -63,7 +70,12 @@ impl Object {
     pub async fn delete(self) -> Result<(), Error> {
         let client = self.client;
         let inner = client.client;
-        let uri = format!("{}/b/{}/o/{}", Client::ENDPOINT, self.bucket, self.name);
+        let uri = format!(
+            "{}/b/{}/o/{}",
+            Client::ENDPOINT,
+            utf8_percent_encode(&self.bucket, NON_ALPHANUMERIC),
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
+        );
 
         let token = client.token_manager.lock().await.token().await?;
         let request = inner
