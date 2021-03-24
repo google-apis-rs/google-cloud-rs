@@ -3,6 +3,7 @@ use std::fs::File;
 use std::sync::Arc;
 
 use json::json;
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use tokio::sync::Mutex;
 
 use crate::authorize::{ApplicationCredentials, TokenManager};
@@ -71,7 +72,11 @@ impl Client {
     /// Get a handle to a specific bucket.
     pub async fn bucket(&mut self, name: &str) -> Result<Bucket, Error> {
         let inner = &self.client;
-        let uri = format!("{}/b/{}", Client::ENDPOINT, name);
+        let uri = format!(
+            "{}/b/{}",
+            Client::ENDPOINT,
+            utf8_percent_encode(name, NON_ALPHANUMERIC),
+        );
 
         let token = self.token_manager.lock().await.token().await?;
         let request = inner

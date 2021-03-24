@@ -1,3 +1,5 @@
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+
 use crate::storage::api::object::ObjectResource;
 use crate::storage::{Client, Error, Object};
 
@@ -30,7 +32,11 @@ impl Bucket {
     ) -> Result<Object, Error> {
         let client = &mut self.client;
         let inner = &client.client;
-        let uri = format!("{}/b/{}/o", Client::UPLOAD_ENDPOINT, self.name);
+        let uri = format!(
+            "{}/b/{}/o",
+            Client::UPLOAD_ENDPOINT,
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
+        );
 
         let data = data.into();
         let token = client.token_manager.lock().await.token().await?;
@@ -57,7 +63,12 @@ impl Bucket {
     pub async fn object(&mut self, name: &str) -> Result<Object, Error> {
         let client = &mut self.client;
         let inner = &client.client;
-        let uri = format!("{}/b/{}/o/{}", Client::ENDPOINT, self.name, name);
+        let uri = format!(
+            "{}/b/{}/o/{}",
+            Client::ENDPOINT,
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
+            utf8_percent_encode(name, NON_ALPHANUMERIC),
+        );
 
         let token = client.token_manager.lock().await.token().await?;
         let request = inner
@@ -79,7 +90,11 @@ impl Bucket {
     pub async fn delete(self) -> Result<(), Error> {
         let client = self.client;
         let inner = client.client;
-        let uri = format!("{}/b/{}", Client::ENDPOINT, self.name);
+        let uri = format!(
+            "{}/b/{}",
+            Client::ENDPOINT,
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
+        );
 
         let token = client.token_manager.lock().await.token().await?;
         let request = inner
