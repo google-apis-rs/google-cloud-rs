@@ -4,6 +4,8 @@ mod datastore;
 mod pubsub;
 #[cfg(feature = "storage")]
 mod storage;
+#[cfg(feature = "tasks")]
+mod tasks;
 #[cfg(feature = "vision")]
 mod vision;
 
