@@ -16,7 +16,7 @@ macro_rules! assert_ok {
 
 async fn setup_client() -> Result<datastore::Client, datastore::Error> {
     // TODO env!("GCP_PROJECT")
-    datastore::Client::new("dl-datastore-staging".to_string()).await
+    datastore::Client::new("dl-datastore-stage".to_string()).await
 }
 
 #[tokio::test]

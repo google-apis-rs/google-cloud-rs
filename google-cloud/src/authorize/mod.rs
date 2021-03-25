@@ -104,7 +104,6 @@ impl TokenManager {
 
     pub(crate) async fn from_metadata_server() -> TokenManager {
         let token_metadata = get_metadata().await.unwrap();
-        // println!("{:?}", token_metadata);
 
         // Hack: ApplicationCredentials are required by the type system
         // But given the behavior of the `token` method,
@@ -149,7 +148,6 @@ impl TokenManager {
                 // need to test
                 //
                 let token_metadata = get_metadata().await.unwrap();
-                println!("\n\nNEW\n\n{:?}\n\n", token_metadata);
                 let lifetime = chrono::Duration::seconds(token_metadata.expires_in - 1);
                 let token_value = TokenValue::Bearer(token_metadata.access_token);
                 let token_contents = token_value.to_string();
