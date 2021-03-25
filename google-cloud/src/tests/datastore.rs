@@ -15,8 +15,8 @@ macro_rules! assert_ok {
 }
 
 async fn setup_client() -> Result<datastore::Client, datastore::Error> {
-    let creds = super::load_creds();
-    datastore::Client::from_credentials(env!("GCP_TEST_PROJECT"), creds).await
+    // TODO env!("GCP_PROJECT")
+    datastore::Client::new("dl-datastore-staging".to_string()).await
 }
 
 #[tokio::test]

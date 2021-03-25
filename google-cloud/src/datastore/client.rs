@@ -2,6 +2,7 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
+use std::str;
 use std::sync::Arc;
 
 use tokio::sync::Mutex;
@@ -47,11 +48,33 @@ impl Client {
     ///
     /// Credentials are looked up in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
     pub async fn new(project_name: impl Into<String>) -> Result<Client, Error> {
-        let path = env::var("GOOGLE_APPLICATION_CREDENTIALS")?;
-        let file = File::open(path)?;
-        let creds = json::from_reader(file)?;
+        if let Ok(path) = env::var("GOOGLE_APPLICATION_CREDENTIALS") {
+            let file = File::open(path)?;
+            let creds = json::from_reader(file)?;
+            Client::from_credentials(project_name, creds).await
+        } else {
+            Client::from_metadata(project_name).await
+        }
+    }
 
-        Client::from_credentials(project_name, creds).await
+    /// Creates a new client from the instance metadata
+    pub async fn from_metadata(project_name: impl Into<String>) -> Result<Client, Error> {
+        let tls_config = ClientTlsConfig::new()
+            .ca_certificate(Certificate::from_pem(TLS_CERTS))
+            .domain_name(Client::DOMAIN_NAME);
+
+        let channel = Channel::from_static(Client::ENDPOINT)
+            .tls_config(tls_config)?
+            .connect()
+            .await?;
+
+        let token_manager = TokenManager::from_metadata_server().await;
+
+        Ok(Client {
+            project_name: project_name.into(),
+            service: DatastoreClient::new(channel),
+            token_manager: Arc::new(Mutex::new(token_manager)),
+        })
     }
 
     /// Creates a new client for the specified project with custom credentials.

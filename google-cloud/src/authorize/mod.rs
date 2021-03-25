@@ -56,11 +56,39 @@ pub(crate) struct TokenManager {
     scopes: String,
     creds: ApplicationCredentials,
     current_token: Option<Token>,
+    use_metadata_server: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct AuthResponse {
     access_token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GCPTokenMetadata {
+    access_token: String,
+    token_type: String,
+    expires_in: i64, // seconds to expiration
+}
+
+async fn get_metadata() -> Result<GCPTokenMetadata, hyper::Error> {
+    // See
+    // https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity#using_from_your_code
+    let auth_endpoint = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
+
+    let client = hyper::Client::default();
+    let req = hyper::Request::builder()
+        .method("GET")
+        .uri(auth_endpoint)
+        .header("Metadata-Flavor", "Google")
+        .body(hyper::Body::empty())
+        .expect("request builder");
+
+    let res = client.request(req).await?;
+    let data = hyper::body::to_bytes(res).await?;
+
+    let gcp_meta: GCPTokenMetadata = json::from_slice(&data).expect("parse json");
+    Ok(gcp_meta)
 }
 
 impl TokenManager {
@@ -70,6 +98,42 @@ impl TokenManager {
             client: Client::builder().build::<_, hyper::Body>(HttpsConnector::new()),
             scopes: scopes.join(" "),
             current_token: None,
+            use_metadata_server: true,
+        }
+    }
+
+    pub(crate) async fn from_metadata_server() -> TokenManager {
+        let token_metadata = get_metadata().await.unwrap();
+        // println!("{:?}", token_metadata);
+
+        // Hack: ApplicationCredentials are required by the type system
+        // But given the behavior of the `token` method,
+        // we can bypass it using a `current_token`.
+        let fake_creds = ApplicationCredentials {
+            cred_type: "".to_string(),
+            project_id: "".to_string(),
+            private_key_id: "".to_string(),
+            private_key: "".to_string(),
+            client_email: "".to_string(),
+            client_id: "".to_string(),
+            auth_uri: "".to_string(),
+            token_uri: "".to_string(),
+            auth_provider_x509_cert_url: "".to_string(),
+            client_x509_cert_url: "".to_string(),
+        };
+
+        let lifetime = chrono::Duration::seconds(token_metadata.expires_in - 1);
+        let current_time = chrono::Utc::now();
+
+        TokenManager {
+            creds: fake_creds,
+            client: Client::builder().build::<_, hyper::Body>(HttpsConnector::new()),
+            scopes: "".to_string(),
+            use_metadata_server: true,
+            current_token: Some(Token {
+                expiry: current_time + lifetime,
+                value: TokenValue::Bearer(token_metadata.access_token),
+            }),
         }
     }
 
@@ -78,6 +142,25 @@ impl TokenManager {
         let current_time = chrono::Utc::now();
         match self.current_token {
             Some(ref token) if token.expiry >= current_time => Ok(token.value.to_string()),
+            Some(ref token) if token.expiry >= current_time && self.use_metadata_server => {
+                //
+                // TODO
+                // logic is a little convoluted but makes a clean diff
+                // need to test
+                //
+                let token_metadata = get_metadata().await.unwrap();
+                println!("\n\nNEW\n\n{:?}\n\n", token_metadata);
+                let lifetime = chrono::Duration::seconds(token_metadata.expires_in - 1);
+                let token_value = TokenValue::Bearer(token_metadata.access_token);
+                let token_contents = token_value.to_string();
+                let token = Token {
+                    expiry: current_time + lifetime,
+                    value: token_value,
+                };
+
+                self.current_token = Some(token);
+                Ok(token_contents)
+            }
             _ => {
                 let expiry = current_time + hour;
                 let claims = json!({
