@@ -1,6 +1,6 @@
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
-use crate::storage::api::object::ObjectResource;
+use crate::storage::api::object::{ObjectResource, ObjectResources};
 use crate::storage::{Client, Error, Object};
 
 /// Represents a Cloud Storage bucket.
@@ -84,6 +84,36 @@ impl Bucket {
             self.name.clone(),
             resource.name,
         ))
+    }
+
+    /// List all existing buckets of the current project.
+    pub async fn objects(&mut self) -> Result<Vec<Object>, Error> {
+        let inner = &self.client.client;
+        let uri = format!(
+            "{}/b/{}/o",
+            Client::ENDPOINT,
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC)
+        );
+
+        let token = self.client.token_manager.lock().await.token().await?;
+        let request = inner
+            .get(uri.as_str())
+            .header("authorization", token)
+            .send();
+        let response = request.await?;
+
+        let resources = response
+            .error_for_status()?
+            .json::<ObjectResources>()
+            .await?;
+
+        let objects = resources
+            .items
+            .into_iter()
+            .map(|resource| Object::new(self.client.clone(), resource.bucket, resource.name))
+            .collect();
+
+        Ok(objects)
     }
 
     /// Delete the bucket.
