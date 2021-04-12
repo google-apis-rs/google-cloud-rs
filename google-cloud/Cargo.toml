@@ -1,57 +1,58 @@
 [package]
-name = "google-cloud"
-version = "0.2.1"
-description = "Asynchronous Rust bindings for Google Cloud Platform gRPC APIs"
 authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
-edition = "2018"
 categories = ["web-programming", "network-programming", "asynchronous"]
+description = "Asynchronous Rust bindings for Google Cloud Platform gRPC APIs"
+documentation = "https://docs.rs/google-cloud"
+edition = "2018"
 keywords = ["grpc", "futures", "async", "google", "cloud"]
 license = "MIT OR Apache-2.0"
+name = "google-cloud"
 repository = "https://github.com/google-apis-rs/google-cloud-rs"
-documentation = "https://docs.rs/google-cloud"
+version = "0.2.1"
 
 [badges]
-maintenance = { status = "actively-developed" }
+maintenance = {status = "actively-developed"}
 
 [dependencies]
 # Derive macros
-google-cloud-derive = { version = "0.2.1", path = "../google-cloud-derive", optional = true }
+google-cloud-derive = {version = "0.2.1", path = "../google-cloud-derive", optional = true}
 
-tonic = { version = "0.4.1", features = ["tls", "prost"] }
-tokio = { version = "1.4.0", features = ["macros", "fs"] }
-reqwest = { version = "0.11.2", optional = true, default_features = false, features = ["blocking", "json", "rustls-tls"] }
+futures = "0.3.13"
 hyper = "0.14.4"
 hyper-rustls = "0.22.1"
-futures = "0.3.13"
+reqwest = {version = "0.11.2", optional = true, default_features = false, features = ["blocking", "json", "rustls-tls", "stream"]}
+tokio = {version = "1.4.0", features = ["macros", "fs"]}
+tokio-util = {version = "0.6.5", features = ["compat"]}
+tonic = {version = "0.4.1", features = ["tls", "prost"]}
 
 prost = "0.7.0"
 prost-types = "0.7.0"
 
-http = "0.2.3"
 chrono = "0.4.19"
+http = "0.2.3"
 
-serde = { version = "1.0.125", features = ["derive"] }
-json = { package = "serde_json", version = "1.0.64" }
-jwt = { package = "jsonwebtoken", version = "7.2.0" }
+json = {package = "serde_json", version = "1.0.64"}
+jwt = {package = "jsonwebtoken", version = "7.2.0"}
+serde = {version = "1.0.125", features = ["derive"]}
 
 thiserror = "1.0.24"
 
-bytes = { version = "1.0.1", optional = true }
-percent-encoding = { version = "2.1.0", optional = true }
+bytes = {version = "1.0.1", optional = true}
+percent-encoding = {version = "2.1.0", optional = true}
 
 [build-dependencies]
 tonic-build = "0.4.1"
 
 [features]
+datastore = []
+datastore-derive = ["datastore", "google-cloud-derive"]
 default = []
+derive = ["datastore-derive"]
 full = ["pubsub", "datastore", "vision", "storage"]
 full-derive = ["pubsub", "datastore-derive", "vision", "storage"]
 pubsub = []
-datastore = []
-datastore-derive = ["datastore", "google-cloud-derive"]
-vision = []
 storage = ["reqwest", "percent-encoding"]
-derive = ["datastore-derive"]
+vision = []
 
 [package.metadata.docs.rs]
 all-features = true
