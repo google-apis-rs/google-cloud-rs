@@ -1,4 +1,6 @@
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+use futures::stream::TryStreamExt;
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use crate::storage::{Client, Error};
 
@@ -38,10 +40,33 @@ impl Object {
     //     Ok(())
     // }
 
-    // /// Get an object stored in the bucket.
-    // pub async fn reader(&mut self) -> Result<ObjectReader, Error> {
-    //     Ok(())
-    // }
+    /// Get an object stored in the bucket.
+    pub async fn reader(&mut self) -> Result<impl tokio::io::AsyncRead, Error> {
+        let client = &mut self.client;
+        let inner = &client.client;
+        let uri = format!(
+            "{}/b/{}/o/{}",
+            Client::ENDPOINT,
+            utf8_percent_encode(&self.bucket, NON_ALPHANUMERIC),
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
+        );
+
+        let token = client.token_manager.lock().await.token().await?;
+        let request = inner
+            .get(uri.as_str())
+            .query(&[("alt", "media")])
+            .header("authorization", token)
+            .send();
+        let response = request.await?;
+        let stream = response.error_for_status()?.bytes_stream();
+
+        // Convert the stream into an futures::io::AsyncRead.
+        // We must first convert the reqwest::Error into an futures::io::Error.
+        let stream = stream.map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e)).into_async_read();
+
+        // Convert the futures::io::AsyncRead into a tokio::io::AsyncRead.
+        Ok(stream.compat())
+    }
 
     /// Get the entire contents of the object.
     pub async fn get(&mut self) -> Result<Vec<u8>, Error> {
