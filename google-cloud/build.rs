@@ -1,6 +1,13 @@
+use std::env;
 use std::fs;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // The docs.rs build locks down write permissions and causes codegen to fail. Skip it since
+    // it's not really needed for rustdoc anyway.
+    if env::var("DOCS_RS").is_ok() {
+        return Ok(());
+    }
+
     let protos = [
         (["protos/google/pubsub/v1/pubsub.proto"], "src/pubsub/api"),
         (
