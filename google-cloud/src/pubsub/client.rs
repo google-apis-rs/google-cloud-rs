@@ -91,6 +91,7 @@ impl Client {
             labels: config.labels,
             message_storage_policy: None,
             kms_key_name: String::new(),
+            ..Default::default()
         };
         let request = self.construct_request(request).await?;
         let response = self.publisher.create_topic(request).await?;

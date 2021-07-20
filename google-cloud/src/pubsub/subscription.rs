@@ -1,6 +1,14 @@
+use crate::pubsub::api::ReceivedMessage;
 use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
 
-use chrono::Duration;
+use chrono::{Duration, NaiveDateTime};
+use futures::channel::mpsc::Sender;
+use futures::lock::Mutex;
+use futures::stream::{Stream, StreamExt};
+use futures::FutureExt;
+use futures::SinkExt;
+use tonic::Streaming;
 
 use crate::pubsub::api;
 use crate::pubsub::{Client, Error, Message};
@@ -65,6 +73,32 @@ impl Default for ReceiveOptions {
     }
 }
 
+/// Optional parameters for streaming pull
+#[derive(Debug, Clone, PartialEq)]
+pub struct StreamingOptions {
+    /// Client ID: identifies the client in the Google Cloud, state is shared between clients with
+    /// the same ID.
+    pub client_id: String,
+    /// Maximum number of un-ACK'd messages sent through the stream at any given moment. Can be
+    /// used to limit memory usage at the cost of throughput.
+    pub max_messages: i64,
+    /// ACK deadline for this stream.
+    pub ack_deadline: i32,
+    /// Filter messages resent to the subscription.
+    pub filter_redeliveries: bool,
+}
+
+impl Default for StreamingOptions {
+    fn default() -> Self {
+        Self {
+            client_id: "google-cloud-rs".into(),
+            max_messages: 0,
+            ack_deadline: 10,
+            filter_redeliveries: false,
+        }
+    }
+}
+
 /// Represents a subscription, tied to a topic.
 #[derive(Clone)]
 pub struct Subscription {
@@ -88,12 +122,15 @@ impl Subscription {
     }
 
     /// Receive the next message from the subscription.
-    pub async fn receive(&mut self) -> Option<Message> {
+    pub async fn receive(&mut self) -> Result<Option<Message>, Error> {
         self.receive_with_options(Default::default()).await
     }
 
     /// Receive the next message from the subscription with options.
-    pub async fn receive_with_options(&mut self, opts: ReceiveOptions) -> Option<Message> {
+    pub async fn receive_with_options(
+        &mut self,
+        opts: ReceiveOptions,
+    ) -> Result<Option<Message>, Error> {
         loop {
             if let Some(handle) = self.buffer.pop_front() {
                 let message = handle.message.unwrap();
@@ -110,16 +147,87 @@ impl Subscription {
                         timestamp.nanos as u32,
                     ),
                 };
-                break Some(message);
+                break Ok(Some(message));
             } else {
-                if let Ok(messages) = self.pull(&opts).await {
-                    if messages.is_empty() && opts.return_immediately {
-                        break None;
+                match self.pull(&opts).await {
+                    Ok(messages) => {
+                        if messages.is_empty() && opts.return_immediately {
+                            break Ok(None);
+                        } else {
+                            self.buffer.extend(messages);
+                        }
                     }
-                    self.buffer.extend(messages);
+                    Err(_) => {}
                 }
             }
         }
+    }
+
+    /// Start a stream of incoming messages.
+    pub async fn stream(&mut self) -> Result<impl Stream<Item = Message>, Error> {
+        self.stream_with_options(Default::default()).await
+    }
+
+    /// Start a stream of incoming messages with options.
+    pub async fn stream_with_options(
+        &mut self,
+        opts: StreamingOptions,
+    ) -> Result<impl Stream<Item = Message>, Error> {
+        let filter_redeliveries = opts.filter_redeliveries;
+        let (streaming, tx) = self.pull_streaming(opts).await?;
+        let client = self.client.clone();
+        let name = self.name.clone();
+        let tx = Arc::new(Mutex::new(tx));
+        Ok(futures::stream::unfold(streaming, |mut res| async {
+            match res.message().await {
+                Ok(Some(v)) => Some((v, res)),
+                Ok(None) => None,
+                // TODO: Better error handling?
+                Err(err) => None,
+            }
+        })
+        .then({
+            move |v| {
+                let tx = tx.clone();
+                async move {
+                    // TODO: Better end-user message acknowledgement mechanism
+                    let mut tx = tx.lock().await;
+                    tx.send(
+                        v.received_messages
+                            .iter()
+                            .map(|m| m.ack_id.clone())
+                            .collect(),
+                    )
+                    .map(|res| res.map(|()| v.received_messages).unwrap_or(vec![]))
+                    .await
+                }
+            }
+        })
+        .flat_map(|v: Vec<ReceivedMessage>| futures::stream::iter(v))
+        .filter(move |m| {
+            futures::future::ready(if filter_redeliveries {
+                m.delivery_attempt == 0
+            } else {
+                true
+            })
+        })
+        .filter(|m| futures::future::ready(m.message.is_some()))
+        .map(move |m: ReceivedMessage| {
+            let inner_msg = m.message.unwrap();
+            let raw_publish_time = inner_msg.publish_time.unwrap_or_default();
+            Message {
+                client: client.clone(),
+                subscription_name: name.clone(),
+                ack_id: m.ack_id,
+                message_id: inner_msg.message_id,
+                publish_time: NaiveDateTime::from_timestamp(
+                    raw_publish_time.seconds,
+                    raw_publish_time.nanos as u32,
+                ),
+                attributes: inner_msg.attributes,
+                data: inner_msg.data,
+            }
+        }))
     }
 
     /// Delete the subscription.
@@ -147,6 +255,32 @@ impl Subscription {
         let response = response.into_inner();
 
         Ok(response.received_messages)
+    }
+
+    pub(crate) async fn pull_streaming(
+        &mut self,
+        opts: StreamingOptions,
+    ) -> Result<(Streaming<api::StreamingPullResponse>, Sender<Vec<String>>), Error> {
+        let request = api::StreamingPullRequest {
+            subscription: self.name.clone(),
+            client_id: opts.client_id,
+            stream_ack_deadline_seconds: opts.ack_deadline,
+            ..Default::default()
+        };
+        let (tx, rx) = futures::channel::mpsc::channel(1000);
+        let request = self
+            .client
+            .construct_request(
+                futures::stream::once(futures::future::ready(request)).chain(rx.map(move |ids| {
+                    api::StreamingPullRequest {
+                        ack_ids: ids,
+                        ..Default::default()
+                    }
+                })),
+            )
+            .await?;
+        let response = self.client.subscriber.streaming_pull(request).await?;
+        Ok((response.into_inner(), tx))
     }
 }
 

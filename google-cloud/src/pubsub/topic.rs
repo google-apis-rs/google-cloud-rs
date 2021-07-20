@@ -71,6 +71,7 @@ impl Topic {
             push_config: None,
             expiration_policy: None,
             dead_letter_policy: None,
+            ..Default::default()
         };
         let request = self.client.construct_request(request).await?;
         let response = self.client.subscriber.create_subscription(request).await?;

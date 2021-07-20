@@ -98,8 +98,8 @@ pub mod key {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ArrayValue {
     /// Values in the array.
-    /// The order of this array may not be preserved if it contains a mix of
-    /// indexed and unindexed values.
+    /// The order of values in an array is preserved as long as all values have
+    /// identical settings for 'exclude_from_indexes'.
     #[prost(message, repeated, tag = "1")]
     pub values: ::prost::alloc::vec::Vec<Value>,
 }
@@ -147,8 +147,8 @@ pub mod value {
         #[prost(message, tag = "5")]
         KeyValue(super::Key),
         /// A UTF-8 encoded string value.
-        /// When `exclude_from_indexes` is false (it is indexed) , may have at most
-        /// 1500 bytes. Otherwise, may be set to at least 1,000,000 bytes.
+        /// When `exclude_from_indexes` is false (it is indexed), may have at most
+        /// 1500 bytes. Otherwise, may be set to at most 1,000,000 bytes.
         #[prost(string, tag = "17")]
         StringValue(::prost::alloc::string::String),
         /// A blob value.
@@ -208,12 +208,12 @@ pub struct EntityResult {
     /// The version of the entity, a strictly positive number that monotonically
     /// increases with changes to the entity.
     ///
-    /// This field is set for
-    /// [`FULL`][google.datastore.v1.EntityResult.ResultType.FULL] entity results.
+    /// This field is set for [`FULL`][google.datastore.v1.EntityResult.ResultType.FULL] entity
+    /// results.
     ///
-    /// For [missing][google.datastore.v1.LookupResponse.missing] entities in
-    /// `LookupResponse`, this is the version of the snapshot that was used to look
-    /// up the entity, and it is always set except for eventually consistent reads.
+    /// For [missing][google.datastore.v1.LookupResponse.missing] entities in `LookupResponse`, this
+    /// is the version of the snapshot that was used to look up the entity, and it
+    /// is always set except for eventually consistent reads.
     #[prost(int64, tag = "4")]
     pub version: i64,
     /// A cursor that points to the position after the result entity.
@@ -516,13 +516,13 @@ pub mod query_result_batch {
 /// The request for [Datastore.Lookup][google.datastore.v1.Datastore.Lookup].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LookupRequest {
-    /// The ID of the project against which to make the request.
+    /// Required. The ID of the project against which to make the request.
     #[prost(string, tag = "8")]
     pub project_id: ::prost::alloc::string::String,
     /// The options for this lookup request.
     #[prost(message, optional, tag = "1")]
     pub read_options: ::core::option::Option<ReadOptions>,
-    /// Keys of entities to look up.
+    /// Required. Keys of entities to look up.
     #[prost(message, repeated, tag = "3")]
     pub keys: ::prost::alloc::vec::Vec<Key>,
 }
@@ -548,7 +548,7 @@ pub struct LookupResponse {
 /// The request for [Datastore.RunQuery][google.datastore.v1.Datastore.RunQuery].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RunQueryRequest {
-    /// The ID of the project against which to make the request.
+    /// Required. The ID of the project against which to make the request.
     #[prost(string, tag = "8")]
     pub project_id: ::prost::alloc::string::String,
     /// Entities are partitioned into subsets, identified by a partition ID.
@@ -577,8 +577,7 @@ pub mod run_query_request {
         GqlQuery(super::GqlQuery),
     }
 }
-/// The response for
-/// [Datastore.RunQuery][google.datastore.v1.Datastore.RunQuery].
+/// The response for [Datastore.RunQuery][google.datastore.v1.Datastore.RunQuery].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RunQueryResponse {
     /// A batch of query results (always present).
@@ -588,19 +587,17 @@ pub struct RunQueryResponse {
     #[prost(message, optional, tag = "2")]
     pub query: ::core::option::Option<Query>,
 }
-/// The request for
-/// [Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction].
+/// The request for [Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BeginTransactionRequest {
-    /// The ID of the project against which to make the request.
+    /// Required. The ID of the project against which to make the request.
     #[prost(string, tag = "8")]
     pub project_id: ::prost::alloc::string::String,
     /// Options for a new transaction.
     #[prost(message, optional, tag = "10")]
     pub transaction_options: ::core::option::Option<TransactionOptions>,
 }
-/// The response for
-/// [Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction].
+/// The response for [Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BeginTransactionResponse {
     /// The transaction identifier (always present).
@@ -610,23 +607,22 @@ pub struct BeginTransactionResponse {
 /// The request for [Datastore.Rollback][google.datastore.v1.Datastore.Rollback].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RollbackRequest {
-    /// The ID of the project against which to make the request.
+    /// Required. The ID of the project against which to make the request.
     #[prost(string, tag = "8")]
     pub project_id: ::prost::alloc::string::String,
-    /// The transaction identifier, returned by a call to
+    /// Required. The transaction identifier, returned by a call to
     /// [Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction].
     #[prost(bytes = "vec", tag = "1")]
     pub transaction: ::prost::alloc::vec::Vec<u8>,
 }
-/// The response for
-/// [Datastore.Rollback][google.datastore.v1.Datastore.Rollback]. (an empty
-/// message).
+/// The response for [Datastore.Rollback][google.datastore.v1.Datastore.Rollback].
+/// (an empty message).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RollbackResponse {}
 /// The request for [Datastore.Commit][google.datastore.v1.Datastore.Commit].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CommitRequest {
-    /// The ID of the project against which to make the request.
+    /// Required. The ID of the project against which to make the request.
     #[prost(string, tag = "8")]
     pub project_id: ::prost::alloc::string::String,
     /// The type of commit to perform. Defaults to `TRANSACTIONAL`.
@@ -688,20 +684,18 @@ pub struct CommitResponse {
     #[prost(int32, tag = "4")]
     pub index_updates: i32,
 }
-/// The request for
-/// [Datastore.AllocateIds][google.datastore.v1.Datastore.AllocateIds].
+/// The request for [Datastore.AllocateIds][google.datastore.v1.Datastore.AllocateIds].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AllocateIdsRequest {
-    /// The ID of the project against which to make the request.
+    /// Required. The ID of the project against which to make the request.
     #[prost(string, tag = "8")]
     pub project_id: ::prost::alloc::string::String,
-    /// A list of keys with incomplete key paths for which to allocate IDs.
+    /// Required. A list of keys with incomplete key paths for which to allocate IDs.
     /// No key may be reserved/read-only.
     #[prost(message, repeated, tag = "1")]
     pub keys: ::prost::alloc::vec::Vec<Key>,
 }
-/// The response for
-/// [Datastore.AllocateIds][google.datastore.v1.Datastore.AllocateIds].
+/// The response for [Datastore.AllocateIds][google.datastore.v1.Datastore.AllocateIds].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AllocateIdsResponse {
     /// The keys specified in the request (in the same order), each with
@@ -709,23 +703,21 @@ pub struct AllocateIdsResponse {
     #[prost(message, repeated, tag = "1")]
     pub keys: ::prost::alloc::vec::Vec<Key>,
 }
-/// The request for
-/// [Datastore.ReserveIds][google.datastore.v1.Datastore.ReserveIds].
+/// The request for [Datastore.ReserveIds][google.datastore.v1.Datastore.ReserveIds].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReserveIdsRequest {
-    /// The ID of the project against which to make the request.
+    /// Required. The ID of the project against which to make the request.
     #[prost(string, tag = "8")]
     pub project_id: ::prost::alloc::string::String,
     /// If not empty, the ID of the database against which to make the request.
     #[prost(string, tag = "9")]
     pub database_id: ::prost::alloc::string::String,
-    /// A list of keys with complete key paths whose numeric IDs should not be
+    /// Required. A list of keys with complete key paths whose numeric IDs should not be
     /// auto-allocated.
     #[prost(message, repeated, tag = "1")]
     pub keys: ::prost::alloc::vec::Vec<Key>,
 }
-/// The response for
-/// [Datastore.ReserveIds][google.datastore.v1.Datastore.ReserveIds].
+/// The response for [Datastore.ReserveIds][google.datastore.v1.Datastore.ReserveIds].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReserveIdsResponse {}
 /// A mutation to apply to an entity.
@@ -847,10 +839,8 @@ pub mod read_options {
 /// Options for beginning a new transaction.
 ///
 /// Transactions can be created explicitly with calls to
-/// [Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction]
-/// or implicitly by setting
-/// [ReadOptions.new_transaction][google.datastore.v1.ReadOptions.new_transaction]
-/// in read requests.
+/// [Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction] or implicitly by setting
+/// [ReadOptions.new_transaction][google.datastore.v1.ReadOptions.new_transaction] in read requests.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransactionOptions {
     /// The `mode` of the transaction, indicating whether write operations are
