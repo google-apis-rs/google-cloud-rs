@@ -6,9 +6,9 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LatLng {
     /// The latitude in degrees. It must be in the range [-90.0, +90.0].
-    #[prost(double, tag = "1")]
+    #[prost(double, tag="1")]
     pub latitude: f64,
     /// The longitude in degrees. It must be in the range [-180.0, +180.0].
-    #[prost(double, tag = "2")]
+    #[prost(double, tag="2")]
     pub longitude: f64,
 }
