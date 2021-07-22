@@ -8,7 +8,7 @@ use futures::lock::Mutex;
 use futures::stream::{Stream, StreamExt};
 use futures::FutureExt;
 use futures::SinkExt;
-use tonic::Streaming;
+use tonic::{Status, Streaming};
 
 use crate::pubsub::api;
 use crate::pubsub::{Client, Error, Message};
@@ -164,7 +164,7 @@ impl Subscription {
     }
 
     /// Start a stream of incoming messages.
-    pub async fn stream(&mut self) -> Result<impl Stream<Item = Message>, Error> {
+    pub async fn stream(&mut self) -> Result<impl Stream<Item = Result<Message, Status>>, Error> {
         self.stream_with_options(Default::default()).await
     }
 
@@ -172,7 +172,7 @@ impl Subscription {
     pub async fn stream_with_options(
         &mut self,
         opts: StreamingOptions,
-    ) -> Result<impl Stream<Item = Message>, Error> {
+    ) -> Result<impl Stream<Item = Result<Message, Status>>, Error> {
         let filter_redeliveries = opts.filter_redeliveries;
         let (streaming, tx) = self.pull_streaming(opts).await?;
         let client = self.client.clone();
@@ -180,53 +180,67 @@ impl Subscription {
         let tx = Arc::new(Mutex::new(tx));
         Ok(futures::stream::unfold(streaming, |mut res| async {
             match res.message().await {
-                Ok(Some(v)) => Some((v, res)),
+                Ok(Some(v)) => Some((Ok(v), res)),
                 Ok(None) => None,
                 // TODO: Better error handling?
-                Err(err) => None,
+                Err(err) => Some((Err(err), res)),
             }
         })
         .then({
-            move |v| {
+            let tx = tx.clone();
+            move |res| {
                 let tx = tx.clone();
                 async move {
-                    // TODO: Better end-user message acknowledgement mechanism
-                    let mut tx = tx.lock().await;
-                    tx.send(
-                        v.received_messages
-                            .iter()
-                            .map(|m| m.ack_id.clone())
-                            .collect(),
-                    )
-                    .map(|res| res.map(|()| v.received_messages).unwrap_or(vec![]))
-                    .await
+                    match res {
+                        Ok(v) => {
+                            // TODO: Better end-user message acknowledgement mechanism
+                            let mut tx = tx.lock().await;
+                            Ok(tx
+                                .send(
+                                    v.received_messages
+                                        .iter()
+                                        .map(|m| m.ack_id.clone())
+                                        .collect(),
+                                )
+                                .map(|res| {
+                                    res.map(|()| v.received_messages).expect("Received closed")
+                                })
+                                .await)
+                        }
+                        Err(err) => Err(err),
+                    }
                 }
             }
         })
-        .flat_map(|v: Vec<ReceivedMessage>| futures::stream::iter(v))
+        .flat_map(|v: Result<Vec<ReceivedMessage>, Status>| match v {
+            Ok(v) => futures::stream::iter(v).map(Ok).boxed(),
+            Err(err) => futures::stream::once(futures::future::ready(Err(err))).boxed(),
+        })
         .filter(move |m| {
             futures::future::ready(if filter_redeliveries {
-                m.delivery_attempt == 0
+                m.as_ref().map(|m| m.delivery_attempt == 0).unwrap_or(true) // Propagate errors through
             } else {
                 true
             })
         })
-        .filter(|m| futures::future::ready(m.message.is_some()))
-        .map(move |m: ReceivedMessage| {
-            let inner_msg = m.message.unwrap();
-            let raw_publish_time = inner_msg.publish_time.unwrap_or_default();
-            Message {
-                client: client.clone(),
-                subscription_name: name.clone(),
-                ack_id: m.ack_id,
-                message_id: inner_msg.message_id,
-                publish_time: NaiveDateTime::from_timestamp(
-                    raw_publish_time.seconds,
-                    raw_publish_time.nanos as u32,
-                ),
-                attributes: inner_msg.attributes,
-                data: inner_msg.data,
-            }
+        .filter(|m| futures::future::ready(m.as_ref().map(|m| m.message.is_some()).unwrap_or(true))) // Propagate errors through
+        .map(move |m: Result<ReceivedMessage, Status>| {
+            m.map(|m| {
+                let inner_msg = m.message.unwrap();
+                let raw_publish_time = inner_msg.publish_time.unwrap_or_default();
+                Message {
+                    client: client.clone(),
+                    subscription_name: name.clone(),
+                    ack_id: m.ack_id,
+                    message_id: inner_msg.message_id,
+                    publish_time: NaiveDateTime::from_timestamp(
+                        raw_publish_time.seconds,
+                        raw_publish_time.nanos as u32,
+                    ),
+                    attributes: inner_msg.attributes,
+                    data: inner_msg.data,
+                }
+            })
         }))
     }
 
