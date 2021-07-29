@@ -1,4 +1,3 @@
-use crate::pubsub::api::ReceivedMessage;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 
@@ -11,7 +10,19 @@ use futures::SinkExt;
 use tonic::{Status, Streaming};
 
 use crate::pubsub::api;
+use crate::pubsub::api::ReceivedMessage;
 use crate::pubsub::{Client, Error, Message};
+
+/// All failure points while streaming
+#[derive(Debug, thiserror::Error)]
+pub enum StreamError {
+    /// Stream ended with the given [`Status`]
+    #[error("Stream terminated with status: {0}")]
+    Status(#[from] Status),
+    /// Stream failed to deserialize the message
+    #[error("Couldn't deserialize message: {0}")]
+    Deserialization(#[from] json::Error),
+}
 
 /// Represents the subscription's configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -244,6 +255,27 @@ impl Subscription {
         }))
     }
 
+    /// Stream deserialized values from messages
+    pub async fn stream_item<T: serde::de::DeserializeOwned>(
+        &mut self,
+    ) -> Result<impl Stream<Item = Result<T, StreamError>>, Error> {
+        Ok(self.stream().await?.map(|m| {
+            m.map_err(StreamError::Status)
+                .and_then(|v: Message| json::from_slice(v.data()).map_err(StreamError::Deserialization))
+        }))
+    }
+
+    /// Stream deserialized values from messages, with options
+    pub async fn stream_item_with_options<T: serde::de::DeserializeOwned>(
+        &mut self,
+        opts: StreamingOptions,
+    ) -> Result<impl Stream<Item = Result<T, StreamError>>, Error> {
+        Ok(self.stream_with_options(opts).await?.map(|m| {
+            m.map_err(StreamError::Status)
+                .and_then(|v: Message| json::from_slice(v.data()).map_err(StreamError::Deserialization))
+        }))
+    }
+
     /// Delete the subscription.
     pub async fn delete(mut self) -> Result<(), Error> {
         let request = api::DeleteSubscriptionRequest {
@@ -259,6 +291,7 @@ impl Subscription {
         &mut self,
         opts: &ReceiveOptions,
     ) -> Result<Vec<api::ReceivedMessage>, Error> {
+        #[allow(deprecated)]
         let request = api::PullRequest {
             subscription: self.name.clone(),
             return_immediately: opts.return_immediately,
