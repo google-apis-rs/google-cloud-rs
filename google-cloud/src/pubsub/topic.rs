@@ -2,8 +2,22 @@ use std::collections::HashMap;
 
 use crate::pubsub::api;
 use crate::pubsub::{Client, Error, Subscription, SubscriptionConfig};
+use futures::{Sink, SinkExt};
+use std::sync::Arc;
+use futures::lock::Mutex;
+use serde::Serialize;
 
-/// Represents the topic's configuration.
+/// Topic-as-publish-sink-related errors
+#[derive(Debug, thiserror::Error)]
+pub enum SinkError {
+    /// An error occured from Pub/Sub during publish
+    #[error("Publish error: {0}")]
+    Publish(#[from] crate::pubsub::Error),
+    /// An error occured during object serialization
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] json::Error),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TopicConfig {
     pub(crate) labels: HashMap<String, String>,
@@ -71,6 +85,7 @@ impl Topic {
             push_config: None,
             expiration_policy: None,
             dead_letter_policy: None,
+            ..Default::default()
         };
         let request = self.client.construct_request(request).await?;
         let response = self.client.subscriber.create_subscription(request).await?;
@@ -95,6 +110,24 @@ impl Topic {
         self.client.publisher.publish(request).await?;
 
         Ok(())
+    }
+
+    /// Creates a sink that will send items as message through this [`Topic`](self::Topic).
+    pub fn sink_data<'a, T: 'a + Into<Vec<u8>>>(&'a mut self) -> impl Sink<T, Error=SinkError> + 'a {
+        let this = Arc::new(Mutex::new(self));
+        futures::sink::unfold(this, |this, item| async {
+            {
+                let mut guard = this.lock().await;
+                guard.publish(item).await?;
+            }
+            Ok::<_, SinkError>(this)
+        }).buffer(100)
+    }
+
+    /// Creates a sink that will send items as message through this [`Topic`], serializing the items beforehand.
+    /// This allows any [`serde::Serialize`] type to be sent directly to the [`Topic`].
+    pub fn sink<'a, T: 'a + Serialize>(&'a mut self) -> impl Sink<T, Error=SinkError> + 'a {
+        self.sink_data().with(|m| futures::future::ready(json::to_vec(&m).map_err(SinkError::Serialization)))
     }
 
     /// Delete the topic.

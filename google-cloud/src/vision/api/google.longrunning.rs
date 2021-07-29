@@ -4,7 +4,7 @@
 pub struct Operation {
     /// The server-assigned name, which is only unique within the same service that
     /// originally returns it. If you use the default HTTP mapping, the
-    /// `name` should have the format of `operations/some/unique/name`.
+    /// `name` should be a resource name ending with `operations/{unique_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Service-specific metadata associated with the operation.  It typically
@@ -270,9 +270,9 @@ pub mod operations_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Waits for the specified long-running operation until it is done or reaches"]
-        #[doc = " at most a specified timeout, returning the latest state.  If the operation"]
-        #[doc = " is already done, the latest state is immediately returned.  If the timeout"]
+        #[doc = " Waits until the specified long-running operation is done or reaches at most"]
+        #[doc = " a specified timeout, returning the latest state.  If the operation is"]
+        #[doc = " already done, the latest state is immediately returned.  If the timeout"]
         #[doc = " specified is greater than the default HTTP/RPC timeout, the HTTP/RPC"]
         #[doc = " timeout is used.  If the server does not support this method, it returns"]
         #[doc = " `google.rpc.Code.UNIMPLEMENTED`."]

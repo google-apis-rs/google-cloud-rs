@@ -1,6 +1,6 @@
 [package]
 name = "google-cloud"
-version = "0.2.1"
+version = "0.3.0"
 description = "Asynchronous Rust bindings for Google Cloud Platform gRPC APIs"
 authors = ["Nicolas Polomack <nicolas@polomack.eu>"]
 edition = "2018"
