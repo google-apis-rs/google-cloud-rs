@@ -1,16 +1,20 @@
 use std::env;
 use std::fs::File;
 use std::sync::Arc;
+use std::pin::Pin;
 
 use tokio::sync::Mutex;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
-use tonic::{IntoRequest, Request};
+use tonic::{IntoRequest, IntoStreamingRequest, Request};
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::pubsub::api;
 use crate::pubsub::api::publisher_client::PublisherClient;
 use crate::pubsub::api::subscriber_client::SubscriberClient;
 use crate::pubsub::{Error, Subscription, Topic, TopicConfig};
+
+use futures::stream::Stream;
+use futures::task::{Poll, Context};
 
 /// The Pub/Sub client, tied to a specific project.
 #[derive(Clone)]
@@ -34,6 +38,21 @@ impl Client {
         request: T,
     ) -> Result<Request<T>, Error> {
         let mut request = request.into_request();
+        let token = self.token_manager.lock().await.token().await?;
+        let metadata = request.metadata_mut();
+        metadata.insert("authorization", token.parse().unwrap());
+        Ok(request)
+    }
+
+    /// Construct a streaming request that sends the given request just once.
+    pub(crate) async fn construct_streaming_request<T>(
+        &mut self,
+        request: T,
+    ) -> Result<Request<Once<T>>, Error>
+    where
+        T: Unpin + Send + Sync + 'static
+    {
+        let mut request = Once::new(request).into_streaming_request();
         let token = self.token_manager.lock().await.token().await?;
         let metadata = request.metadata_mut();
         metadata.insert("authorization", token.parse().unwrap());
@@ -186,4 +205,23 @@ impl Client {
 
         Ok(Some(Subscription::new(self.clone(), subscription.name)))
     }
+}
+
+/// A simple `Stream` impl that sends its contents exactly once.
+pub struct Once<T: Send + Sync + 'static> {
+    t: Option<T>
+}
+
+impl<T: Send + Sync + 'static> Once<T> {
+    fn new(t: T) -> Once<T> { Once { t: Some(t) } }
+}
+
+impl<T: Unpin + Send + Sync + 'static> Stream for Once<T> {
+    type Item = T;
+
+    fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<T>> {
+        Poll::Ready(self.get_mut().t.take())
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { (1, Some(1)) }
 }

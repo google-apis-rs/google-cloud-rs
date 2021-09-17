@@ -4,6 +4,8 @@ use chrono::Duration;
 
 use crate::pubsub::api;
 use crate::pubsub::{Client, Error, Message};
+use futures::stream::Stream;
+use futures::stream::TryStreamExt;
 
 /// Represents the subscription's configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -54,6 +56,18 @@ pub struct ReceiveOptions {
     pub return_immediately: bool,
     /// Number of messages to retrieve at once
     pub max_messages: i32,
+}
+
+/// Options to send on a streaming pull.
+pub struct ReceiveStreamOptions {
+    /// The IDs from previous pulls that should be acked.
+    pub ack_ids: Vec<String>,
+    /// A list of message IDs that should have their deadline modified.
+    pub modify_deadline_ack_ids: Vec<String>,
+    /// The new deadline (starting from now) for `modify_deadline_ack_ids`.
+    pub modify_deadline_seconds: Vec<i32>,
+    /// The ack deadline for the stream.
+    pub stream_ack_deadline_seconds: i32
 }
 
 impl Default for ReceiveOptions {
@@ -111,13 +125,11 @@ impl Subscription {
                     ),
                 };
                 break Some(message);
-            } else {
-                if let Ok(messages) = self.pull(&opts).await {
-                    if messages.is_empty() && opts.return_immediately {
-                        break None;
-                    }
-                    self.buffer.extend(messages);
+            } else if let Ok(messages) = self.pull(&opts).await {
+                if messages.is_empty() && opts.return_immediately {
+                    break None;
                 }
+                self.buffer.extend(messages);
             }
         }
     }
@@ -147,6 +159,26 @@ impl Subscription {
         let response = response.into_inner();
 
         Ok(response.received_messages)
+    }
+
+    /// Create a stream of messages from the server.
+    pub async fn pull_streaming(
+        &mut self,
+        opts: ReceiveStreamOptions
+    ) -> Result<impl Stream<Item = Result<Vec<api::ReceivedMessage>, Error>>, Error> {
+        let request = api::StreamingPullRequest {
+            subscription: self.name.clone(),
+            ack_ids: opts.ack_ids,
+            modify_deadline_seconds: opts.modify_deadline_seconds,
+            modify_deadline_ack_ids: opts.modify_deadline_ack_ids,
+            stream_ack_deadline_seconds: opts.stream_ack_deadline_seconds
+        };
+
+        let request = self.client.construct_streaming_request(request).await?;
+        let response = self.client.subscriber.streaming_pull(request).await?;
+        let response = response.into_inner();
+
+        Ok(response.map_ok(|v| v.received_messages).map_err(Error::from))
     }
 }
 

@@ -11,6 +11,7 @@ mod casing;
 use crate::casing::{transform_field_casing, transform_variant_casing};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromMeta)]
+#[allow(clippy::enum_variant_names)]
 pub(crate) enum RenameAll {
     #[darling(rename = "lowercase")]
     LowerCase,

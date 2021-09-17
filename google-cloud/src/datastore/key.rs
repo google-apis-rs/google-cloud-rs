@@ -27,10 +27,7 @@ impl KeyID {
     /// assert!(!id2.is_incomplete());
     /// ```
     pub fn is_incomplete(&self) -> bool {
-        match self {
-            KeyID::Incomplete => true,
-            _ => false,
-        }
+        matches!(self, KeyID::Incomplete)
     }
 }
 
@@ -171,7 +168,7 @@ impl Key {
     /// assert_eq!(key2.get_namespace(), Some("dev"));
     /// ```
     pub fn get_namespace(&self) -> Option<&str> {
-        self.namespace.as_ref().map(|inner| inner.as_str())
+        self.namespace.as_deref()
     }
 
     /// Is the key incomplete (missing an ID) ?
