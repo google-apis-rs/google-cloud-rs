@@ -121,9 +121,7 @@ pub struct Value {
     )]
     pub value_type: ::core::option::Option<value::ValueType>,
 }
-
 /// Nested message and enum types in `Value`.
-#[allow(clippy::enum_variant_names)]
 pub mod value {
     /// Must have a value set.
     #[derive(Clone, PartialEq, ::prost::Oneof)]

@@ -21,6 +21,11 @@ impl Message {
         self.message_id.as_str()
     }
 
+    /// The message's Acknowldege ID, used to ack the message.
+    pub fn ack_id(&self) -> &str {
+        self.ack_id.as_str()
+    }
+
     /// The payload data of the message.
     pub fn data(&self) -> &[u8] {
         self.data.as_slice()

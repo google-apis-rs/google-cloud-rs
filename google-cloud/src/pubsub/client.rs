@@ -1,7 +1,6 @@
 use std::env;
 use std::fs::File;
 use std::sync::Arc;
-use std::pin::Pin;
 
 use tokio::sync::Mutex;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
@@ -13,8 +12,11 @@ use crate::pubsub::api::publisher_client::PublisherClient;
 use crate::pubsub::api::subscriber_client::SubscriberClient;
 use crate::pubsub::{Error, Subscription, Topic, TopicConfig};
 
-use futures::stream::Stream;
-use futures::task::{Poll, Context};
+use futures::channel::mpsc::{channel, Receiver, Sender};
+use futures::future::{ready, Ready};
+use futures::stream::{once, Chain, Once, StreamExt};
+
+type PreStream<T> = Chain<Once<Ready<T>>, Receiver<T>>;
 
 /// The Pub/Sub client, tied to a specific project.
 #[derive(Clone)]
@@ -44,19 +46,21 @@ impl Client {
         Ok(request)
     }
 
-    /// Construct a streaming request that sends the given request just once.
+    /// Construct a streaming request.
     pub(crate) async fn construct_streaming_request<T>(
         &mut self,
         request: T,
-    ) -> Result<Request<Once<T>>, Error>
+    ) -> Result<(Request<PreStream<T>>, Sender<T>), Error>
     where
-        T: Unpin + Send + Sync + 'static
+        T: Unpin + Clone + Send + Sync + 'static,
     {
-        let mut request = Once::new(request).into_streaming_request();
+        let (send, recv) = channel(3);
+        let recv: PreStream<T> = once(ready(request)).chain(recv);
+        let mut request = recv.into_streaming_request();
         let token = self.token_manager.lock().await.token().await?;
         let metadata = request.metadata_mut();
         metadata.insert("authorization", token.parse().unwrap());
-        Ok(request)
+        Ok((request, send))
     }
 
     /// Create a new client for the specified project.
@@ -205,23 +209,4 @@ impl Client {
 
         Ok(Some(Subscription::new(self.clone(), subscription.name)))
     }
-}
-
-/// A simple `Stream` impl that sends its contents exactly once.
-pub struct Once<T: Send + Sync + 'static> {
-    t: Option<T>
-}
-
-impl<T: Send + Sync + 'static> Once<T> {
-    fn new(t: T) -> Once<T> { Once { t: Some(t) } }
-}
-
-impl<T: Unpin + Send + Sync + 'static> Stream for Once<T> {
-    type Item = T;
-
-    fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<T>> {
-        Poll::Ready(self.get_mut().t.take())
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) { (1, Some(1)) }
 }
