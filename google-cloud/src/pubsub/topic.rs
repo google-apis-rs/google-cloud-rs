@@ -97,6 +97,24 @@ impl Topic {
         Ok(())
     }
 
+    /// Publish a message onto this topic.
+    pub async fn publish_all(&mut self, data: Vec<impl Into<Vec<u8>>>) -> Result<(), Error> {
+        let request = api::PublishRequest {
+            topic: self.name.clone(),
+            messages: data.into_iter().map(|data| api::PubsubMessage {
+                data: data.into(),
+                attributes: HashMap::new(),
+                message_id: String::new(),
+                ordering_key: String::new(),
+                publish_time: None,
+            }).collect::<Vec<_>>(),
+        };
+        let request = self.client.construct_request(request).await?;
+        self.client.publisher.publish(request).await?;
+
+        Ok(())
+    }
+
     /// Delete the topic.
     pub async fn delete(mut self) -> Result<(), Error> {
         let request = api::DeleteTopicRequest {
