@@ -4,13 +4,19 @@ use std::sync::Arc;
 
 use tokio::sync::Mutex;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
-use tonic::{IntoRequest, Request};
+use tonic::{IntoRequest, IntoStreamingRequest, Request};
 
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::pubsub::api;
 use crate::pubsub::api::publisher_client::PublisherClient;
 use crate::pubsub::api::subscriber_client::SubscriberClient;
 use crate::pubsub::{Error, Subscription, Topic, TopicConfig};
+
+use futures::channel::mpsc::{channel, Receiver, Sender};
+use futures::future::{ready, Ready};
+use futures::stream::{once, Chain, Once, StreamExt};
+
+type PreStream<T> = Chain<Once<Ready<T>>, Receiver<T>>;
 
 /// The Pub/Sub client, tied to a specific project.
 #[derive(Clone)]
@@ -38,6 +44,23 @@ impl Client {
         let metadata = request.metadata_mut();
         metadata.insert("authorization", token.parse().unwrap());
         Ok(request)
+    }
+
+    /// Construct a streaming request.
+    pub(crate) async fn construct_streaming_request<T>(
+        &mut self,
+        request: T,
+    ) -> Result<(Request<PreStream<T>>, Sender<T>), Error>
+    where
+        T: Unpin + Clone + Send + Sync + 'static,
+    {
+        let (send, recv) = channel(3);
+        let recv: PreStream<T> = once(ready(request)).chain(recv);
+        let mut request = recv.into_streaming_request();
+        let token = self.token_manager.lock().await.token().await?;
+        let metadata = request.metadata_mut();
+        metadata.insert("authorization", token.parse().unwrap());
+        Ok((request, send))
     }
 
     /// Create a new client for the specified project.

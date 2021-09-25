@@ -90,7 +90,7 @@ impl TokenManager {
                 let token = jwt::encode(
                     &jwt::Header::new(jwt::Algorithm::RS256),
                     &claims,
-                    &jwt::EncodingKey::from_rsa_pem(&self.creds.private_key.as_bytes())?,
+                    &jwt::EncodingKey::from_rsa_pem(self.creds.private_key.as_bytes())?,
                 )?;
                 let form = format!(
                     "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion={}",
