@@ -2,7 +2,10 @@ mod client;
 mod message;
 mod subscription;
 mod topic;
-mod api {
+
+/// API proto structures
+#[allow(missing_docs)]
+pub mod api {
     include!("api/google.pubsub.v1.rs");
 }
 
