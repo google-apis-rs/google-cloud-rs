@@ -11,12 +11,12 @@ use tonic::{IntoRequest, Request};
 use crate::authorize::{ApplicationCredentials, TokenManager, TLS_CERTS};
 use crate::datastore::api;
 use crate::datastore::api::datastore_client::DatastoreClient;
-use crate::datastore::api::value::ValueType;
 use crate::datastore::{
     Entity, Error, Filter, FromValue, IntoEntity, Key, KeyID, Order, Query, Value,
 };
 
-use super::IndexExcluded;
+use super::{Transaction, IndexExcluded};
+use super::api::transaction_options::{ReadWrite, ReadOnly};
 
 /// The Datastore client, tied to a specific project.
 #[derive(Clone)]
@@ -25,6 +25,17 @@ pub struct Client {
     pub(crate) service: DatastoreClient<Channel>,
     pub(crate) token_manager: Arc<Mutex<TokenManager>>,
     pub(crate) index_excluded: IndexExcluded,
+}
+
+/// Opciones para el modo de crear la trx
+#[derive(Debug, Clone, PartialEq)]
+pub enum TrxOption {
+    /// modo solo lectura
+    ReadOnly,
+    /// modo de escritura y lectura
+    ReadWrite,
+    /// modo por defecto 
+    Default,
 }
 
 impl Client {
@@ -82,6 +93,35 @@ impl Client {
         })
     }
 
+    /// Create a new transaction
+    ///     - option_mode: Option for the transaction
+    ///     - trx_id: Clave de la transacción anterior y que por algún motivo fallo y se ejecuto el rollback
+    pub async fn new_transaction(&mut self, option_mode: TrxOption, trx_id: Option<Vec<u8>>) -> Result<Transaction, Error> {
+        let trx_option = match option_mode {
+            TrxOption::ReadOnly => Some(api::TransactionOptions {
+                            mode: Some(api::transaction_options::Mode::ReadOnly(ReadOnly{}))
+                        }),
+            TrxOption::ReadWrite => match trx_id {
+                Some(trx) => Some(api::TransactionOptions {
+                    mode: Some(api::transaction_options::Mode::ReadWrite(ReadWrite {previous_transaction: trx}))
+                }),
+                None => None,
+            },
+            TrxOption::Default => None,
+        };
+
+        let request = api::BeginTransactionRequest {
+            project_id: self.project_name.clone(),
+            transaction_options: trx_option,
+        };
+
+        let request = self.construct_request(request).await?;
+        let response = self.service.begin_transaction(request).await?;
+        let response = response.into_inner();
+
+        Ok(Transaction::new(self.to_owned(), response.transaction))
+    }
+
     /// Gets an entity from a key.
     pub async fn get<T, K>(&mut self, key: K) -> Result<Option<T>, Error>
     where
@@ -93,7 +133,17 @@ impl Client {
     }
 
     /// Gets multiple entities from multiple keys.
-    pub async fn get_all<T, K, I>(&mut self, keys: I) -> Result<Vec<T>, Error>
+    pub async fn get_all<T, K, I>(&mut self, keys: I) -> Result<Vec<T>, Error> 
+    where
+        I: IntoIterator<Item = K>,
+        K: Borrow<Key>,
+        T: FromValue,
+    {
+        Ok(self.get_all_tx(keys, None).await?)
+    }
+
+    /// Gets multiple entities from multiple keys associated with a transaction
+    pub(crate) async fn get_all_tx<T, K, I>(&mut self, keys: I, tx_id: Option<Vec<u8>>) -> Result<Vec<T>, Error>
     where
         I: IntoIterator<Item = K>,
         K: Borrow<Key>,
@@ -107,15 +157,25 @@ impl Client {
         let mut found = HashMap::new();
 
         while !keys.is_empty() {
-            let request = api::LookupRequest {
-                keys,
-                project_id: self.project_name.clone(),
-                read_options: None,
+            let request = match tx_id.to_owned() {
+                Some(tx) => api::LookupRequest {
+                    keys, 
+                    project_id: self.project_name.clone(), 
+                    read_options: Some(api::ReadOptions {
+                        consistency_type: Some(api::read_options::ConsistencyType::Transaction(tx)),
+                    }),
+                },
+                None => api::LookupRequest {
+                    keys,
+                    project_id: self.project_name.clone(),
+                    read_options: None,
+                }
             };
+
             let request = self.construct_request(request).await?;
             let response = self.service.lookup(request).await?;
+            
             let response = response.into_inner();
-
             found.extend(
                 response
                     .found
@@ -124,7 +184,6 @@ impl Client {
                     .map(Entity::from)
                     .map(|entity| (entity.key, entity.properties)),
             );
-            // let missing = response.missing;
             keys = response.deferred;
         }
 
@@ -156,10 +215,11 @@ impl Client {
             .into_iter()
             .map(IntoEntity::into_entity)
             .collect::<Result<_, _>>()?;
+
         let mutations = entities
             .into_iter()
             .map(|entity| {
-                let is_incomplete = entity.key.is_incomplete();
+                let is_incomplete = entity.key.is_new || entity.key.is_incomplete();
                 let entity = convert_entity(self.project_name.as_str(), entity, self.index_excluded.to_owned());
                 api::Mutation {
                     operation: if is_incomplete {
@@ -224,6 +284,11 @@ impl Client {
 
     /// Runs a (potentially) complex query againt Datastore and returns the results.
     pub async fn query(&mut self, query: Query) -> Result<Vec<Entity>, Error> {
+        Ok(self.query_tx(query, None).await?)
+    }
+
+    /// Runs a (potentially) complex query againt Datastore and returns the results and associated with a transaction
+    pub(crate) async fn query_tx(&mut self, query: Query, tx_id: Option<Vec<u8>>) -> Result<Vec<Entity>, Error> {
         let mut output = Vec::new();
 
         let mut cur_query = query.clone();
@@ -278,13 +343,18 @@ impl Client {
                 read_options: Some({
                     use api::read_options::{ConsistencyType, ReadConsistency};
                     api::ReadOptions {
-                        consistency_type: Some(ConsistencyType::ReadConsistency(
-                            if cur_query.eventual {
-                                ReadConsistency::Eventual as i32
-                            } else {
-                                ReadConsistency::Strong as i32
-                            },
-                        )),
+                        consistency_type: Some(
+                            match tx_id.to_owned() {
+                                Some(tx) => ConsistencyType::Transaction(tx),
+                                None => ConsistencyType::ReadConsistency(
+                                    if cur_query.eventual {
+                                        ReadConsistency::Eventual as i32
+                                    } else {
+                                        ReadConsistency::Strong as i32
+                                    },
+                                ),
+                            }
+                        ),
                     }
                 }),
                 project_id: self.project_name.clone(),
@@ -312,7 +382,7 @@ impl Client {
     }
 }
 
-fn convert_key(project_name: &str, key: &Key) -> api::Key {
+pub(crate) fn convert_key(project_name: &str, key: &Key) -> api::Key {
     api::Key {
         partition_id: Some(api::PartitionId {
             project_id: String::from(project_name),
@@ -340,7 +410,7 @@ fn convert_key(project_name: &str, key: &Key) -> api::Key {
     }
 }
 
-fn convert_entity(project_name: &str, entity: Entity, index_excluded: IndexExcluded) -> api::Entity {
+pub(crate) fn convert_entity(project_name: &str, entity: Entity, index_excluded: IndexExcluded) -> api::Entity {
     let key = convert_key(project_name, &entity.key);
     let properties = match entity.clone().properties {
         Value::EntityValue(properties) => properties,
@@ -359,24 +429,24 @@ fn convert_entity(project_name: &str, entity: Entity, index_excluded: IndexExclu
     }
 }
 
-fn convert_value(project_name: &str, value: Value, index_excluded: bool) -> api::Value {
+pub(crate) fn convert_value(project_name: &str, value: Value, index_excluded: bool) -> api::Value {
     let value_type = match value {
         Value::NULL(_) => api::value::ValueType::NullValue(0),
-        Value::BooleanValue(val) => ValueType::BooleanValue(val),
-        Value::IntegerValue(val) => ValueType::IntegerValue(val),
-        Value::DoubleValue(val) => ValueType::DoubleValue(val),
-        Value::TimestampValue(val) => ValueType::TimestampValue(prost_types::Timestamp {
+        Value::BooleanValue(val) => api::value::ValueType::BooleanValue(val),
+        Value::IntegerValue(val) => api::value::ValueType::IntegerValue(val),
+        Value::DoubleValue(val) => api::value::ValueType::DoubleValue(val),
+        Value::TimestampValue(val) => api::value::ValueType::TimestampValue(prost_types::Timestamp {
             seconds: val.timestamp(),
             nanos: val.timestamp_subsec_nanos() as i32,
         }),
-        Value::KeyValue(key) => ValueType::KeyValue(convert_key(project_name, &key)),
-        Value::StringValue(val) => ValueType::StringValue(val),
-        Value::BlobValue(val) => ValueType::BlobValue(val),
-        Value::GeoPointValue(latitude, longitude) => ValueType::GeoPointValue(api::LatLng {
+        Value::KeyValue(key) => api::value::ValueType::KeyValue(convert_key(project_name, &key)),
+        Value::StringValue(val) => api::value::ValueType::StringValue(val),
+        Value::BlobValue(val) => api::value::ValueType::BlobValue(val),
+        Value::GeoPointValue(latitude, longitude) => api::value::ValueType::GeoPointValue(api::LatLng {
             latitude,
             longitude,
         }),
-        Value::EntityValue(properties) => ValueType::EntityValue({
+        Value::EntityValue(properties) => api::value::ValueType::EntityValue({
             api::Entity {
                 key: None,
                 properties: properties
@@ -385,7 +455,7 @@ fn convert_value(project_name: &str, value: Value, index_excluded: bool) -> api:
                     .collect(),
             }
         }),
-        Value::ArrayValue(values) => ValueType::ArrayValue(api::ArrayValue {
+        Value::ArrayValue(values) => api::value::ValueType::ArrayValue(api::ArrayValue {
             values: values
                 .into_iter()
                 .map(|value| convert_value(project_name, value, index_excluded))
@@ -399,7 +469,7 @@ fn convert_value(project_name: &str, value: Value, index_excluded: bool) -> api:
     }
 }
 
-fn convert_filter(project_name: &str, filters: Vec<Filter>) -> Option<api::Filter> {
+pub(crate) fn convert_filter(project_name: &str, filters: Vec<Filter>) -> Option<api::Filter> {
     use api::filter::FilterType;
 
     if !filters.is_empty() {

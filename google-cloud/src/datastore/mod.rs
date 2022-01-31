@@ -4,6 +4,7 @@ mod index_excluded;
 mod key;
 mod query;
 mod value;
+mod transaction;
 mod api {
     pub mod r#type {
         include!("api/google.r#type.rs");
@@ -23,6 +24,7 @@ pub use self::index_excluded::*;
 pub use self::key::*;
 pub use self::query::*;
 pub use self::value::*;
+pub use self::transaction::*;
 
 /// The error type for the Datastore module.
 pub type Error = crate::error::Error;
