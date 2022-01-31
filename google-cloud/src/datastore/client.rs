@@ -122,6 +122,31 @@ impl Client {
         Ok(Transaction::new(self.to_owned(), response.transaction))
     }
 
+    /// Reserve the ID of an entity before creating it
+    /// We can use it for transactions with related entities
+    pub async fn allocate_tx(&mut self, keys: Vec<Key>) -> Result<Vec<Key>, Error> {
+        let ks = keys
+            .iter()
+            .map(|key| convert_key(self.project_name.as_str(), key.borrow()))
+            .collect();
+
+        let request = api::AllocateIdsRequest {
+            project_id: self.project_name.clone(),
+            keys: ks,
+        };
+
+        let request = self.construct_request(request).await?;
+        let response = self.service.allocate_ids(request).await?;
+
+        let response = response.into_inner();
+        let keys = response.keys
+            .into_iter()
+            .map(|f| api::Key::into(f))
+            .collect::<Vec<Key>>();
+            
+        Ok(keys)
+    }
+
     /// Gets an entity from a key.
     pub async fn get<T, K>(&mut self, key: K) -> Result<Option<T>, Error>
     where
