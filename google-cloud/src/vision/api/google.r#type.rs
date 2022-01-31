@@ -108,7 +108,7 @@
 ///       var rgbNumber = new Number((red << 16) | (green << 8) | blue);
 ///       var hexString = rgbNumber.toString(16);
 ///       var missingZeros = 6 - hexString.length;
-///       var resultBuilder = ['#'];
+///       var resultBuilder = \['#'\];
 ///       for (var i = 0; i < missingZeros; i++) {
 ///          resultBuilder.push('0');
 ///       }
@@ -145,7 +145,7 @@ pub struct Color {
 /// An object representing a latitude/longitude pair. This is expressed as a pair
 /// of doubles representing degrees latitude and degrees longitude. Unless
 /// specified otherwise, this must conform to the
-/// <a href="http://www.unoosa.org/pdf/icg/2012/template/WGS_84.pdf">WGS84
+/// <a href="<http://www.unoosa.org/pdf/icg/2012/template/WGS_84.pdf">WGS84>
 /// standard</a>. Values must be within normalized ranges.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LatLng {

@@ -22,6 +22,8 @@ pub enum Filter {
     GreaterThanOrEqual(String, Value),
     /// Lesser-than-or-equal filter (<=).
     LesserThanEqual(String, Value),
+    /// Append ancestor to the Query
+    HasAncestor(Value),
 }
 
 /// Represents a Datastore query.
@@ -32,7 +34,6 @@ pub struct Query {
     pub(crate) keys_only: bool,
     pub(crate) offset: i32,
     pub(crate) limit: Option<i32>,
-    pub(crate) ancestor: Option<Key>,
     pub(crate) namespace: Option<String>,
     pub(crate) projections: Vec<String>,
     pub(crate) distinct_on: Vec<String>,
@@ -54,7 +55,6 @@ impl Query {
             keys_only: false,
             offset: 0,
             limit: None,
-            ancestor: None,
             namespace: None,
             projections: Vec::new(),
             distinct_on: Vec::new(),
@@ -119,8 +119,8 @@ impl Query {
     /// let key = Key::new("dev").id(10);
     /// let query = Query::new("users").ancestor(key);
     /// ```
-    pub fn ancestor(mut self, key: Key) -> Query {
-        self.ancestor = Some(key);
+    pub fn ancestor(mut self, key: Value) -> Query {
+        self.filters.push(Filter::HasAncestor(key));
         self
     }
 

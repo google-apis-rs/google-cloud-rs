@@ -13,13 +13,13 @@ pub struct MessageStoragePolicy {
 pub struct Topic {
     /// The name of the topic. It must have the format
     /// `"projects/{project}/topics/{topic}"`. `{topic}` must start with a letter,
-    /// and contain only letters (`[A-Za-z]`), numbers (`[0-9]`), dashes (`-`),
+    /// and contain only letters (`\[A-Za-z\]`), numbers (`\[0-9\]`), dashes (`-`),
     /// underscores (`_`), periods (`.`), tildes (`~`), plus (`+`) or percent
     /// signs (`%`). It must be between 3 and 255 characters in length, and it
     /// must not start with `"goog"`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// See <a href="https://cloud.google.com/pubsub/docs/labels"> Creating and
+    /// See <a href="<https://cloud.google.com/pubsub/docs/labels">> Creating and
     /// managing labels</a>.
     #[prost(map = "string, string", tag = "2")]
     pub labels:
@@ -40,9 +40,9 @@ pub struct Topic {
 /// message must contain either a non-empty data field or at least one attribute.
 /// Note that client libraries represent this object differently
 /// depending on the language. See the corresponding
-/// <a href="https://cloud.google.com/pubsub/docs/reference/libraries">client
+/// <a href="<https://cloud.google.com/pubsub/docs/reference/libraries">client>
 /// library documentation</a> for more information. See
-/// <a href="https://cloud.google.com/pubsub/quotas">Quotas and limits</a>
+/// <a href="<https://cloud.google.com/pubsub/quotas">Quotas> and limits</a>
 /// for more information about message limits.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PubsubMessage {
@@ -213,8 +213,8 @@ pub struct DeleteTopicRequest {
 pub struct Subscription {
     /// The name of the subscription. It must have the format
     /// `"projects/{project}/subscriptions/{subscription}"`. `{subscription}` must
-    /// start with a letter, and contain only letters (`[A-Za-z]`), numbers
-    /// (`[0-9]`), dashes (`-`), underscores (`_`), periods (`.`), tildes (`~`),
+    /// start with a letter, and contain only letters (`\[A-Za-z\]`), numbers
+    /// (`\[0-9\]`), dashes (`-`), underscores (`_`), periods (`.`), tildes (`~`),
     /// plus (`+`) or percent signs (`%`). It must be between 3 and 255 characters
     /// in length, and it must not start with `"goog"`.
     #[prost(string, tag = "1")]
@@ -257,7 +257,7 @@ pub struct Subscription {
     /// acknowledged, until they fall out of the `message_retention_duration`
     /// window. This must be true if you would like to
     /// <a
-    /// href="https://cloud.google.com/pubsub/docs/replay-overview#seek_to_a_time">
+    /// href="<https://cloud.google.com/pubsub/docs/replay-overview#seek_to_a_time">>
     /// Seek to a timestamp</a>.
     #[prost(bool, tag = "7")]
     pub retain_acked_messages: bool,
@@ -269,7 +269,7 @@ pub struct Subscription {
     /// minutes.
     #[prost(message, optional, tag = "8")]
     pub message_retention_duration: ::core::option::Option<::prost_types::Duration>,
-    /// See <a href="https://cloud.google.com/pubsub/docs/labels"> Creating and
+    /// See <a href="<https://cloud.google.com/pubsub/docs/labels">> Creating and
     /// managing labels</a>.
     #[prost(map = "string, string", tag = "9")]
     pub labels:
@@ -356,7 +356,7 @@ pub struct ExpirationPolicy {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PushConfig {
     /// A URL locating the endpoint to which messages should be pushed.
-    /// For example, a Webhook endpoint might use "https://example.com/push".
+    /// For example, a Webhook endpoint might use "<https://example.com/push".>
     #[prost(string, tag = "1")]
     pub push_endpoint: ::prost::alloc::string::String,
     /// Endpoint configuration attributes that can be used to control different
@@ -395,11 +395,11 @@ pub struct PushConfig {
 pub mod push_config {
     /// Contains information needed for generating an
     /// [OpenID Connect
-    /// token](https://developers.google.com/identity/protocols/OpenIDConnect).
+    /// token](<https://developers.google.com/identity/protocols/OpenIDConnect>).
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct OidcToken {
         /// [Service account
-        /// email](https://cloud.google.com/iam/docs/service-accounts)
+        /// email](<https://cloud.google.com/iam/docs/service-accounts>)
         /// to be used for generating the OIDC token. The caller (for
         /// CreateSubscription, UpdateSubscription, and ModifyPushConfig RPCs) must
         /// have the iam.serviceAccounts.actAs permission for the service account.
@@ -409,7 +409,7 @@ pub mod push_config {
         /// identifies the recipients that the JWT is intended for. The audience
         /// value is a single case-sensitive string. Having multiple values (array)
         /// for the audience field is not supported. More info about the OIDC JWT
-        /// token audience here: https://tools.ietf.org/html/rfc7519#section-4.1.3
+        /// token audience here: <https://tools.ietf.org/html/rfc7519#section-4.1.3>
         /// Note: if not specified, the Push endpoint URL will be used.
         #[prost(string, tag = "2")]
         pub audience: ::prost::alloc::string::String,
@@ -648,7 +648,7 @@ pub struct CreateSnapshotRequest {
     /// If the name is not provided in the request, the server will assign a random
     /// name for this snapshot on the same project as the subscription.
     /// Note that for REST API requests, you must specify a name.  See the
-    /// <a href="https://cloud.google.com/pubsub/docs/admin#resource_names">
+    /// <a href="<https://cloud.google.com/pubsub/docs/admin#resource_names">>
     /// resource name rules</a>.
     /// Format is `projects/{project}/snapshots/{snap}`.
     #[prost(string, tag = "1")]
@@ -664,7 +664,7 @@ pub struct CreateSnapshotRequest {
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "2")]
     pub subscription: ::prost::alloc::string::String,
-    /// See <a href="https://cloud.google.com/pubsub/docs/labels"> Creating and
+    /// See <a href="<https://cloud.google.com/pubsub/docs/labels">> Creating and
     /// managing labels</a>.
     #[prost(map = "string, string", tag = "3")]
     pub labels:
@@ -682,7 +682,7 @@ pub struct UpdateSnapshotRequest {
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// A snapshot resource. Snapshots are used in
-/// <a href="https://cloud.google.com/pubsub/docs/replay-overview">Seek</a>
+/// <a href="<https://cloud.google.com/pubsub/docs/replay-overview">Seek</a>>
 /// operations, which allow
 /// you to manage message acknowledgments in bulk. That is, you can set the
 /// acknowledgment state of messages in an existing subscription to the state
@@ -707,7 +707,7 @@ pub struct Snapshot {
     /// snapshot that would expire in less than 1 hour after creation.
     #[prost(message, optional, tag = "3")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// See <a href="https://cloud.google.com/pubsub/docs/labels"> Creating and
+    /// See <a href="<https://cloud.google.com/pubsub/docs/labels">> Creating and
     /// managing labels</a>.
     #[prost(map = "string, string", tag = "4")]
     pub labels:
@@ -794,10 +794,11 @@ pub mod seek_request {
 pub struct SeekResponse {}
 #[doc = r" Generated client implementations."]
 pub mod publisher_client {
-    #![allow(unused_variables, dead_code, missing_docs)]
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     #[doc = " The service that an application uses to manipulate topics, and to send"]
     #[doc = " messages to a topic."]
+    #[derive(Debug, Clone)]
     pub struct PublisherClient<T> {
         inner: tonic::client::Grpc<T>,
     }
@@ -815,17 +816,43 @@ pub mod publisher_client {
     impl<T> PublisherClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::ResponseBody: Body + Send + 'static,
         T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
-            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
-            Self { inner }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> PublisherClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            PublisherClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
         }
         #[doc = " Creates the given topic with the given name. See the"]
         #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/admin#resource_names\">"]
@@ -969,26 +996,15 @@ pub mod publisher_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
-    impl<T: Clone> Clone for PublisherClient<T> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-            }
-        }
-    }
-    impl<T> std::fmt::Debug for PublisherClient<T> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "PublisherClient {{ ... }}")
-        }
-    }
 }
 #[doc = r" Generated client implementations."]
 pub mod subscriber_client {
-    #![allow(unused_variables, dead_code, missing_docs)]
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     #[doc = " The service that an application uses to manipulate subscriptions and to"]
     #[doc = " consume messages from a subscription via the `Pull` method or by"]
     #[doc = " establishing a bi-directional stream using the `StreamingPull` method."]
+    #[derive(Debug, Clone)]
     pub struct SubscriberClient<T> {
         inner: tonic::client::Grpc<T>,
     }
@@ -1006,17 +1022,43 @@ pub mod subscriber_client {
     impl<T> SubscriberClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::ResponseBody: Body + Send + 'static,
         T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
-            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
-            Self { inner }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> SubscriberClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            SubscriberClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
         }
         #[doc = " Creates a subscription to a given topic. See the"]
         #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/admin#resource_names\">"]
@@ -1370,18 +1412,6 @@ pub mod subscriber_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/google.pubsub.v1.Subscriber/Seek");
             self.inner.unary(request.into_request(), path, codec).await
-        }
-    }
-    impl<T: Clone> Clone for SubscriberClient<T> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-            }
-        }
-    }
-    impl<T> std::fmt::Debug for SubscriberClient<T> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "SubscriberClient {{ ... }}")
         }
     }
 }
