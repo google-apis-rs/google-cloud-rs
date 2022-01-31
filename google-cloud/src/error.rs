@@ -31,6 +31,9 @@ pub enum Error {
     /// authentication-related error.
     #[error("authentication error: {0}")]
     Auth(#[from] AuthError),
+    /// A YAML (de)serialization error.
+    #[error("YAML error: {0}")]
+    YAML(#[from] serde_yaml::Error),
 }
 
 /// The error type for value conversions.

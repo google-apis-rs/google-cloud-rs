@@ -16,12 +16,15 @@ use crate::datastore::{
     Entity, Error, Filter, FromValue, IntoEntity, Key, KeyID, Order, Query, Value,
 };
 
+use super::IndexExcluded;
+
 /// The Datastore client, tied to a specific project.
 #[derive(Clone)]
 pub struct Client {
     pub(crate) project_name: String,
     pub(crate) service: DatastoreClient<Channel>,
     pub(crate) token_manager: Arc<Mutex<TokenManager>>,
+    pub(crate) index_excluded: IndexExcluded,
 }
 
 impl Client {
@@ -75,6 +78,7 @@ impl Client {
                 creds,
                 Client::SCOPES.as_ref(),
             ))),
+            index_excluded: IndexExcluded::new()?,
         })
     }
 
@@ -156,7 +160,7 @@ impl Client {
             .into_iter()
             .map(|entity| {
                 let is_incomplete = entity.key.is_incomplete();
-                let entity = convert_entity(self.project_name.as_str(), entity);
+                let entity = convert_entity(self.project_name.as_str(), entity, self.index_excluded.to_owned());
                 api::Mutation {
                     operation: if is_incomplete {
                         Some(api::mutation::Operation::Insert(entity))
@@ -336,23 +340,26 @@ fn convert_key(project_name: &str, key: &Key) -> api::Key {
     }
 }
 
-fn convert_entity(project_name: &str, entity: Entity) -> api::Entity {
+fn convert_entity(project_name: &str, entity: Entity, index_excluded: IndexExcluded) -> api::Entity {
     let key = convert_key(project_name, &entity.key);
-    let properties = match entity.properties {
+    let properties = match entity.clone().properties {
         Value::EntityValue(properties) => properties,
         _ => panic!("unexpected non-entity datastore value"),
     };
     let properties = properties
         .into_iter()
-        .map(|(k, v)| (k, convert_value(project_name, v)))
-        .collect();
+        .map(|(k, v)| {
+            let index_excluded = IndexExcluded::ckeck_value(index_excluded.to_owned(), entity.key.get_kind().to_owned(), k.to_owned());
+            (k, convert_value(project_name, v, index_excluded))
+        }
+        ).collect();
     api::Entity {
         key: Some(key),
         properties,
     }
 }
 
-fn convert_value(project_name: &str, value: Value) -> api::Value {
+fn convert_value(project_name: &str, value: Value, index_excluded: bool) -> api::Value {
     let value_type = match value {
         Value::NULL(_) => api::value::ValueType::NullValue(0),
         Value::BooleanValue(val) => ValueType::BooleanValue(val),
@@ -374,20 +381,20 @@ fn convert_value(project_name: &str, value: Value) -> api::Value {
                 key: None,
                 properties: properties
                     .into_iter()
-                    .map(|(k, v)| (k, convert_value(project_name, v)))
+                    .map(|(k, v)| (k, convert_value(project_name, v, index_excluded)))
                     .collect(),
             }
         }),
         Value::ArrayValue(values) => ValueType::ArrayValue(api::ArrayValue {
             values: values
                 .into_iter()
-                .map(|value| convert_value(project_name, value))
+                .map(|value| convert_value(project_name, value, index_excluded))
                 .collect(),
         }),
     };
     api::Value {
         meaning: 0,
-        exclude_from_indexes: false,
+        exclude_from_indexes: index_excluded,
         value_type: Some(value_type),
     }
 }
@@ -419,7 +426,7 @@ fn convert_filter(project_name: &str, filters: Vec<Filter>) -> Option<api::Filte
                     filter_type: Some(FilterType::PropertyFilter(api::PropertyFilter {
                         op: op as i32,
                         property: Some(api::PropertyReference { name }),
-                        value: Some(convert_value(project_name, value)),
+                        value: Some(convert_value(project_name, value, false)),
                     })),
                 }
             })
