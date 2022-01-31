@@ -226,7 +226,7 @@ pub struct UpdateProductRequest {
     /// product.name is immutable.
     #[prost(message, optional, tag = "1")]
     pub product: ::core::option::Option<Product>,
-    /// The [FieldMask][google.protobuf.FieldMask] that specifies which fields
+    /// The \[FieldMask][google.protobuf.FieldMask\] that specifies which fields
     /// to update.
     /// If update_mask isn't specified, all mutable fields are to be updated.
     /// Valid mask paths include `product_labels`, `display_name`, and
@@ -304,7 +304,7 @@ pub struct UpdateProductSetRequest {
     /// Required. The ProductSet resource which replaces the one on the server.
     #[prost(message, optional, tag = "1")]
     pub product_set: ::core::option::Option<ProductSet>,
-    /// The [FieldMask][google.protobuf.FieldMask] that specifies which fields to
+    /// The \[FieldMask][google.protobuf.FieldMask\] that specifies which fields to
     /// update.
     /// If update_mask isn't specified, all mutable fields are to be updated.
     /// Valid mask path is `display_name`.
@@ -481,16 +481,16 @@ pub struct ImportProductSetsGcsSource {
     /// `product-id` values does not exist, then the system will create a new
     /// `ProductSet` or `Product` for the image. In this case, the
     /// `product-display-name` column refers to
-    /// [display_name][google.cloud.vision.v1.Product.display_name], the
+    /// \[display_name][google.cloud.vision.v1.Product.display_name\], the
     /// `product-category` column refers to
-    /// [product_category][google.cloud.vision.v1.Product.product_category], and the
-    /// `labels` column refers to [product_labels][google.cloud.vision.v1.Product.product_labels].
+    /// \[product_category][google.cloud.vision.v1.Product.product_category\], and the
+    /// `labels` column refers to \[product_labels][google.cloud.vision.v1.Product.product_labels\].
     ///
     /// The `image-id` column is optional but must be unique if provided. If it is
     /// empty, the system will automatically assign a unique id to the image.
     ///
     /// The `product-display-name` column is optional. If it is empty, the system
-    /// sets the [display_name][google.cloud.vision.v1.Product.display_name] field for the product to a
+    /// sets the \[display_name][google.cloud.vision.v1.Product.display_name\] field for the product to a
     /// space (" "). You can update the `display_name` later by using the API.
     ///
     /// If a `Product` with the specified `product-id` already exists, then the
@@ -555,8 +555,8 @@ pub struct ImportProductSetsRequest {
 /// Response message for the `ImportProductSets` method.
 ///
 /// This message is returned by the
-/// [google.longrunning.Operations.GetOperation][google.longrunning.Operations.GetOperation] method in the returned
-/// [google.longrunning.Operation.response][google.longrunning.Operation.response] field.
+/// \[google.longrunning.Operations.GetOperation][google.longrunning.Operations.GetOperation\] method in the returned
+/// \[google.longrunning.Operation.response][google.longrunning.Operation.response\] field.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ImportProductSetsResponse {
     /// The list of reference_images that are imported successfully.
@@ -566,7 +566,7 @@ pub struct ImportProductSetsResponse {
     /// and errors.
     ///
     /// The number of statuses here matches the number of lines in the csv file,
-    /// and statuses[i] stores the success or failure status of processing the i-th
+    /// and statuses\[i\] stores the success or failure status of processing the i-th
     /// line of the csv, starting from line 0.
     #[prost(message, repeated, tag = "2")]
     pub statuses: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
@@ -584,7 +584,7 @@ pub struct BatchOperationMetadata {
     #[prost(message, optional, tag = "2")]
     pub submit_time: ::core::option::Option<::prost_types::Timestamp>,
     /// The time when the batch request is finished and
-    /// [google.longrunning.Operation.done][google.longrunning.Operation.done] is set to true.
+    /// \[google.longrunning.Operation.done][google.longrunning.Operation.done\] is set to true.
     #[prost(message, optional, tag = "3")]
     pub end_time: ::core::option::Option<::prost_types::Timestamp>,
 }
@@ -650,7 +650,7 @@ pub mod purge_products_request {
 }
 #[doc = r" Generated client implementations."]
 pub mod product_search_client {
-    #![allow(unused_variables, dead_code, missing_docs)]
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     #[doc = " Manages Products and ProductSets of reference images for use in product"]
     #[doc = " search. It uses the following resource model:"]
@@ -666,6 +666,7 @@ pub mod product_search_client {
     #[doc = ""]
     #[doc = " - Each [Product][google.cloud.vision.v1.Product] has a collection of [ReferenceImage][google.cloud.vision.v1.ReferenceImage] resources, named"]
     #[doc = "   `projects/*/locations/*/products/*/referenceImages/*`"]
+    #[derive(Debug, Clone)]
     pub struct ProductSearchClient<T> {
         inner: tonic::client::Grpc<T>,
     }
@@ -683,17 +684,43 @@ pub mod product_search_client {
     impl<T> ProductSearchClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::ResponseBody: Body + Send + 'static,
         T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
-            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
-            Self { inner }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ProductSearchClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ProductSearchClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
         }
         #[doc = " Creates and returns a new ProductSet resource."]
         #[doc = ""]
@@ -1163,18 +1190,6 @@ pub mod product_search_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
-    impl<T: Clone> Clone for ProductSearchClient<T> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-            }
-        }
-    }
-    impl<T> std::fmt::Debug for ProductSearchClient<T> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "ProductSearchClient {{ ... }}")
-        }
-    }
 }
 /// Parameters for a product search request.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1183,7 +1198,7 @@ pub struct ProductSearchParams {
     /// Optional. If it is not specified, system discretion will be applied.
     #[prost(message, optional, tag = "9")]
     pub bounding_poly: ::core::option::Option<BoundingPoly>,
-    /// The resource name of a [ProductSet][google.cloud.vision.v1.ProductSet] to be searched for similar images.
+    /// The resource name of a \[ProductSet][google.cloud.vision.v1.ProductSet\] to be searched for similar images.
     ///
     /// Format is:
     /// `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`.
@@ -1252,7 +1267,7 @@ pub mod product_search_results {
         pub mid: ::prost::alloc::string::String,
         /// The BCP-47 language code, such as "en-US" or "sr-Latn". For more
         /// information, see
-        /// http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+        /// <http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.>
         #[prost(string, tag = "2")]
         pub language_code: ::prost::alloc::string::String,
         /// Object name, expressed in its `language_code` language.
@@ -1282,7 +1297,7 @@ pub mod product_search_results {
 ///     TextAnnotation -> Page -> Block -> Paragraph -> Word -> Symbol
 /// Each structural component, starting from Page, may further have their own
 /// properties. Properties describe detected languages, breaks etc.. Please refer
-/// to the [TextAnnotation.TextProperty][google.cloud.vision.v1.TextAnnotation.TextProperty] message definition below for more
+/// to the \[TextAnnotation.TextProperty][google.cloud.vision.v1.TextAnnotation.TextProperty\] message definition below for more
 /// detail.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TextAnnotation {
@@ -1300,7 +1315,7 @@ pub mod text_annotation {
     pub struct DetectedLanguage {
         /// The BCP-47 language code, such as "en-US" or "sr-Latn". For more
         /// information, see
-        /// http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+        /// <http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.>
         #[prost(string, tag = "1")]
         pub language_code: ::prost::alloc::string::String,
         /// Confidence of detected language. Range [0, 1].
@@ -1604,7 +1619,7 @@ pub mod web_detection {
         pub label: ::prost::alloc::string::String,
         /// The BCP-47 language code for `label`, such as "en-US" or "sr-Latn".
         /// For more information, see
-        /// http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+        /// <http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.>
         #[prost(string, tag = "2")]
         pub language_code: ::prost::alloc::string::String,
     }
@@ -1674,7 +1689,7 @@ pub struct ImageSource {
     /// The Google Cloud Storage  URI of the form
     /// `gs://bucket_name/object_name`. Object versioning is not supported. See
     /// [Google Cloud Storage Request
-    /// URIs](https://cloud.google.com/storage/docs/reference-uris) for more info.
+    /// URIs](<https://cloud.google.com/storage/docs/reference-uris>) for more info.
     #[prost(string, tag = "1")]
     pub gcs_image_uri: ::prost::alloc::string::String,
     /// The URI of the source image. Can be either:
@@ -1682,7 +1697,7 @@ pub struct ImageSource {
     /// 1. A Google Cloud Storage URI of the form
     ///    `gs://bucket_name/object_name`. Object versioning is not supported. See
     ///    [Google Cloud Storage Request
-    ///    URIs](https://cloud.google.com/storage/docs/reference-uris) for more
+    ///    URIs](<https://cloud.google.com/storage/docs/reference-uris>) for more
     ///    info.
     ///
     /// 2. A publicly-accessible image HTTP/HTTPS URL. When fetching images from
@@ -1736,16 +1751,16 @@ pub struct FaceAnnotation {
     pub landmarks: ::prost::alloc::vec::Vec<face_annotation::Landmark>,
     /// Roll angle, which indicates the amount of clockwise/anti-clockwise rotation
     /// of the face relative to the image vertical about the axis perpendicular to
-    /// the face. Range [-180,180].
+    /// the face. Range \[-180,180\].
     #[prost(float, tag = "4")]
     pub roll_angle: f32,
     /// Yaw angle, which indicates the leftward/rightward angle that the face is
     /// pointing relative to the vertical plane perpendicular to the image. Range
-    /// [-180,180].
+    /// \[-180,180\].
     #[prost(float, tag = "5")]
     pub pan_angle: f32,
     /// Pitch angle, which indicates the upwards/downwards angle that the face is
-    /// pointing relative to the image's horizontal plane. Range [-180,180].
+    /// pointing relative to the image's horizontal plane. Range \[-180,180\].
     #[prost(float, tag = "6")]
     pub tilt_angle: f32,
     /// Detection confidence. Range [0, 1].
@@ -1897,7 +1912,7 @@ pub struct Property {
 pub struct EntityAnnotation {
     /// Opaque entity ID. Some IDs may be available in
     /// [Google Knowledge Graph Search
-    /// API](https://developers.google.com/knowledge-graph/).
+    /// API](<https://developers.google.com/knowledge-graph/>).
     #[prost(string, tag = "1")]
     pub mid: ::prost::alloc::string::String,
     /// The language code for the locale in which the entity textual
@@ -1949,7 +1964,7 @@ pub struct LocalizedObjectAnnotation {
     pub mid: ::prost::alloc::string::String,
     /// The BCP-47 language code, such as "en-US" or "sr-Latn". For more
     /// information, see
-    /// http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+    /// <http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.>
     #[prost(string, tag = "2")]
     pub language_code: ::prost::alloc::string::String,
     /// Object name, expressed in its `language_code` language.
@@ -2515,11 +2530,12 @@ pub enum Likelihood {
 }
 #[doc = r" Generated client implementations."]
 pub mod image_annotator_client {
-    #![allow(unused_variables, dead_code, missing_docs)]
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     #[doc = " Service that performs Google Cloud Vision API detection tasks over client"]
     #[doc = " images, such as face, landmark, logo, label, and text detection. The"]
     #[doc = " ImageAnnotator service returns detected entities from the images."]
+    #[derive(Debug, Clone)]
     pub struct ImageAnnotatorClient<T> {
         inner: tonic::client::Grpc<T>,
     }
@@ -2537,17 +2553,43 @@ pub mod image_annotator_client {
     impl<T> ImageAnnotatorClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::ResponseBody: Body + Send + 'static,
         T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
-            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
-            Self { inner }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ImageAnnotatorClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ImageAnnotatorClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
         }
         #[doc = " Run image detection and annotation for a batch of images."]
         pub async fn batch_annotate_images(
@@ -2641,18 +2683,6 @@ pub mod image_annotator_client {
                 "/google.cloud.vision.v1.ImageAnnotator/AsyncBatchAnnotateFiles",
             );
             self.inner.unary(request.into_request(), path, codec).await
-        }
-    }
-    impl<T: Clone> Clone for ImageAnnotatorClient<T> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-            }
-        }
-    }
-    impl<T> std::fmt::Debug for ImageAnnotatorClient<T> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "ImageAnnotatorClient {{ ... }}")
         }
     }
 }

@@ -409,6 +409,9 @@ fn convert_filter(project_name: &str, filters: Vec<Filter>) -> Option<api::Filte
                     Filter::LesserThanEqual(name, value) => {
                         (name, Operator::LessThanOrEqual, value)
                     }
+                    Filter::HasAncestor(value) => {
+                        ("__key__".to_string(), Operator::HasAncestor, value)
+                    }
                 };
 
                 api::Filter {
