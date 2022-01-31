@@ -1,5 +1,6 @@
 mod client;
 mod entity;
+mod index_excluded;
 mod key;
 mod query;
 mod value;
@@ -18,6 +19,7 @@ mod api {
 
 pub use self::client::*;
 pub use self::entity::*;
+pub use self::index_excluded::*;
 pub use self::key::*;
 pub use self::query::*;
 pub use self::value::*;
