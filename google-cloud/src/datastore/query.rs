@@ -1,4 +1,4 @@
-use crate::datastore::{Key, Value};
+use crate::datastore::Value;
 
 /// Represents Datastore query result orderings.
 #[derive(Debug, Clone, PartialEq)]
