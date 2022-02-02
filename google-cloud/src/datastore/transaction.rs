@@ -15,6 +15,16 @@ pub struct Transaction {
 }
 
 impl Transaction {
+    /// Returns the client using the transaction
+    pub fn get_client(self) -> Client {
+        self.client
+    }
+
+    /// Returns the transaction key
+    pub fn get_tx_key(self) -> Vec<u8> {
+        self.tx_key
+    }
+
     /// Create a new transaction
     pub fn new(client: Client, tx_key: Vec<u8>) -> Transaction {
         let project_name = client.clone().project_name;
