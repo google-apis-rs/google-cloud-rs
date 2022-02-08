@@ -56,14 +56,24 @@ impl Client {
         project_name: impl Into<String>,
         creds: ApplicationCredentials,
     ) -> Result<Client, Error> {
-        let tls_config = ClientTlsConfig::new()
-            .ca_certificate(Certificate::from_pem(TLS_CERTS))
-            .domain_name(Client::DOMAIN_NAME);
+        let endpoint_str = env::var("PUBSUB_EMULATOR_HOST")
+            .map(|s| format!("http://{}", s))
+            .map(|s| &*Box::leak(s.into_boxed_str()))
+            .unwrap_or(Client::ENDPOINT);
 
-        let channel = Channel::from_static(Client::ENDPOINT)
-            .tls_config(tls_config)?
-            .connect()
-            .await?;
+        let endpoint = Channel::from_static(endpoint_str);
+
+        let endpoint = if endpoint_str.starts_with("https") {
+            let tls_config = ClientTlsConfig::new()
+                .ca_certificate(Certificate::from_pem(TLS_CERTS))
+                .domain_name(Client::DOMAIN_NAME);
+
+            endpoint.tls_config(tls_config)?
+        } else {
+            endpoint
+        };
+
+        let channel = endpoint.connect().await?;
 
         Ok(Client {
             project_name: project_name.into(),
