@@ -29,8 +29,12 @@ pub enum Value {
     KeyValue(Key),
     /// A string value.
     StringValue(String),
+    /// An unindexed string value.
+    UnindexedStringValue(String),
     /// A blob value, just a block of bytes.
     BlobValue(Vec<u8>),
+    /// An unindexed blob value.
+    UnindexedBlobValue(Vec<u8>),
     /// An Earth geographic location value (with latitude and longitude).
     GeoPointValue(f64, f64),
     /// An entity value.
@@ -48,8 +52,8 @@ impl Value {
             Value::DoubleValue(_) => "double",
             Value::TimestampValue(_) => "timestamp",
             Value::KeyValue(_) => "key",
-            Value::StringValue(_) => "string",
-            Value::BlobValue(_) => "blob",
+            Value::StringValue(_) | Value::UnindexedStringValue(_) => "string",
+            Value::BlobValue(_) | Value::UnindexedBlobValue(_) => "blob",
             Value::GeoPointValue(_, _) => "geopoint",
             Value::EntityValue(_) => "entity",
             Value::ArrayValue(_) => "array",
