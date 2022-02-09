@@ -142,12 +142,11 @@ impl Transaction {
 
     /// Execute transaction rollback
     pub async fn rollback(&mut self) -> Result<(), Error> {
-        self.client.service.rollback(
-            RollbackRequest {
-                project_id: self.client.project_name.to_owned(),
-                transaction: self.tx_key.to_vec()
-            }
-        ).await?;
+        let request = self.client.construct_request(RollbackRequest {
+            project_id: self.client.project_name.to_owned(),
+            transaction: self.tx_key.to_vec()
+        }).await?;
+        self.client.service.rollback(request).await?;
         
         Ok(())
     }
