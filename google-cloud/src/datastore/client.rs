@@ -353,6 +353,7 @@ fn convert_entity(project_name: &str, entity: Entity) -> api::Entity {
 }
 
 fn convert_value(project_name: &str, value: Value) -> api::Value {
+    let mut exclude_from_indexes = false;
     let value_type = match value {
         Value::BooleanValue(val) => ValueType::BooleanValue(val),
         Value::IntegerValue(val) => ValueType::IntegerValue(val),
@@ -363,7 +364,15 @@ fn convert_value(project_name: &str, value: Value) -> api::Value {
         }),
         Value::KeyValue(key) => ValueType::KeyValue(convert_key(project_name, &key)),
         Value::StringValue(val) => ValueType::StringValue(val),
+        Value::UnindexedStringValue(val) => {
+            exclude_from_indexes = true;
+            ValueType::StringValue(val)
+        },
         Value::BlobValue(val) => ValueType::BlobValue(val),
+        Value::UnindexedBlobValue(val) => {
+            exclude_from_indexes = true;
+            ValueType::BlobValue(val)
+        },
         Value::GeoPointValue(latitude, longitude) => ValueType::GeoPointValue(api::LatLng {
             latitude,
             longitude,
@@ -386,7 +395,7 @@ fn convert_value(project_name: &str, value: Value) -> api::Value {
     };
     api::Value {
         meaning: 0,
-        exclude_from_indexes: false,
+        exclude_from_indexes,
         value_type: Some(value_type),
     }
 }
