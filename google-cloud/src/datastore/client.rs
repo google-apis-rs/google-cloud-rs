@@ -455,8 +455,19 @@ pub(crate) fn convert_entity(project_name: &str, entity: Entity, index_excluded:
 }
 
 pub(crate) fn convert_value(project_name: &str, value: Value, index_excluded: bool) -> api::Value {
-    let value_type = match value {
-        Value::NULL(_) => api::value::ValueType::NullValue(0),
+    api::Value {
+        meaning: 0,
+        exclude_from_indexes: index_excluded,
+        value_type: Some(convert_value_type(project_name, value, index_excluded)),
+    }
+}
+
+fn convert_value_type(project_name: &str, value: Value, index_excluded: bool) -> api::value::ValueType {
+    match value {
+        Value::OptionValue(val) => match val {
+            Some(v) => convert_value_type(project_name, *v, index_excluded),
+            None => api::value::ValueType::NullValue(0),
+        },
         Value::BooleanValue(val) => api::value::ValueType::BooleanValue(val),
         Value::IntegerValue(val) => api::value::ValueType::IntegerValue(val),
         Value::DoubleValue(val) => api::value::ValueType::DoubleValue(val),
@@ -486,11 +497,6 @@ pub(crate) fn convert_value(project_name: &str, value: Value, index_excluded: bo
                 .map(|value| convert_value(project_name, value, index_excluded))
                 .collect(),
         }),
-    };
-    api::Value {
-        meaning: 0,
-        exclude_from_indexes: index_excluded,
-        value_type: Some(value_type),
     }
 }
 
