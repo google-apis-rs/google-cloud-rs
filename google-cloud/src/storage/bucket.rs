@@ -3,6 +3,7 @@ use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use crate::storage::api::object::*;
 use crate::storage::{Client, Error, Object};
 
+use serde::Serialize;
 use std::collections::HashMap;
 
 /// Represents a Cloud Storage bucket.
@@ -91,7 +92,7 @@ impl Bucket {
     }
 
     /// List objects stored in the bucket.
-    pub async fn list<V>(&mut self, list_options: &HashMap<String, V>) -> Result<Vec<Object>, Error> {
+    pub async fn list<V: Serialize>(&mut self, list_options: &HashMap<String, V>) -> Result<Vec<Object>, Error> {
         let client = &mut self.client;
         let inner = &client.client;
         let uri = format!(
