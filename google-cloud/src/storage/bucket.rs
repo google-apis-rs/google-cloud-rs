@@ -91,7 +91,7 @@ impl Bucket {
     }
 
     /// List objects stored in the bucket.
-    pub async fn list(&mut self, list_options: &HashMap<String, T>) -> Result<Object, Error> {
+    pub async fn list(&mut self, list_options: &HashMap<K, V>) -> Result<Object, Error> {
         let client = &mut self.client;
         let inner = &client.client;
         let uri = format!(

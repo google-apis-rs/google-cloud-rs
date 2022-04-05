@@ -18,7 +18,7 @@ impl Object {
         client: Client,
         bucket: impl Into<String>,
         name: impl Into<String>,
-        metadata: impl Into<HashMap>,
+        metadata: impl Into<HashMap<K, V>>,
     ) -> Object {
         Object {
             client,
