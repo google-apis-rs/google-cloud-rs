@@ -2,6 +2,8 @@ use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
 use crate::storage::{Client, Error};
 
+use std::collections::HashMap;
+
 /// Represents a Cloud Storage bucket.
 #[derive(Clone)]
 pub struct Object {
@@ -16,7 +18,7 @@ impl Object {
         client: Client,
         bucket: impl Into<String>,
         name: impl Into<String>,
-        metadata: impl Into<HashMap<String:String>>,
+        metadata: impl Into<HashMap>,
     ) -> Object {
         Object {
             client,

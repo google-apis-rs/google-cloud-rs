@@ -1,7 +1,9 @@
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
-use crate::storage::api::object::ObjectResource;
+use crate::storage::api::object::*;
 use crate::storage::{Client, Error, Object};
+
+use std::collections::HashMap;
 
 /// Represents a Cloud Storage bucket.
 #[derive(Clone)]
@@ -56,6 +58,7 @@ impl Bucket {
             client.clone(),
             self.name.clone(),
             resource.name,
+            resource.metadata,
         ))
     }
 
@@ -88,20 +91,19 @@ impl Bucket {
     }
 
     /// List objects stored in the bucket.
-    pub async fn list(&mut self, opts: &HashMap<String, String>) -> Result<Object, Error> {
+    pub async fn list(&mut self, list_options: &HashMap<String, T>) -> Result<Object, Error> {
         let client = &mut self.client;
         let inner = &client.client;
         let uri = format!(
             "{}/b/{}/o",
             Client::ENDPOINT,
             utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
-            utf8_percent_encode(name, NON_ALPHANUMERIC),
         );
 
         let token = client.token_manager.lock().await.token().await?;
         let request = inner
             .get(uri.as_str())
-            .query(&opts)
+            .query(&list_options)
             .header("authorization", token)
             .send();
         let response = request.await?;
@@ -113,7 +115,7 @@ impl Bucket {
         let objects = resources
             .items
             .into_iter()
-            .map(|resource| Object::new(self.clone(), resource.name, resource.bucket, resource.metadata))
+            .map(|resource| Object::new(client.clone(), resource.name, resource.bucket, resource.metadata))
             .collect();
 
         Ok(objects)
