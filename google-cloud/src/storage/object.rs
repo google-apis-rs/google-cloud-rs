@@ -18,13 +18,13 @@ impl Object {
         client: Client,
         bucket: impl Into<String>,
         name: impl Into<String>,
-        metadata: impl Into<HashMap<K, V>>,
+        metadata: HashMap<String, String>,
     ) -> Object {
         Object {
             client,
             name: name.into(),
             bucket: bucket.into(),
-            metadata: metadata.into(),
+            metadata: metadata,
         }
     }
 
