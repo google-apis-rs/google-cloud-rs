@@ -83,6 +83,7 @@ impl Bucket {
             client.clone(),
             self.name.clone(),
             resource.name,
+            resource.metadata
         ))
     }
 

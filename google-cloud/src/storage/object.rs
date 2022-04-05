@@ -8,6 +8,7 @@ pub struct Object {
     pub(crate) client: Client,
     pub(crate) name: String,
     pub(crate) bucket: String,
+    pub(crate) metadata: HashMap<String, String>,
 }
 
 impl Object {
@@ -15,11 +16,13 @@ impl Object {
         client: Client,
         bucket: impl Into<String>,
         name: impl Into<String>,
+        metadata: impl Into<HashMap<String:String>>,
     ) -> Object {
         Object {
             client,
             name: name.into(),
             bucket: bucket.into(),
+            metadata: metadata.into(),
         }
     }
 
@@ -31,6 +34,11 @@ impl Object {
     /// Get the object's bucket name.
     pub fn bucket(&self) -> &str {
         self.bucket.as_str()
+    }
+
+    /// Get the object's metadata
+    pub fn metadata(&self) -> &HashMap<String, String> {
+        self.metadata
     }
 
     // /// Insert a new object into the bucket.
