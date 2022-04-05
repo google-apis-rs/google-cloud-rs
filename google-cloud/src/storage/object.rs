@@ -40,7 +40,7 @@ impl Object {
 
     /// Get the object's metadata
     pub fn metadata(&self) -> &HashMap<String, String> {
-        self.metadata
+        &self.metadata
     }
 
     // /// Insert a new object into the bucket.
