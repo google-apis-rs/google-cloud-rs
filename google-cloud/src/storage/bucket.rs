@@ -87,6 +87,38 @@ impl Bucket {
         ))
     }
 
+    /// List objects stored in the bucket.
+    pub async fn list(&mut self, opts: &HashMap<String, String>) -> Result<Object, Error> {
+        let client = &mut self.client;
+        let inner = &client.client;
+        let uri = format!(
+            "{}/b/{}/o",
+            Client::ENDPOINT,
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
+            utf8_percent_encode(name, NON_ALPHANUMERIC),
+        );
+
+        let token = client.token_manager.lock().await.token().await?;
+        let request = inner
+            .get(uri.as_str())
+            .query(&opts)
+            .header("authorization", token)
+            .send();
+        let response = request.await?;
+        let resources = response.
+            error_for_status()?
+            .json::<ObjectResources>()
+            .await?;
+
+        let objects = resources
+            .items
+            .into_iter()
+            .map(|resource| Object::new(self.clone(), resource.name, resource.bucket, resource.metadata))
+            .collect();
+
+        Ok(objects)
+    }
+
     /// Delete the bucket.
     pub async fn delete(self) -> Result<(), Error> {
         let client = self.client;
