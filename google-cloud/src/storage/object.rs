@@ -8,6 +8,7 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub struct Object {
     pub(crate) client: Client,
+    pub(crate) id: String,
     pub(crate) name: String,
     pub(crate) bucket: String,
     pub(crate) metadata: HashMap<String, String>,
@@ -17,15 +18,22 @@ impl Object {
     pub(crate) fn new(
         client: Client,
         bucket: impl Into<String>,
+        id: impl Into<String>,
         name: impl Into<String>,
         metadata: HashMap<String, String>,
     ) -> Object {
         Object {
             client,
+            id: id.into(),
             name: name.into(),
             bucket: bucket.into(),
             metadata: metadata,
         }
+    }
+
+    /// Get the object's id.
+    pub fn id(&self) -> &str {
+        self.id.as_str()
     }
 
     /// Get the object's name.

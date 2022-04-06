@@ -58,6 +58,7 @@ impl Bucket {
         Ok(Object::new(
             client.clone(),
             self.name.clone(),
+            resource.id,
             resource.name,
             resource.metadata.unwrap_or(HashMap::new()),
         ))
@@ -86,6 +87,7 @@ impl Bucket {
         Ok(Object::new(
             client.clone(),
             self.name.clone(),
+            resource.id,
             resource.name,
             resource.metadata.unwrap_or(HashMap::new()),
         ))
@@ -116,7 +118,7 @@ impl Bucket {
         let objects = resources
             .items
             .into_iter()
-            .map(|resource| Object::new(client.clone(), resource.name, resource.bucket, resource.metadata.unwrap_or(HashMap::new())))
+            .map(|resource| Object::new(client.clone(), resource.id, resource.name, resource.bucket, resource.metadata.unwrap_or(HashMap::new())))
             .collect();
 
         Ok(objects)
