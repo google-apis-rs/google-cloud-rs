@@ -6,6 +6,15 @@ use crate::storage::api::object_acl::ObjectAclResource;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ObjectResources {
+    /// Value: "storage#objects"
+    pub kind: String,
+    #[serde(default)]
+    pub items: Vec<ObjectResource>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ObjectResource {
     // Value: "storage#object"
     pub kind: String,

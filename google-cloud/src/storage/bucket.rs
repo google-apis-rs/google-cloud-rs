@@ -1,7 +1,10 @@
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
-use crate::storage::api::object::ObjectResource;
+use crate::storage::api::object::*;
 use crate::storage::{Client, Error, Object};
+
+use serde::Serialize;
+use std::collections::HashMap;
 
 /// Represents a Cloud Storage bucket.
 #[derive(Clone)]
@@ -55,7 +58,9 @@ impl Bucket {
         Ok(Object::new(
             client.clone(),
             self.name.clone(),
+            resource.id,
             resource.name,
+            resource.metadata.unwrap_or(HashMap::new()),
         ))
     }
 
@@ -82,8 +87,41 @@ impl Bucket {
         Ok(Object::new(
             client.clone(),
             self.name.clone(),
+            resource.id,
             resource.name,
+            resource.metadata.unwrap_or(HashMap::new()),
         ))
+    }
+
+    /// List objects stored in the bucket.
+    pub async fn list<V: Serialize>(&mut self, list_options: &HashMap<String, V>) -> Result<Vec<Object>, Error> {
+        let client = &mut self.client;
+        let inner = &client.client;
+        let uri = format!(
+            "{}/b/{}/o",
+            Client::ENDPOINT,
+            utf8_percent_encode(&self.name, NON_ALPHANUMERIC),
+        );
+
+        let token = client.token_manager.lock().await.token().await?;
+        let request = inner
+            .get(uri.as_str())
+            .query(&list_options)
+            .header("authorization", token)
+            .send();
+        let response = request.await?;
+        let resources = response.
+            error_for_status()?
+            .json::<ObjectResources>()
+            .await?;
+
+        let objects = resources
+            .items
+            .into_iter()
+            .map(|resource| Object::new(client.clone(), resource.id, resource.name, resource.bucket, resource.metadata.unwrap_or(HashMap::new())))
+            .collect();
+
+        Ok(objects)
     }
 
     /// Delete the bucket.
