@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::storage::api::bucket_acl::BucketAclResource;
 use crate::storage::api::object_acl::ObjectAclResource;
+use crate::deserializer::deserialize_u64_or_string;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -49,9 +50,10 @@ pub struct BucketResource {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BucketRetentionPolicy {
-    pub pubretention_period: u64,
-    pub pubeffective_time: String,
-    pub pubis_locked: bool,
+    #[serde(deserialize_with = "deserialize_u64_or_string")]
+    pub retention_period: u64,
+    pub effective_time: String,
+    pub is_locked: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
