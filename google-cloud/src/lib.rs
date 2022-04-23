@@ -8,6 +8,8 @@ extern crate google_cloud_derive;
 pub mod authorize;
 /// Error handling utilities.
 pub mod error;
+/// Complements serde deserializers.
+pub mod deserializer;
 
 /// Datastore bindings.
 #[cfg(feature = "datastore")]
