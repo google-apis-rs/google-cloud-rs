@@ -29,6 +29,8 @@ pub enum Value {
     KeyValue(Key),
     /// A string value.
     StringValue(String),
+    /// A value with an indexed/unindexed flag.
+    IndexedValue(Box<Value>, bool),
     /// A blob value, just a block of bytes.
     BlobValue(Vec<u8>),
     /// An Earth geographic location value (with latitude and longitude).
@@ -49,6 +51,7 @@ impl Value {
             Value::TimestampValue(_) => "timestamp",
             Value::KeyValue(_) => "key",
             Value::StringValue(_) => "string",
+            Value::IndexedValue(v, _) => v.type_name(),
             Value::BlobValue(_) => "blob",
             Value::GeoPointValue(_, _) => "geopoint",
             Value::EntityValue(_) => "entity",
@@ -72,6 +75,12 @@ pub trait FromValue: Sized {
 impl IntoValue for Value {
     fn into_value(self) -> Value {
         self
+    }
+}
+
+impl IntoValue for (Value, bool) {
+    fn into_value(self) -> Value {
+        Value::IndexedValue(Box::new(self.0), self.1)
     }
 }
 
