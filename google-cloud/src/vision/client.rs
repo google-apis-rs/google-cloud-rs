@@ -17,6 +17,7 @@ use crate::vision::{
 
 /// The Cloud Vision client, tied to a specific project.
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct Client {
     pub(crate) project_name: String,
     pub(crate) img_annotator: ImageAnnotatorClient<Channel>,

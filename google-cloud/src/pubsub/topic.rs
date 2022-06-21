@@ -4,7 +4,7 @@ use crate::pubsub::api;
 use crate::pubsub::{Client, Error, Subscription, SubscriptionConfig};
 
 /// Represents the topic's configuration.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct TopicConfig {
     pub(crate) labels: HashMap<String, String>,
 }
@@ -14,14 +14,6 @@ impl TopicConfig {
     pub fn label(mut self, name: impl Into<String>, value: impl Into<String>) -> TopicConfig {
         self.labels.insert(name.into(), value.into());
         self
-    }
-}
-
-impl Default for TopicConfig {
-    fn default() -> TopicConfig {
-        TopicConfig {
-            labels: HashMap::new(),
-        }
     }
 }
 

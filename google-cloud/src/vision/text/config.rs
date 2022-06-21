@@ -1,6 +1,7 @@
 use crate::vision::api;
 
 /// Represents the text detection's configuration.
+#[derive(Default)]
 pub struct TextDetectionConfig {
     pub(crate) language_hints: Vec<String>,
 }
@@ -11,14 +12,6 @@ impl TextDetectionConfig {
     pub fn language_hint(mut self, lang: impl Into<String>) -> TextDetectionConfig {
         self.language_hints.push(lang.into());
         self
-    }
-}
-
-impl Default for TextDetectionConfig {
-    fn default() -> TextDetectionConfig {
-        TextDetectionConfig {
-            language_hints: Vec::new(),
-        }
     }
 }
 

@@ -111,13 +111,11 @@ impl Subscription {
                     ),
                 };
                 break Some(message);
-            } else {
-                if let Ok(messages) = self.pull(&opts).await {
-                    if messages.is_empty() && opts.return_immediately {
-                        break None;
-                    }
-                    self.buffer.extend(messages);
+            } else if let Ok(messages) = self.pull(&opts).await {
+                if messages.is_empty() && opts.return_immediately {
+                    break None;
                 }
+                self.buffer.extend(messages);
             }
         }
     }

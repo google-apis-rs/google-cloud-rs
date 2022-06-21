@@ -13,26 +13,26 @@ use crate::casing::{transform_field_casing, transform_variant_casing};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromMeta)]
 pub(crate) enum RenameAll {
     #[darling(rename = "lowercase")]
-    LowerCase,
+    Lower,
     #[darling(rename = "UPPERCASE")]
-    UpperCase,
+    Upper,
     #[darling(rename = "PascalCase")]
-    PascalCase,
+    Pascal,
     #[darling(rename = "camelCase")]
-    CamelCase,
+    Camel,
     #[darling(rename = "snake_case")]
-    SnakeCase,
+    Snake,
     #[darling(rename = "SCREAMING_SNAKE_CASE")]
-    ScreamingSnakeCase,
+    ScreamingSnake,
     #[darling(rename = "kebab-case")]
-    KebabCase,
+    Kebab,
     #[darling(rename = "SCREAMING-KEBAB-CASE")]
-    ScreamingKebabCase,
+    ScreamingKebab,
 }
 
 impl Default for RenameAll {
     fn default() -> RenameAll {
-        RenameAll::CamelCase
+        RenameAll::Camel
     }
 }
 
