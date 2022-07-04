@@ -270,9 +270,7 @@ impl Client {
                     project_id: self.project_name.clone(),
                     namespace_id: cur_query.namespace.unwrap_or_default(),
                 }),
-                query_type: Some(api::run_query_request::QueryType::Query(Box::new(
-                    api_query,
-                ))),
+                query_type: Some(api::run_query_request::QueryType::Query(api_query)),
                 read_options: Some({
                     use api::read_options::{ConsistencyType, ReadConsistency};
                     api::ReadOptions {

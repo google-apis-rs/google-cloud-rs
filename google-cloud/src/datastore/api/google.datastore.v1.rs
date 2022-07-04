@@ -124,7 +124,6 @@ pub struct Value {
 /// Nested message and enum types in `Value`.
 pub mod value {
     /// Must have a value set.
-    #[allow(clippy::enum_variant_names)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ValueType {
         /// A null value.
@@ -572,7 +571,7 @@ pub mod run_query_request {
     pub enum QueryType {
         /// The query to run.
         #[prost(message, tag = "3")]
-        Query(Box<super::Query>),
+        Query(super::Query),
         /// The GQL query to run.
         #[prost(message, tag = "7")]
         GqlQuery(super::GqlQuery),
