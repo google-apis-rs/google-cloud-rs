@@ -80,12 +80,16 @@ impl Topic {
     }
 
     /// Publish a message onto this topic.
-    pub async fn publish(&mut self, data: impl Into<Vec<u8>>) -> Result<(), Error> {
+    pub async fn publish(
+        &mut self,
+        data: impl Into<Vec<u8>>,
+        attributes: Option<HashMap<String, String>>,
+    ) -> Result<(), Error> {
         let request = api::PublishRequest {
             topic: self.name.clone(),
             messages: vec![api::PubsubMessage {
                 data: data.into(),
-                attributes: HashMap::new(),
+                attributes: attributes.unwrap_or_default(),
                 message_id: String::new(),
                 ordering_key: String::new(),
                 publish_time: None,
