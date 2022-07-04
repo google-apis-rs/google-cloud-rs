@@ -8,6 +8,7 @@ mod api {
         include!("api/google.r#type.rs");
     }
     pub mod datastore {
+        #![allow(clippy::enum_variant_names, clippy::large_enum_variant)]
         pub mod v1 {
             include!("api/google.datastore.v1.rs");
         }

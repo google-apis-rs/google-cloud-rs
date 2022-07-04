@@ -13,7 +13,7 @@ pub struct Image {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ImageInner {
     Bytes(Vec<u8>),
-    URL(String),
+    Url(String),
 }
 
 impl Image {
@@ -27,7 +27,7 @@ impl Image {
     /// Constructs an image from URL.
     pub fn from_url(url: impl Into<String>) -> Image {
         Image {
-            inner: ImageInner::URL(url.into()),
+            inner: ImageInner::Url(url.into()),
         }
     }
 
@@ -46,7 +46,7 @@ impl From<Image> for api::Image {
                 content,
                 source: None,
             },
-            ImageInner::URL(image_uri) => api::Image {
+            ImageInner::Url(image_uri) => api::Image {
                 content: Vec::new(),
                 source: Some(api::ImageSource {
                     image_uri,

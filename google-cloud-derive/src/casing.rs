@@ -2,14 +2,14 @@ use crate::RenameAll;
 
 pub(crate) fn transform_variant_casing(variant: syn::Ident, rename_all: RenameAll) -> String {
     match rename_all {
-        RenameAll::LowerCase => variant.to_string().to_ascii_lowercase(),
-        RenameAll::UpperCase => variant.to_string().to_ascii_uppercase(),
-        RenameAll::CamelCase => {
+        RenameAll::Lower => variant.to_string().to_ascii_lowercase(),
+        RenameAll::Upper => variant.to_string().to_ascii_uppercase(),
+        RenameAll::Camel => {
             let variant = variant.to_string();
             variant[..1].to_ascii_lowercase() + &variant[1..]
         }
-        RenameAll::PascalCase => variant.to_string(),
-        RenameAll::SnakeCase => {
+        RenameAll::Pascal => variant.to_string(),
+        RenameAll::Snake => {
             let variant = variant.to_string();
             let mut snake = String::new();
             for (i, ch) in variant.char_indices() {
@@ -20,27 +20,25 @@ pub(crate) fn transform_variant_casing(variant: syn::Ident, rename_all: RenameAl
             }
             snake
         }
-        RenameAll::ScreamingSnakeCase => {
-            transform_variant_casing(variant, RenameAll::SnakeCase).to_ascii_uppercase()
+        RenameAll::ScreamingSnake => {
+            transform_variant_casing(variant, RenameAll::Snake).to_ascii_uppercase()
         }
-        RenameAll::KebabCase => {
-            transform_variant_casing(variant, RenameAll::SnakeCase).replace('_', "-")
-        }
-        RenameAll::ScreamingKebabCase => {
-            transform_variant_casing(variant, RenameAll::ScreamingSnakeCase).replace('_', "-")
+        RenameAll::Kebab => transform_variant_casing(variant, RenameAll::Snake).replace('_', "-"),
+        RenameAll::ScreamingKebab => {
+            transform_variant_casing(variant, RenameAll::ScreamingSnake).replace('_', "-")
         }
     }
 }
 
 pub(crate) fn transform_field_casing(field: syn::Ident, rename_all: RenameAll) -> String {
     match rename_all {
-        RenameAll::LowerCase => field.to_string(),
-        RenameAll::UpperCase => field.to_string().to_ascii_uppercase(),
-        RenameAll::CamelCase => {
-            let pascal = transform_field_casing(field, RenameAll::PascalCase);
+        RenameAll::Lower => field.to_string(),
+        RenameAll::Upper => field.to_string().to_ascii_uppercase(),
+        RenameAll::Camel => {
+            let pascal = transform_field_casing(field, RenameAll::Pascal);
             pascal[..1].to_ascii_lowercase() + &pascal[1..]
         }
-        RenameAll::PascalCase => {
+        RenameAll::Pascal => {
             let field = field.to_string();
             let mut pascal = String::new();
             let mut capitalize = true;
@@ -56,11 +54,11 @@ pub(crate) fn transform_field_casing(field: syn::Ident, rename_all: RenameAll) -
             }
             pascal
         }
-        RenameAll::SnakeCase => field.to_string(),
-        RenameAll::ScreamingSnakeCase => field.to_string().to_ascii_uppercase(),
-        RenameAll::KebabCase => field.to_string().replace('_', "-"),
-        RenameAll::ScreamingKebabCase => {
-            transform_field_casing(field, RenameAll::ScreamingSnakeCase).replace('_', "-")
+        RenameAll::Snake => field.to_string(),
+        RenameAll::ScreamingSnake => field.to_string().to_ascii_uppercase(),
+        RenameAll::Kebab => field.to_string().replace('_', "-"),
+        RenameAll::ScreamingKebab => {
+            transform_field_casing(field, RenameAll::ScreamingSnake).replace('_', "-")
         }
     }
 }
