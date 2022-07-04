@@ -88,7 +88,7 @@ async fn pubsub_sends_and_receives_message_successfully() {
     //? Publish that message onto the topic.
     print!("sending message... ");
     io::stdout().flush().unwrap();
-    assert_ok!(topic.publish(message).await);
+    assert_ok!(topic.publish(message, None).await);
     println!("OK !");
 
     //? Receive it back from the subscription.
