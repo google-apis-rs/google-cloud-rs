@@ -21,7 +21,6 @@ import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/devtools/clouddebugger/v2/data.proto";
-import "google/protobuf/empty.proto";
 
 option csharp_namespace = "Google.Cloud.Debugger.V2";
 option go_package = "google.golang.org/genproto/googleapis/devtools/clouddebugger/v2;clouddebugger";
@@ -29,6 +28,7 @@ option java_multiple_files = true;
 option java_outer_classname = "ControllerProto";
 option java_package = "com.google.devtools.clouddebugger.v2";
 option php_namespace = "Google\\Cloud\\Debugger\\V2";
+option ruby_package = "Google::Cloud::Debugger::V2";
 
 // The Controller service provides the API for orchestrating a collection of
 // debugger agents to perform debugging tasks. These agents are each attached

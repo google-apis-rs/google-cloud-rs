@@ -17,22 +17,23 @@ maintenance = { status = "actively-developed" }
 # Derive macros
 google-cloud-derive = { version = "0.2.1", path = "../google-cloud-derive", optional = true }
 
-tonic = { version = "0.4.1", features = ["tls", "prost"] }
+tonic = { version = "0.8.2", features = ["tls", "prost"] }
 tokio = { version = "1.4.0", features = ["macros", "fs"] }
 reqwest = { version = "0.11.2", optional = true, default_features = false, features = ["blocking", "json", "rustls-tls"] }
 hyper = "0.14.4"
-hyper-rustls = "0.22.1"
+hyper-rustls = "0.23.0"
 futures = "0.3.13"
 
-prost = "0.7.0"
-prost-types = "0.7.0"
+prost = "0.11.0"
+prost-types = "0.11.1"
 
 http = "0.2.3"
 chrono = "0.4.19"
 
 serde = { version = "1.0.125", features = ["derive"] }
 json = { package = "serde_json", version = "1.0.64" }
-jwt = { package = "jsonwebtoken", version = "7.2.0" }
+jwt = { package = "jsonwebtoken", version = "8.1.1" }
+serde_yaml = "0.9.14"
 
 thiserror = "1.0.24"
 
@@ -40,7 +41,7 @@ bytes = { version = "1.0.1", optional = true }
 percent-encoding = { version = "2.1.0", optional = true }
 
 [build-dependencies]
-tonic-build = "0.4.1"
+tonic-build = "0.8.2"
 
 [features]
 default = []

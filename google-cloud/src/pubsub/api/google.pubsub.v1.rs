@@ -1,3 +1,345 @@
+/// A schema resource.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Schema {
+    /// Required. Name of the schema.
+    /// Format is `projects/{project}/schemas/{schema}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The type of the schema definition.
+    #[prost(enumeration = "schema::Type", tag = "2")]
+    pub r#type: i32,
+    /// The definition of the schema. This should contain a string representing
+    /// the full definition of the schema that is a valid schema definition of
+    /// the type specified in `type`.
+    #[prost(string, tag = "3")]
+    pub definition: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `Schema`.
+pub mod schema {
+    /// Possible schema definition types.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Type {
+        /// Default value. This value is unused.
+        Unspecified = 0,
+        /// A Protocol Buffer schema definition.
+        ProtocolBuffer = 1,
+        /// An Avro schema definition.
+        Avro = 2,
+    }
+}
+/// Request for the CreateSchema method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSchemaRequest {
+    /// Required. The name of the project in which to create the schema.
+    /// Format is `projects/{project-id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The schema object to create.
+    ///
+    /// This schema's `name` parameter is ignored. The schema object returned
+    /// by CreateSchema will have a `name` made using the given `parent` and
+    /// `schema_id`.
+    #[prost(message, optional, tag = "2")]
+    pub schema: ::core::option::Option<Schema>,
+    /// The ID to use for the schema, which will become the final component of
+    /// the schema's resource name.
+    ///
+    /// See <https://cloud.google.com/pubsub/docs/admin#resource_names> for resource
+    /// name constraints.
+    #[prost(string, tag = "3")]
+    pub schema_id: ::prost::alloc::string::String,
+}
+/// Request for the GetSchema method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSchemaRequest {
+    /// Required. The name of the schema to get.
+    /// Format is `projects/{project}/schemas/{schema}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The set of fields to return in the response. If not set, returns a Schema
+    /// with `name` and `type`, but not `definition`. Set to `FULL` to retrieve all
+    /// fields.
+    #[prost(enumeration = "SchemaView", tag = "2")]
+    pub view: i32,
+}
+/// Request for the `ListSchemas` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSchemasRequest {
+    /// Required. The name of the project in which to list schemas.
+    /// Format is `projects/{project-id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The set of Schema fields to return in the response. If not set, returns
+    /// Schemas with `name` and `type`, but not `definition`. Set to `FULL` to
+    /// retrieve all fields.
+    #[prost(enumeration = "SchemaView", tag = "2")]
+    pub view: i32,
+    /// Maximum number of schemas to return.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+    /// The value returned by the last `ListSchemasResponse`; indicates that
+    /// this is a continuation of a prior `ListSchemas` call, and that the
+    /// system should return the next page of data.
+    #[prost(string, tag = "4")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response for the `ListSchemas` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSchemasResponse {
+    /// The resulting schemas.
+    #[prost(message, repeated, tag = "1")]
+    pub schemas: ::prost::alloc::vec::Vec<Schema>,
+    /// If not empty, indicates that there may be more schemas that match the
+    /// request; this value should be passed in a new `ListSchemasRequest`.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request for the `DeleteSchema` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteSchemaRequest {
+    /// Required. Name of the schema to delete.
+    /// Format is `projects/{project}/schemas/{schema}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for the `ValidateSchema` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValidateSchemaRequest {
+    /// Required. The name of the project in which to validate schemas.
+    /// Format is `projects/{project-id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The schema object to validate.
+    #[prost(message, optional, tag = "2")]
+    pub schema: ::core::option::Option<Schema>,
+}
+/// Response for the `ValidateSchema` method.
+/// Empty for now.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValidateSchemaResponse {}
+/// Request for the `ValidateMessage` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValidateMessageRequest {
+    /// Required. The name of the project in which to validate schemas.
+    /// Format is `projects/{project-id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Message to validate against the provided `schema_spec`.
+    #[prost(bytes = "vec", tag = "4")]
+    pub message: ::prost::alloc::vec::Vec<u8>,
+    /// The encoding expected for messages
+    #[prost(enumeration = "Encoding", tag = "5")]
+    pub encoding: i32,
+    #[prost(oneof = "validate_message_request::SchemaSpec", tags = "2, 3")]
+    pub schema_spec: ::core::option::Option<validate_message_request::SchemaSpec>,
+}
+/// Nested message and enum types in `ValidateMessageRequest`.
+pub mod validate_message_request {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SchemaSpec {
+        /// Name of the schema against which to validate.
+        ///
+        /// Format is `projects/{project}/schemas/{schema}`.
+        #[prost(string, tag = "2")]
+        Name(::prost::alloc::string::String),
+        /// Ad-hoc schema against which to validate
+        #[prost(message, tag = "3")]
+        Schema(super::Schema),
+    }
+}
+/// Response for the `ValidateMessage` method.
+/// Empty for now.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValidateMessageResponse {}
+/// View of Schema object fields to be returned by GetSchema and ListSchemas.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SchemaView {
+    /// The default / unset value.
+    /// The API will default to the BASIC view.
+    Unspecified = 0,
+    /// Include the name and type of the schema, but not the definition.
+    Basic = 1,
+    /// Include all Schema object fields.
+    Full = 2,
+}
+/// Possible encoding types for messages.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Encoding {
+    /// Unspecified
+    Unspecified = 0,
+    /// JSON encoding
+    Json = 1,
+    /// Binary encoding, as defined by the schema type. For some schema types,
+    /// binary encoding may not be available.
+    Binary = 2,
+}
+#[doc = r" Generated client implementations."]
+pub mod schema_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for doing schema-related operations."]
+    #[derive(Debug, Clone)]
+    pub struct SchemaServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl SchemaServiceClient<tonic::transport::Channel> {
+        #[doc = r" Attempt to create a new client by connecting to a given endpoint."]
+        pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
+        where
+            D: std::convert::TryInto<tonic::transport::Endpoint>,
+            D::Error: Into<StdError>,
+        {
+            let conn = tonic::transport::Endpoint::new(dst)?.connect().await?;
+            Ok(Self::new(conn))
+        }
+    }
+    impl<T> SchemaServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> SchemaServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            SchemaServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a schema."]
+        pub async fn create_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSchemaRequest>,
+        ) -> Result<tonic::Response<super::Schema>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.pubsub.v1.SchemaService/CreateSchema",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a schema."]
+        pub async fn get_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSchemaRequest>,
+        ) -> Result<tonic::Response<super::Schema>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.pubsub.v1.SchemaService/GetSchema");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists schemas in a project."]
+        pub async fn list_schemas(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListSchemasRequest>,
+        ) -> Result<tonic::Response<super::ListSchemasResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.pubsub.v1.SchemaService/ListSchemas");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a schema."]
+        pub async fn delete_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteSchemaRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.pubsub.v1.SchemaService/DeleteSchema",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Validates a schema."]
+        pub async fn validate_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ValidateSchemaRequest>,
+        ) -> Result<tonic::Response<super::ValidateSchemaResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.pubsub.v1.SchemaService/ValidateSchema",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Validates a message against a schema."]
+        pub async fn validate_message(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ValidateMessageRequest>,
+        ) -> Result<tonic::Response<super::ValidateMessageResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.pubsub.v1.SchemaService/ValidateMessage",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// A policy constraining the storage of messages published to the topic.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MessageStoragePolicy {
     /// A list of IDs of GCP regions where messages that are published to the topic
@@ -8,19 +350,32 @@ pub struct MessageStoragePolicy {
     #[prost(string, repeated, tag = "1")]
     pub allowed_persistence_regions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
+/// Settings for validating messages published against a schema.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SchemaSettings {
+    /// Required. The name of the schema that messages published should be
+    /// validated against. Format is `projects/{project}/schemas/{schema}`. The
+    /// value of this field will be `_deleted-schema_` if the schema has been
+    /// deleted.
+    #[prost(string, tag = "1")]
+    pub schema: ::prost::alloc::string::String,
+    /// The encoding of messages validated against `schema`.
+    #[prost(enumeration = "Encoding", tag = "2")]
+    pub encoding: i32,
+}
 /// A topic resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Topic {
-    /// The name of the topic. It must have the format
+    /// Required. The name of the topic. It must have the format
     /// `"projects/{project}/topics/{topic}"`. `{topic}` must start with a letter,
-    /// and contain only letters (`[A-Za-z]`), numbers (`[0-9]`), dashes (`-`),
+    /// and contain only letters (`\[A-Za-z\]`), numbers (`\[0-9\]`), dashes (`-`),
     /// underscores (`_`), periods (`.`), tildes (`~`), plus (`+`) or percent
     /// signs (`%`). It must be between 3 and 255 characters in length, and it
     /// must not start with `"goog"`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// See <a href="https://cloud.google.com/pubsub/docs/labels"> Creating and
-    /// managing labels</a>.
+    /// See [Creating and managing labels]
+    /// (<https://cloud.google.com/pubsub/docs/labels>).
     #[prost(map = "string, string", tag = "2")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
@@ -35,22 +390,41 @@ pub struct Topic {
     /// The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*`.
     #[prost(string, tag = "5")]
     pub kms_key_name: ::prost::alloc::string::String,
+    /// Settings for validating messages published against a schema.
+    #[prost(message, optional, tag = "6")]
+    pub schema_settings: ::core::option::Option<SchemaSettings>,
+    /// Reserved for future use. This field is set only in responses from the
+    /// server; it is ignored if it is set in any requests.
+    #[prost(bool, tag = "7")]
+    pub satisfies_pzs: bool,
+    /// Indicates the minimum duration to retain a message after it is published to
+    /// the topic. If this field is set, messages published to the topic in the
+    /// last `message_retention_duration` are always available to subscribers. For
+    /// instance, it allows any attached subscription to [seek to a
+    /// timestamp](<https://cloud.google.com/pubsub/docs/replay-overview#seek_to_a_time>)
+    /// that is up to `message_retention_duration` in the past. If this field is
+    /// not set, message retention is controlled by settings on individual
+    /// subscriptions. Cannot be more than 7 days or less than 10 minutes.
+    #[prost(message, optional, tag = "8")]
+    pub message_retention_duration: ::core::option::Option<::prost_types::Duration>,
 }
 /// A message that is published by publishers and consumed by subscribers. The
 /// message must contain either a non-empty data field or at least one attribute.
 /// Note that client libraries represent this object differently
-/// depending on the language. See the corresponding
-/// <a href="https://cloud.google.com/pubsub/docs/reference/libraries">client
-/// library documentation</a> for more information. See
-/// <a href="https://cloud.google.com/pubsub/quotas">Quotas and limits</a>
-/// for more information about message limits.
+/// depending on the language. See the corresponding [client library
+/// documentation](<https://cloud.google.com/pubsub/docs/reference/libraries>) for
+/// more information. See [quotas and limits]
+/// (<https://cloud.google.com/pubsub/quotas>) for more information about message
+/// limits.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PubsubMessage {
     /// The message data field. If this field is empty, the message must contain
     /// at least one attribute.
     #[prost(bytes = "vec", tag = "1")]
     pub data: ::prost::alloc::vec::Vec<u8>,
-    /// Optional attributes for this message.
+    /// Attributes for this message. If this field is empty, the message must
+    /// contain non-empty data. This can be used to filter messages on the
+    /// subscription.
     #[prost(map = "string, string", tag = "2")]
     pub attributes:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
@@ -65,20 +439,19 @@ pub struct PubsubMessage {
     /// publisher in a `Publish` call.
     #[prost(message, optional, tag = "4")]
     pub publish_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Identifies related messages for which publish order should be respected.
-    /// If a `Subscription` has `enable_message_ordering` set to `true`, messages
-    /// published with the same `ordering_key` value will be delivered to
-    /// subscribers in the order in which they are received by the Pub/Sub system.
-    /// <b>EXPERIMENTAL:</b> This feature is part of a closed alpha release. This
-    /// API might be changed in backward-incompatible ways and is not recommended
-    /// for production use. It is not subject to any SLA or deprecation policy.
+    /// If non-empty, identifies related messages for which publish order should be
+    /// respected. If a `Subscription` has `enable_message_ordering` set to `true`,
+    /// messages published with the same non-empty `ordering_key` value will be
+    /// delivered to subscribers in the order in which they are received by the
+    /// Pub/Sub system. All `PubsubMessage`s published in a given `PublishRequest`
+    /// must specify the same `ordering_key` value.
     #[prost(string, tag = "5")]
     pub ordering_key: ::prost::alloc::string::String,
 }
 /// Request for the GetTopic method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetTopicRequest {
-    /// The name of the topic to get.
+    /// Required. The name of the topic to get.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: ::prost::alloc::string::String,
@@ -86,25 +459,25 @@ pub struct GetTopicRequest {
 /// Request for the UpdateTopic method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateTopicRequest {
-    /// The updated topic object.
+    /// Required. The updated topic object.
     #[prost(message, optional, tag = "1")]
     pub topic: ::core::option::Option<Topic>,
-    /// Indicates which fields in the provided topic to update. Must be specified
-    /// and non-empty. Note that if `update_mask` contains
-    /// "message_storage_policy" then the new value will be determined based on the
-    /// policy configured at the project or organization level. The
-    /// `message_storage_policy` must not be set in the `topic` provided above.
+    /// Required. Indicates which fields in the provided topic to update. Must be
+    /// specified and non-empty. Note that if `update_mask` contains
+    /// "message_storage_policy" but the `message_storage_policy` is not set in
+    /// the `topic` provided above, then the updated value is determined by the
+    /// policy configured at the project or organization level.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Request for the Publish method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PublishRequest {
-    /// The messages in the request will be published on this topic.
+    /// Required. The messages in the request will be published on this topic.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: ::prost::alloc::string::String,
-    /// The messages to publish.
+    /// Required. The messages to publish.
     #[prost(message, repeated, tag = "2")]
     pub messages: ::prost::alloc::vec::Vec<PubsubMessage>,
 }
@@ -120,7 +493,7 @@ pub struct PublishResponse {
 /// Request for the `ListTopics` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTopicsRequest {
-    /// The name of the project in which to list topics.
+    /// Required. The name of the project in which to list topics.
     /// Format is `projects/{project-id}`.
     #[prost(string, tag = "1")]
     pub project: ::prost::alloc::string::String,
@@ -147,7 +520,7 @@ pub struct ListTopicsResponse {
 /// Request for the `ListTopicSubscriptions` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTopicSubscriptionsRequest {
-    /// The name of the topic that subscriptions are attached to.
+    /// Required. The name of the topic that subscriptions are attached to.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: ::prost::alloc::string::String,
@@ -163,7 +536,7 @@ pub struct ListTopicSubscriptionsRequest {
 /// Response for the `ListTopicSubscriptions` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTopicSubscriptionsResponse {
-    /// The names of the subscriptions that match the request.
+    /// The names of subscriptions attached to the topic specified in the request.
     #[prost(string, repeated, tag = "1")]
     pub subscriptions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// If not empty, indicates that there may be more subscriptions that match
@@ -175,7 +548,7 @@ pub struct ListTopicSubscriptionsResponse {
 /// Request for the `ListTopicSnapshots` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTopicSnapshotsRequest {
-    /// The name of the topic that snapshots are attached to.
+    /// Required. The name of the topic that snapshots are attached to.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: ::prost::alloc::string::String,
@@ -203,33 +576,51 @@ pub struct ListTopicSnapshotsResponse {
 /// Request for the `DeleteTopic` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteTopicRequest {
-    /// Name of the topic to delete.
+    /// Required. Name of the topic to delete.
     /// Format is `projects/{project}/topics/{topic}`.
     #[prost(string, tag = "1")]
     pub topic: ::prost::alloc::string::String,
 }
+/// Request for the DetachSubscription method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DetachSubscriptionRequest {
+    /// Required. The subscription to detach.
+    /// Format is `projects/{project}/subscriptions/{subscription}`.
+    #[prost(string, tag = "1")]
+    pub subscription: ::prost::alloc::string::String,
+}
+/// Response for the DetachSubscription method.
+/// Reserved for future use.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DetachSubscriptionResponse {}
 /// A subscription resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Subscription {
-    /// The name of the subscription. It must have the format
+    /// Required. The name of the subscription. It must have the format
     /// `"projects/{project}/subscriptions/{subscription}"`. `{subscription}` must
-    /// start with a letter, and contain only letters (`[A-Za-z]`), numbers
-    /// (`[0-9]`), dashes (`-`), underscores (`_`), periods (`.`), tildes (`~`),
+    /// start with a letter, and contain only letters (`\[A-Za-z\]`), numbers
+    /// (`\[0-9\]`), dashes (`-`), underscores (`_`), periods (`.`), tildes (`~`),
     /// plus (`+`) or percent signs (`%`). It must be between 3 and 255 characters
     /// in length, and it must not start with `"goog"`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The name of the topic from which this subscription is receiving messages.
-    /// Format is `projects/{project}/topics/{topic}`.
-    /// The value of this field will be `_deleted-topic_` if the topic has been
-    /// deleted.
+    /// Required. The name of the topic from which this subscription is receiving
+    /// messages. Format is `projects/{project}/topics/{topic}`. The value of this
+    /// field will be `_deleted-topic_` if the topic has been deleted.
     #[prost(string, tag = "2")]
     pub topic: ::prost::alloc::string::String,
     /// If push delivery is used with this subscription, this field is
-    /// used to configure it. An empty `pushConfig` signifies that the subscriber
-    /// will pull and ack messages using API methods.
+    /// used to configure it. Either `pushConfig` or `bigQueryConfig` can be set,
+    /// but not both. If both are empty, then the subscriber will pull and ack
+    /// messages using API methods.
     #[prost(message, optional, tag = "4")]
     pub push_config: ::core::option::Option<PushConfig>,
+    /// If delivery to BigQuery is used with this subscription, this field is
+    /// used to configure it. Either `pushConfig` or `bigQueryConfig` can be set,
+    /// but not both. If both are empty, then the subscriber will pull and ack
+    /// messages using API methods.
+    #[prost(message, optional, tag = "18")]
+    pub bigquery_config: ::core::option::Option<BigQueryConfig>,
     /// The approximate amount of time (on a best-effort basis) Pub/Sub waits for
     /// the subscriber to acknowledge receipt before resending the message. In the
     /// interval after the message is delivered and before it is acknowledged, it
@@ -255,10 +646,9 @@ pub struct Subscription {
     /// Indicates whether to retain acknowledged messages. If true, then
     /// messages are not expunged from the subscription's backlog, even if they are
     /// acknowledged, until they fall out of the `message_retention_duration`
-    /// window. This must be true if you would like to
-    /// <a
-    /// href="https://cloud.google.com/pubsub/docs/replay-overview#seek_to_a_time">
-    /// Seek to a timestamp</a>.
+    /// window. This must be true if you would like to [`Seek` to a timestamp]
+    /// (<https://cloud.google.com/pubsub/docs/replay-overview#seek_to_a_time>) in
+    /// the past to replay previously-acknowledged messages.
     #[prost(bool, tag = "7")]
     pub retain_acked_messages: bool,
     /// How long to retain unacknowledged messages in the subscription's backlog,
@@ -269,7 +659,7 @@ pub struct Subscription {
     /// minutes.
     #[prost(message, optional, tag = "8")]
     pub message_retention_duration: ::core::option::Option<::prost_types::Duration>,
-    /// See <a href="https://cloud.google.com/pubsub/docs/labels"> Creating and
+    /// See <a href="<https://cloud.google.com/pubsub/docs/labels">> Creating and
     /// managing labels</a>.
     #[prost(map = "string, string", tag = "9")]
     pub labels:
@@ -278,9 +668,6 @@ pub struct Subscription {
     /// will be delivered to the subscribers in the order in which they
     /// are received by the Pub/Sub system. Otherwise, they may be delivered in
     /// any order.
-    /// <b>EXPERIMENTAL:</b> This feature is part of a closed alpha release. This
-    /// API might be changed in backward-incompatible ways and is not recommended
-    /// for production use. It is not subject to any SLA or deprecation policy.
     #[prost(bool, tag = "10")]
     pub enable_message_ordering: bool,
     /// A policy that specifies the conditions for this subscription's expiration.
@@ -291,6 +678,13 @@ pub struct Subscription {
     /// value for `expiration_policy.ttl` is 1 day.
     #[prost(message, optional, tag = "11")]
     pub expiration_policy: ::core::option::Option<ExpirationPolicy>,
+    /// An expression written in the Pub/Sub [filter
+    /// language](<https://cloud.google.com/pubsub/docs/filtering>). If non-empty,
+    /// then only `PubsubMessage`s whose `attributes` field matches the filter are
+    /// delivered on this subscription. If empty, then no messages are filtered
+    /// out.
+    #[prost(string, tag = "12")]
+    pub filter: ::prost::alloc::string::String,
     /// A policy that specifies the conditions for dead lettering messages in
     /// this subscription. If dead_letter_policy is not set, dead lettering
     /// is disabled.
@@ -299,11 +693,87 @@ pub struct Subscription {
     /// parent project (i.e.,
     /// service-{project_number}@gcp-sa-pubsub.iam.gserviceaccount.com) must have
     /// permission to Acknowledge() messages on this subscription.
-    /// <b>EXPERIMENTAL:</b> This feature is part of a closed alpha release. This
-    /// API might be changed in backward-incompatible ways and is not recommended
-    /// for production use. It is not subject to any SLA or deprecation policy.
     #[prost(message, optional, tag = "13")]
     pub dead_letter_policy: ::core::option::Option<DeadLetterPolicy>,
+    /// A policy that specifies how Pub/Sub retries message delivery for this
+    /// subscription.
+    ///
+    /// If not set, the default retry policy is applied. This generally implies
+    /// that messages will be retried as soon as possible for healthy subscribers.
+    /// RetryPolicy will be triggered on NACKs or acknowledgement deadline
+    /// exceeded events for a given message.
+    #[prost(message, optional, tag = "14")]
+    pub retry_policy: ::core::option::Option<RetryPolicy>,
+    /// Indicates whether the subscription is detached from its topic. Detached
+    /// subscriptions don't receive messages from their topic and don't retain any
+    /// backlog. `Pull` and `StreamingPull` requests will return
+    /// FAILED_PRECONDITION. If the subscription is a push subscription, pushes to
+    /// the endpoint will not be made.
+    #[prost(bool, tag = "15")]
+    pub detached: bool,
+    /// If true, Pub/Sub provides the following guarantees for the delivery of
+    /// a message with a given value of `message_id` on this subscription:
+    ///
+    /// * The message sent to a subscriber is guaranteed not to be resent
+    /// before the message's acknowledgement deadline expires.
+    /// * An acknowledged message will not be resent to a subscriber.
+    ///
+    /// Note that subscribers may still receive multiple copies of a message
+    /// when `enable_exactly_once_delivery` is true if the message was published
+    /// multiple times by a publisher client. These copies are  considered distinct
+    /// by Pub/Sub and have distinct `message_id` values.
+    #[prost(bool, tag = "16")]
+    pub enable_exactly_once_delivery: bool,
+    /// Output only. Indicates the minimum duration for which a message is retained
+    /// after it is published to the subscription's topic. If this field is set,
+    /// messages published to the subscription's topic in the last
+    /// `topic_message_retention_duration` are always available to subscribers. See
+    /// the `message_retention_duration` field in `Topic`. This field is set only
+    /// in responses from the server; it is ignored if it is set in any requests.
+    #[prost(message, optional, tag = "17")]
+    pub topic_message_retention_duration: ::core::option::Option<::prost_types::Duration>,
+    /// Output only. An output-only field indicating whether or not the subscription can receive
+    /// messages.
+    #[prost(enumeration = "subscription::State", tag = "19")]
+    pub state: i32,
+}
+/// Nested message and enum types in `Subscription`.
+pub mod subscription {
+    /// Possible states for a subscription.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Default value. This value is unused.
+        Unspecified = 0,
+        /// The subscription can actively receive messages
+        Active = 1,
+        /// The subscription cannot receive messages because of an error with the
+        /// resource to which it pushes messages. See the more detailed error state
+        /// in the corresponding configuration.
+        ResourceError = 2,
+    }
+}
+/// A policy that specifies how Cloud Pub/Sub retries message delivery.
+///
+/// Retry delay will be exponential based on provided minimum and maximum
+/// backoffs. <https://en.wikipedia.org/wiki/Exponential_backoff.>
+///
+/// RetryPolicy will be triggered on NACKs or acknowledgement deadline exceeded
+/// events for a given message.
+///
+/// Retry Policy is implemented on a best effort basis. At times, the delay
+/// between consecutive deliveries may not match the configuration. That is,
+/// delay can be more or less than configured backoff.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RetryPolicy {
+    /// The minimum delay between consecutive deliveries of a given message.
+    /// Value should be between 0 and 600 seconds. Defaults to 10 seconds.
+    #[prost(message, optional, tag = "1")]
+    pub minimum_backoff: ::core::option::Option<::prost_types::Duration>,
+    /// The maximum delay between consecutive deliveries of a given message.
+    /// Value should be between 0 and 600 seconds. Defaults to 600 seconds.
+    #[prost(message, optional, tag = "2")]
+    pub maximum_backoff: ::core::option::Option<::prost_types::Duration>,
 }
 /// Dead lettering is done on a best effort basis. The same message might be
 /// dead lettered multiple times.
@@ -356,7 +826,7 @@ pub struct ExpirationPolicy {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PushConfig {
     /// A URL locating the endpoint to which messages should be pushed.
-    /// For example, a Webhook endpoint might use "https://example.com/push".
+    /// For example, a Webhook endpoint might use `<https://example.com/push`.>
     #[prost(string, tag = "1")]
     pub push_endpoint: ::prost::alloc::string::String,
     /// Endpoint configuration attributes that can be used to control different
@@ -395,11 +865,11 @@ pub struct PushConfig {
 pub mod push_config {
     /// Contains information needed for generating an
     /// [OpenID Connect
-    /// token](https://developers.google.com/identity/protocols/OpenIDConnect).
+    /// token](<https://developers.google.com/identity/protocols/OpenIDConnect>).
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct OidcToken {
         /// [Service account
-        /// email](https://cloud.google.com/iam/docs/service-accounts)
+        /// email](<https://cloud.google.com/iam/docs/service-accounts>)
         /// to be used for generating the OIDC token. The caller (for
         /// CreateSubscription, UpdateSubscription, and ModifyPushConfig RPCs) must
         /// have the iam.serviceAccounts.actAs permission for the service account.
@@ -409,7 +879,7 @@ pub mod push_config {
         /// identifies the recipients that the JWT is intended for. The audience
         /// value is a single case-sensitive string. Having multiple values (array)
         /// for the audience field is not supported. More info about the OIDC JWT
-        /// token audience here: https://tools.ietf.org/html/rfc7519#section-4.1.3
+        /// token audience here: <https://tools.ietf.org/html/rfc7519#section-4.1.3>
         /// Note: if not specified, the Push endpoint URL will be used.
         #[prost(string, tag = "2")]
         pub audience: ::prost::alloc::string::String,
@@ -427,6 +897,54 @@ pub mod push_config {
         OidcToken(OidcToken),
     }
 }
+/// Configuration for a BigQuery subscription.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigQueryConfig {
+    /// The name of the table to which to write data, of the form
+    /// {projectId}:{datasetId}.{tableId}
+    #[prost(string, tag = "1")]
+    pub table: ::prost::alloc::string::String,
+    /// When true, use the topic's schema as the columns to write to in BigQuery,
+    /// if it exists.
+    #[prost(bool, tag = "2")]
+    pub use_topic_schema: bool,
+    /// When true, write the subscription name, message_id, publish_time,
+    /// attributes, and ordering_key to additional columns in the table. The
+    /// subscription name, message_id, and publish_time fields are put in their own
+    /// columns while all other message properties (other than data) are written to
+    /// a JSON object in the attributes column.
+    #[prost(bool, tag = "3")]
+    pub write_metadata: bool,
+    /// When true and use_topic_schema is true, any fields that are a part of the
+    /// topic schema that are not part of the BigQuery table schema are dropped
+    /// when writing to BigQuery. Otherwise, the schemas must be kept in sync and
+    /// any messages with extra fields are not written and remain in the
+    /// subscription's backlog.
+    #[prost(bool, tag = "4")]
+    pub drop_unknown_fields: bool,
+    /// Output only. An output-only field that indicates whether or not the subscription can
+    /// receive messages.
+    #[prost(enumeration = "big_query_config::State", tag = "5")]
+    pub state: i32,
+}
+/// Nested message and enum types in `BigQueryConfig`.
+pub mod big_query_config {
+    /// Possible states for a BigQuery subscription.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Default value. This value is unused.
+        Unspecified = 0,
+        /// The subscription can actively send messages to BigQuery
+        Active = 1,
+        /// Cannot write to the BigQuery table because of permission denied errors.
+        PermissionDenied = 2,
+        /// Cannot write to the BigQuery table because it does not exist.
+        NotFound = 3,
+        /// Cannot write to the BigQuery table due to a schema mismatch.
+        SchemaMismatch = 4,
+    }
+}
 /// A message and its corresponding acknowledgment ID.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReceivedMessage {
@@ -436,8 +954,11 @@ pub struct ReceivedMessage {
     /// The message.
     #[prost(message, optional, tag = "2")]
     pub message: ::core::option::Option<PubsubMessage>,
-    /// Delivery attempt counter is 1 + (the sum of number of NACKs and number of
-    /// ack_deadline exceeds) for this message.
+    /// The approximate number of times that Cloud Pub/Sub has attempted to deliver
+    /// the associated message to a subscriber.
+    ///
+    /// More precisely, this is 1 + (number of NACKs) +
+    /// (number of ack_deadline exceeds) for this message.
     ///
     /// A NACK is any call to ModifyAckDeadline with a 0 deadline. An ack_deadline
     /// exceeds event is whenever a message is not acknowledged within
@@ -445,20 +966,17 @@ pub struct ReceivedMessage {
     /// Subscription.ackDeadlineSeconds, but may get extended automatically by
     /// the client library.
     ///
-    /// The first delivery of a given message will have this value as 1. The value
-    /// is calculated at best effort and is approximate.
+    /// Upon the first delivery of a given message, `delivery_attempt` will have a
+    /// value of 1. The value is calculated at best effort and is approximate.
     ///
     /// If a DeadLetterPolicy is not set on the subscription, this will be 0.
-    /// <b>EXPERIMENTAL:</b> This feature is part of a closed alpha release. This
-    /// API might be changed in backward-incompatible ways and is not recommended
-    /// for production use. It is not subject to any SLA or deprecation policy.
     #[prost(int32, tag = "3")]
     pub delivery_attempt: i32,
 }
 /// Request for the GetSubscription method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSubscriptionRequest {
-    /// The name of the subscription to get.
+    /// Required. The name of the subscription to get.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: ::prost::alloc::string::String,
@@ -466,10 +984,10 @@ pub struct GetSubscriptionRequest {
 /// Request for the UpdateSubscription method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateSubscriptionRequest {
-    /// The updated subscription object.
+    /// Required. The updated subscription object.
     #[prost(message, optional, tag = "1")]
     pub subscription: ::core::option::Option<Subscription>,
-    /// Indicates which fields in the provided subscription to update.
+    /// Required. Indicates which fields in the provided subscription to update.
     /// Must be specified and non-empty.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
@@ -477,7 +995,7 @@ pub struct UpdateSubscriptionRequest {
 /// Request for the `ListSubscriptions` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSubscriptionsRequest {
-    /// The name of the project in which to list subscriptions.
+    /// Required. The name of the project in which to list subscriptions.
     /// Format is `projects/{project-id}`.
     #[prost(string, tag = "1")]
     pub project: ::prost::alloc::string::String,
@@ -505,7 +1023,7 @@ pub struct ListSubscriptionsResponse {
 /// Request for the DeleteSubscription method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteSubscriptionRequest {
-    /// The subscription to delete.
+    /// Required. The subscription to delete.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: ::prost::alloc::string::String,
@@ -513,11 +1031,11 @@ pub struct DeleteSubscriptionRequest {
 /// Request for the ModifyPushConfig method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ModifyPushConfigRequest {
-    /// The name of the subscription.
+    /// Required. The name of the subscription.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: ::prost::alloc::string::String,
-    /// The push configuration for future deliveries.
+    /// Required. The push configuration for future deliveries.
     ///
     /// An empty `pushConfig` indicates that the Pub/Sub system should
     /// stop pushing messages from the given subscription and allow
@@ -529,18 +1047,22 @@ pub struct ModifyPushConfigRequest {
 /// Request for the `Pull` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PullRequest {
-    /// The subscription from which messages should be pulled.
+    /// Required. The subscription from which messages should be pulled.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: ::prost::alloc::string::String,
-    /// If this field set to true, the system will respond immediately even if
-    /// it there are no messages available to return in the `Pull` response.
-    /// Otherwise, the system may wait (for a bounded amount of time) until at
-    /// least one message is available, rather than returning no messages.
+    /// Optional. If this field set to true, the system will respond immediately
+    /// even if it there are no messages available to return in the `Pull`
+    /// response. Otherwise, the system may wait (for a bounded amount of time)
+    /// until at least one message is available, rather than returning no messages.
+    /// Warning: setting this field to `true` is discouraged because it adversely
+    /// impacts the performance of `Pull` operations. We recommend that users do
+    /// not set this field.
+    #[deprecated]
     #[prost(bool, tag = "2")]
     pub return_immediately: bool,
-    /// The maximum number of messages to return for this request. Must be a
-    /// positive integer. The Pub/Sub system may return fewer than the number
+    /// Required. The maximum number of messages to return for this request. Must
+    /// be a positive integer. The Pub/Sub system may return fewer than the number
     /// specified.
     #[prost(int32, tag = "3")]
     pub max_messages: i32,
@@ -558,17 +1080,17 @@ pub struct PullResponse {
 /// Request for the ModifyAckDeadline method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ModifyAckDeadlineRequest {
-    /// The name of the subscription.
+    /// Required. The name of the subscription.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: ::prost::alloc::string::String,
-    /// List of acknowledgment IDs.
+    /// Required. List of acknowledgment IDs.
     #[prost(string, repeated, tag = "4")]
     pub ack_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// The new ack deadline with respect to the time this request was sent to
-    /// the Pub/Sub system. For example, if the value is 10, the new
-    /// ack deadline will expire 10 seconds after the `ModifyAckDeadline` call
-    /// was made. Specifying zero might immediately make the message available for
+    /// Required. The new ack deadline with respect to the time this request was
+    /// sent to the Pub/Sub system. For example, if the value is 10, the new ack
+    /// deadline will expire 10 seconds after the `ModifyAckDeadline` call was
+    /// made. Specifying zero might immediately make the message available for
     /// delivery to another subscriber client. This typically results in an
     /// increase in the rate of message redeliveries (that is, duplicates).
     /// The minimum deadline you can specify is 0 seconds.
@@ -579,12 +1101,13 @@ pub struct ModifyAckDeadlineRequest {
 /// Request for the Acknowledge method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AcknowledgeRequest {
-    /// The subscription whose message is being acknowledged.
+    /// Required. The subscription whose message is being acknowledged.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
     pub subscription: ::prost::alloc::string::String,
-    /// The acknowledgment ID for the messages being acknowledged that was returned
-    /// by the Pub/Sub system in the `Pull` response. Must not be empty.
+    /// Required. The acknowledgment ID for the messages being acknowledged that
+    /// was returned by the Pub/Sub system in the `Pull` response. Must not be
+    /// empty.
     #[prost(string, repeated, tag = "2")]
     pub ack_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
@@ -593,8 +1116,8 @@ pub struct AcknowledgeRequest {
 /// deadline modifications from the client to the server.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StreamingPullRequest {
-    /// The subscription for which to initialize the new stream. This must be
-    /// provided in the first request on the stream, and must not be set in
+    /// Required. The subscription for which to initialize the new stream. This
+    /// must be provided in the first request on the stream, and must not be set in
     /// subsequent requests from client to server.
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "1")]
@@ -626,12 +1149,42 @@ pub struct StreamingPullRequest {
     /// processing was interrupted.
     #[prost(string, repeated, tag = "4")]
     pub modify_deadline_ack_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// The ack deadline to use for the stream. This must be provided in the
-    /// first request on the stream, but it can also be updated on subsequent
+    /// Required. The ack deadline to use for the stream. This must be provided in
+    /// the first request on the stream, but it can also be updated on subsequent
     /// requests from client to server. The minimum deadline you can specify is 10
     /// seconds. The maximum deadline you can specify is 600 seconds (10 minutes).
     #[prost(int32, tag = "5")]
     pub stream_ack_deadline_seconds: i32,
+    /// A unique identifier that is used to distinguish client instances from each
+    /// other. Only needs to be provided on the initial request. When a stream
+    /// disconnects and reconnects for the same stream, the client_id should be set
+    /// to the same value so that state associated with the old stream can be
+    /// transferred to the new stream. The same client_id should not be used for
+    /// different client instances.
+    #[prost(string, tag = "6")]
+    pub client_id: ::prost::alloc::string::String,
+    /// Flow control settings for the maximum number of outstanding messages. When
+    /// there are `max_outstanding_messages` or more currently sent to the
+    /// streaming pull client that have not yet been acked or nacked, the server
+    /// stops sending more messages. The sending of messages resumes once the
+    /// number of outstanding messages is less than this value. If the value is
+    /// <= 0, there is no limit to the number of outstanding messages. This
+    /// property can only be set on the initial StreamingPullRequest. If it is set
+    /// on a subsequent request, the stream will be aborted with status
+    /// `INVALID_ARGUMENT`.
+    #[prost(int64, tag = "7")]
+    pub max_outstanding_messages: i64,
+    /// Flow control settings for the maximum number of outstanding bytes. When
+    /// there are `max_outstanding_bytes` or more worth of messages currently sent
+    /// to the streaming pull client that have not yet been acked or nacked, the
+    /// server will stop sending more messages. The sending of messages resumes
+    /// once the number of outstanding bytes is less than this value. If the value
+    /// is <= 0, there is no limit to the number of outstanding bytes. This
+    /// property can only be set on the initial StreamingPullRequest. If it is set
+    /// on a subsequent request, the stream will be aborted with status
+    /// `INVALID_ARGUMENT`.
+    #[prost(int64, tag = "8")]
+    pub max_outstanding_bytes: i64,
 }
 /// Response for the `StreamingPull` method. This response is used to stream
 /// messages from the server to the client.
@@ -640,20 +1193,73 @@ pub struct StreamingPullResponse {
     /// Received Pub/Sub messages. This will not be empty.
     #[prost(message, repeated, tag = "1")]
     pub received_messages: ::prost::alloc::vec::Vec<ReceivedMessage>,
+    /// This field will only be set if `enable_exactly_once_delivery` is set to
+    /// `true`.
+    #[prost(message, optional, tag = "5")]
+    pub acknowledge_confirmation:
+        ::core::option::Option<streaming_pull_response::AcknowledgeConfirmation>,
+    /// This field will only be set if `enable_exactly_once_delivery` is set to
+    /// `true`.
+    #[prost(message, optional, tag = "3")]
+    pub modify_ack_deadline_confirmation:
+        ::core::option::Option<streaming_pull_response::ModifyAckDeadlineConfirmation>,
+    /// Properties associated with this subscription.
+    #[prost(message, optional, tag = "4")]
+    pub subscription_properties:
+        ::core::option::Option<streaming_pull_response::SubscriptionProperties>,
+}
+/// Nested message and enum types in `StreamingPullResponse`.
+pub mod streaming_pull_response {
+    /// Acknowledgement IDs sent in one or more previous requests to acknowledge a
+    /// previously received message.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AcknowledgeConfirmation {
+        /// Successfully processed acknowledgement IDs.
+        #[prost(string, repeated, tag = "1")]
+        pub ack_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// List of acknowledgement IDs that were malformed or whose acknowledgement
+        /// deadline has expired.
+        #[prost(string, repeated, tag = "2")]
+        pub invalid_ack_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// List of acknowledgement IDs that were out of order.
+        #[prost(string, repeated, tag = "3")]
+        pub unordered_ack_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+    /// Acknowledgement IDs sent in one or more previous requests to modify the
+    /// deadline for a specific message.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ModifyAckDeadlineConfirmation {
+        /// Successfully processed acknowledgement IDs.
+        #[prost(string, repeated, tag = "1")]
+        pub ack_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// List of acknowledgement IDs that were malformed or whose acknowledgement
+        /// deadline has expired.
+        #[prost(string, repeated, tag = "2")]
+        pub invalid_ack_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+    /// Subscription properties sent as part of the response.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SubscriptionProperties {
+        /// True iff exactly once delivery is enabled for this subscription.
+        #[prost(bool, tag = "1")]
+        pub exactly_once_delivery_enabled: bool,
+        /// True iff message ordering is enabled for this subscription.
+        #[prost(bool, tag = "2")]
+        pub message_ordering_enabled: bool,
+    }
 }
 /// Request for the `CreateSnapshot` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateSnapshotRequest {
-    /// Optional user-provided name for this snapshot.
-    /// If the name is not provided in the request, the server will assign a random
-    /// name for this snapshot on the same project as the subscription.
-    /// Note that for REST API requests, you must specify a name.  See the
-    /// <a href="https://cloud.google.com/pubsub/docs/admin#resource_names">
-    /// resource name rules</a>.
-    /// Format is `projects/{project}/snapshots/{snap}`.
+    /// Required. User-provided name for this snapshot. If the name is not provided
+    /// in the request, the server will assign a random name for this snapshot on
+    /// the same project as the subscription. Note that for REST API requests, you
+    /// must specify a name.  See the <a
+    /// href="<https://cloud.google.com/pubsub/docs/admin#resource_names">> resource
+    /// name rules</a>. Format is `projects/{project}/snapshots/{snap}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The subscription whose backlog the snapshot retains.
+    /// Required. The subscription whose backlog the snapshot retains.
     /// Specifically, the created snapshot is guaranteed to retain:
     ///  (a) The existing backlog on the subscription. More precisely, this is
     ///      defined as the messages in the subscription's backlog that are
@@ -664,7 +1270,7 @@ pub struct CreateSnapshotRequest {
     /// Format is `projects/{project}/subscriptions/{sub}`.
     #[prost(string, tag = "2")]
     pub subscription: ::prost::alloc::string::String,
-    /// See <a href="https://cloud.google.com/pubsub/docs/labels"> Creating and
+    /// See <a href="<https://cloud.google.com/pubsub/docs/labels">> Creating and
     /// managing labels</a>.
     #[prost(map = "string, string", tag = "3")]
     pub labels:
@@ -673,20 +1279,19 @@ pub struct CreateSnapshotRequest {
 /// Request for the UpdateSnapshot method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateSnapshotRequest {
-    /// The updated snapshot object.
+    /// Required. The updated snapshot object.
     #[prost(message, optional, tag = "1")]
     pub snapshot: ::core::option::Option<Snapshot>,
-    /// Indicates which fields in the provided snapshot to update.
+    /// Required. Indicates which fields in the provided snapshot to update.
     /// Must be specified and non-empty.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// A snapshot resource. Snapshots are used in
-/// <a href="https://cloud.google.com/pubsub/docs/replay-overview">Seek</a>
-/// operations, which allow
-/// you to manage message acknowledgments in bulk. That is, you can set the
-/// acknowledgment state of messages in an existing subscription to the state
-/// captured by a snapshot.
+/// \[Seek\](<https://cloud.google.com/pubsub/docs/replay-overview>)
+/// operations, which allow you to manage message acknowledgments in bulk. That
+/// is, you can set the acknowledgment state of messages in an existing
+/// subscription to the state captured by a snapshot.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Snapshot {
     /// The name of the snapshot.
@@ -707,8 +1312,8 @@ pub struct Snapshot {
     /// snapshot that would expire in less than 1 hour after creation.
     #[prost(message, optional, tag = "3")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// See <a href="https://cloud.google.com/pubsub/docs/labels"> Creating and
-    /// managing labels</a>.
+    /// See [Creating and managing labels]
+    /// (<https://cloud.google.com/pubsub/docs/labels>).
     #[prost(map = "string, string", tag = "4")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
@@ -716,7 +1321,7 @@ pub struct Snapshot {
 /// Request for the GetSnapshot method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSnapshotRequest {
-    /// The name of the snapshot to get.
+    /// Required. The name of the snapshot to get.
     /// Format is `projects/{project}/snapshots/{snap}`.
     #[prost(string, tag = "1")]
     pub snapshot: ::prost::alloc::string::String,
@@ -724,7 +1329,7 @@ pub struct GetSnapshotRequest {
 /// Request for the `ListSnapshots` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSnapshotsRequest {
-    /// The name of the project in which to list snapshots.
+    /// Required. The name of the project in which to list snapshots.
     /// Format is `projects/{project-id}`.
     #[prost(string, tag = "1")]
     pub project: ::prost::alloc::string::String,
@@ -751,7 +1356,7 @@ pub struct ListSnapshotsResponse {
 /// Request for the `DeleteSnapshot` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteSnapshotRequest {
-    /// The name of the snapshot to delete.
+    /// Required. The name of the snapshot to delete.
     /// Format is `projects/{project}/snapshots/{snap}`.
     #[prost(string, tag = "1")]
     pub snapshot: ::prost::alloc::string::String,
@@ -759,7 +1364,7 @@ pub struct DeleteSnapshotRequest {
 /// Request for the `Seek` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SeekRequest {
-    /// The subscription to affect.
+    /// Required. The subscription to affect.
     #[prost(string, tag = "1")]
     pub subscription: ::prost::alloc::string::String,
     #[prost(oneof = "seek_request::Target", tags = "2, 3")]
@@ -794,10 +1399,11 @@ pub mod seek_request {
 pub struct SeekResponse {}
 #[doc = r" Generated client implementations."]
 pub mod publisher_client {
-    #![allow(unused_variables, dead_code, missing_docs)]
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     #[doc = " The service that an application uses to manipulate topics, and to send"]
     #[doc = " messages to a topic."]
+    #[derive(Debug, Clone)]
     pub struct PublisherClient<T> {
         inner: tonic::client::Grpc<T>,
     }
@@ -815,21 +1421,46 @@ pub mod publisher_client {
     impl<T> PublisherClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::ResponseBody: Body + Send + 'static,
         T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
-            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
-            Self { inner }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> PublisherClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            PublisherClient::new(InterceptedService::new(inner, interceptor))
         }
-        #[doc = " Creates the given topic with the given name. See the"]
-        #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/admin#resource_names\">"]
-        #[doc = " resource name rules</a>."]
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates the given topic with the given name. See the [resource name rules]"]
+        #[doc = " (https://cloud.google.com/pubsub/docs/admin#resource_names)."]
         pub async fn create_topic(
             &mut self,
             request: impl tonic::IntoRequest<super::Topic>,
@@ -909,7 +1540,7 @@ pub mod publisher_client {
                 http::uri::PathAndQuery::from_static("/google.pubsub.v1.Publisher/ListTopics");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists the names of the subscriptions on this topic."]
+        #[doc = " Lists the names of the attached subscriptions on this topic."]
         pub async fn list_topic_subscriptions(
             &mut self,
             request: impl tonic::IntoRequest<super::ListTopicSubscriptionsRequest>,
@@ -927,11 +1558,10 @@ pub mod publisher_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Lists the names of the snapshots on this topic. Snapshots are used in"]
-        #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/replay-overview\">Seek</a>"]
-        #[doc = " operations, which allow"]
-        #[doc = " you to manage message acknowledgments in bulk. That is, you can set the"]
-        #[doc = " acknowledgment state of messages in an existing subscription to the state"]
-        #[doc = " captured by a snapshot."]
+        #[doc = " [Seek](https://cloud.google.com/pubsub/docs/replay-overview) operations,"]
+        #[doc = " which allow you to manage message acknowledgments in bulk. That is, you can"]
+        #[doc = " set the acknowledgment state of messages in an existing subscription to the"]
+        #[doc = " state captured by a snapshot."]
         pub async fn list_topic_snapshots(
             &mut self,
             request: impl tonic::IntoRequest<super::ListTopicSnapshotsRequest>,
@@ -968,27 +1598,36 @@ pub mod publisher_client {
                 http::uri::PathAndQuery::from_static("/google.pubsub.v1.Publisher/DeleteTopic");
             self.inner.unary(request.into_request(), path, codec).await
         }
-    }
-    impl<T: Clone> Clone for PublisherClient<T> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-            }
-        }
-    }
-    impl<T> std::fmt::Debug for PublisherClient<T> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "PublisherClient {{ ... }}")
+        #[doc = " Detaches a subscription from this topic. All messages retained in the"]
+        #[doc = " subscription are dropped. Subsequent `Pull` and `StreamingPull` requests"]
+        #[doc = " will return FAILED_PRECONDITION. If the subscription is a push"]
+        #[doc = " subscription, pushes to the endpoint will stop."]
+        pub async fn detach_subscription(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DetachSubscriptionRequest>,
+        ) -> Result<tonic::Response<super::DetachSubscriptionResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.pubsub.v1.Publisher/DetachSubscription",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 #[doc = r" Generated client implementations."]
 pub mod subscriber_client {
-    #![allow(unused_variables, dead_code, missing_docs)]
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     #[doc = " The service that an application uses to manipulate subscriptions and to"]
     #[doc = " consume messages from a subscription via the `Pull` method or by"]
     #[doc = " establishing a bi-directional stream using the `StreamingPull` method."]
+    #[derive(Debug, Clone)]
     pub struct SubscriberClient<T> {
         inner: tonic::client::Grpc<T>,
     }
@@ -1006,31 +1645,55 @@ pub mod subscriber_client {
     impl<T> SubscriberClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::ResponseBody: Body + Send + 'static,
         T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
-            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
-            Self { inner }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> SubscriberClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            SubscriberClient::new(InterceptedService::new(inner, interceptor))
         }
-        #[doc = " Creates a subscription to a given topic. See the"]
-        #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/admin#resource_names\">"]
-        #[doc = " resource name rules</a>."]
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a subscription to a given topic. See the [resource name rules]"]
+        #[doc = " (https://cloud.google.com/pubsub/docs/admin#resource_names)."]
         #[doc = " If the subscription already exists, returns `ALREADY_EXISTS`."]
         #[doc = " If the corresponding topic doesn't exist, returns `NOT_FOUND`."]
         #[doc = ""]
         #[doc = " If the name is not provided in the request, the server will assign a random"]
         #[doc = " name for this subscription on the same project as the topic, conforming"]
-        #[doc = " to the"]
-        #[doc = " [resource name"]
-        #[doc = " format](https://cloud.google.com/pubsub/docs/admin#resource_names). The"]
-        #[doc = " generated name is populated in the returned Subscription object. Note that"]
-        #[doc = " for REST API requests, you must specify a name in the request."]
+        #[doc = " to the [resource name format]"]
+        #[doc = " (https://cloud.google.com/pubsub/docs/admin#resource_names). The generated"]
+        #[doc = " name is populated in the returned Subscription object. Note that for REST"]
+        #[doc = " API requests, you must specify a name in the request."]
         pub async fn create_subscription(
             &mut self,
             request: impl tonic::IntoRequest<super::Subscription>,
@@ -1249,12 +1912,11 @@ pub mod subscriber_client {
                 http::uri::PathAndQuery::from_static("/google.pubsub.v1.Subscriber/GetSnapshot");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists the existing snapshots. Snapshots are used in"]
-        #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/replay-overview\">Seek</a>"]
-        #[doc = " operations, which allow"]
-        #[doc = " you to manage message acknowledgments in bulk. That is, you can set the"]
-        #[doc = " acknowledgment state of messages in an existing subscription to the state"]
-        #[doc = " captured by a snapshot."]
+        #[doc = " Lists the existing snapshots. Snapshots are used in [Seek]("]
+        #[doc = " https://cloud.google.com/pubsub/docs/replay-overview) operations, which"]
+        #[doc = " allow you to manage message acknowledgments in bulk. That is, you can set"]
+        #[doc = " the acknowledgment state of messages in an existing subscription to the"]
+        #[doc = " state captured by a snapshot."]
         pub async fn list_snapshots(
             &mut self,
             request: impl tonic::IntoRequest<super::ListSnapshotsRequest>,
@@ -1271,21 +1933,19 @@ pub mod subscriber_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Creates a snapshot from the requested subscription. Snapshots are used in"]
-        #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/replay-overview\">Seek</a>"]
-        #[doc = " operations, which allow"]
-        #[doc = " you to manage message acknowledgments in bulk. That is, you can set the"]
-        #[doc = " acknowledgment state of messages in an existing subscription to the state"]
-        #[doc = " captured by a snapshot."]
-        #[doc = " <br><br>If the snapshot already exists, returns `ALREADY_EXISTS`."]
+        #[doc = " [Seek](https://cloud.google.com/pubsub/docs/replay-overview) operations,"]
+        #[doc = " which allow you to manage message acknowledgments in bulk. That is, you can"]
+        #[doc = " set the acknowledgment state of messages in an existing subscription to the"]
+        #[doc = " state captured by a snapshot."]
+        #[doc = " If the snapshot already exists, returns `ALREADY_EXISTS`."]
         #[doc = " If the requested subscription doesn't exist, returns `NOT_FOUND`."]
         #[doc = " If the backlog in the subscription is too old -- and the resulting snapshot"]
         #[doc = " would expire in less than 1 hour -- then `FAILED_PRECONDITION` is returned."]
         #[doc = " See also the `Snapshot.expire_time` field. If the name is not provided in"]
         #[doc = " the request, the server will assign a random"]
         #[doc = " name for this snapshot on the same project as the subscription, conforming"]
-        #[doc = " to the"]
-        #[doc = " [resource name"]
-        #[doc = " format](https://cloud.google.com/pubsub/docs/admin#resource_names). The"]
+        #[doc = " to the [resource name format]"]
+        #[doc = " (https://cloud.google.com/pubsub/docs/admin#resource_names). The"]
         #[doc = " generated name is populated in the returned Snapshot object. Note that for"]
         #[doc = " REST API requests, you must specify a name in the request."]
         pub async fn create_snapshot(
@@ -1324,12 +1984,11 @@ pub mod subscriber_client {
                 http::uri::PathAndQuery::from_static("/google.pubsub.v1.Subscriber/UpdateSnapshot");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Removes an existing snapshot. Snapshots are used in"]
-        #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/replay-overview\">Seek</a>"]
-        #[doc = " operations, which allow"]
-        #[doc = " you to manage message acknowledgments in bulk. That is, you can set the"]
-        #[doc = " acknowledgment state of messages in an existing subscription to the state"]
-        #[doc = " captured by a snapshot.<br><br>"]
+        #[doc = " Removes an existing snapshot. Snapshots are used in [Seek]"]
+        #[doc = " (https://cloud.google.com/pubsub/docs/replay-overview) operations, which"]
+        #[doc = " allow you to manage message acknowledgments in bulk. That is, you can set"]
+        #[doc = " the acknowledgment state of messages in an existing subscription to the"]
+        #[doc = " state captured by a snapshot."]
         #[doc = " When the snapshot is deleted, all messages retained in the snapshot"]
         #[doc = " are immediately dropped. After a snapshot is deleted, a new one may be"]
         #[doc = " created with the same name, but the new one has no association with the old"]
@@ -1350,13 +2009,12 @@ pub mod subscriber_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Seeks an existing subscription to a point in time or to a given snapshot,"]
-        #[doc = " whichever is provided in the request. Snapshots are used in"]
-        #[doc = " <a href=\"https://cloud.google.com/pubsub/docs/replay-overview\">Seek</a>"]
-        #[doc = " operations, which allow"]
-        #[doc = " you to manage message acknowledgments in bulk. That is, you can set the"]
-        #[doc = " acknowledgment state of messages in an existing subscription to the state"]
-        #[doc = " captured by a snapshot. Note that both the subscription and the snapshot"]
-        #[doc = " must be on the same topic."]
+        #[doc = " whichever is provided in the request. Snapshots are used in [Seek]"]
+        #[doc = " (https://cloud.google.com/pubsub/docs/replay-overview) operations, which"]
+        #[doc = " allow you to manage message acknowledgments in bulk. That is, you can set"]
+        #[doc = " the acknowledgment state of messages in an existing subscription to the"]
+        #[doc = " state captured by a snapshot. Note that both the subscription and the"]
+        #[doc = " snapshot must be on the same topic."]
         pub async fn seek(
             &mut self,
             request: impl tonic::IntoRequest<super::SeekRequest>,
@@ -1370,18 +2028,6 @@ pub mod subscriber_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/google.pubsub.v1.Subscriber/Seek");
             self.inner.unary(request.into_request(), path, codec).await
-        }
-    }
-    impl<T: Clone> Clone for SubscriberClient<T> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-            }
-        }
-    }
-    impl<T> std::fmt::Debug for SubscriberClient<T> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "SubscriberClient {{ ... }}")
         }
     }
 }

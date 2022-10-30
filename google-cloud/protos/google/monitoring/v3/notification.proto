@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,14 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.monitoring.v3;
 
 import "google/api/label.proto";
+import "google/api/launch_stage.proto";
+import "google/api/resource.proto";
 import "google/monitoring/v3/common.proto";
+import "google/monitoring/v3/mutation_record.proto";
 import "google/protobuf/wrappers.proto";
 
 option csharp_namespace = "Google.Cloud.Monitoring.V3";
@@ -27,19 +29,31 @@ option java_multiple_files = true;
 option java_outer_classname = "NotificationProto";
 option java_package = "com.google.monitoring.v3";
 option php_namespace = "Google\\Cloud\\Monitoring\\V3";
+option ruby_package = "Google::Cloud::Monitoring::V3";
 
 // A description of a notification channel. The descriptor includes
 // the properties of the channel and the set of labels or fields that
 // must be specified to configure channels of a given type.
 message NotificationChannelDescriptor {
-  // The full REST resource name for this descriptor. The syntax is:
+  option (google.api.resource) = {
+    type: "monitoring.googleapis.com/NotificationChannelDescriptor"
+    pattern: "projects/{project}/notificationChannelDescriptors/{channel_descriptor}"
+    pattern: "organizations/{organization}/notificationChannelDescriptors/{channel_descriptor}"
+    pattern: "folders/{folder}/notificationChannelDescriptors/{channel_descriptor}"
+    pattern: "*"
+  };
+
+  // The full REST resource name for this descriptor. The format is:
   //
-  //     projects/[PROJECT_ID]/notificationChannelDescriptors/[TYPE]
+  //     projects/[PROJECT_ID_OR_NUMBER]/notificationChannelDescriptors/[TYPE]
   //
   // In the above, `[TYPE]` is the value of the `type` field.
   string name = 6;
 
-  // The type of notification channel, such as "email", "sms", etc.
+  // The type of notification channel, such as "email" and "sms". To view the
+  // full list of channels, see
+  // [Channel
+  // descriptors](https://cloud.google.com/monitoring/alerts/using-channels-api#ncd).
   // Notification channel types are globally unique.
   string type = 1;
 
@@ -60,6 +74,9 @@ message NotificationChannelDescriptor {
   // The tiers that support this notification channel; the project service tier
   // must be one of the supported_tiers.
   repeated ServiceTier supported_tiers = 5 [deprecated = true];
+
+  // The product launch stage for channels of this type.
+  google.api.LaunchStage launch_stage = 7;
 }
 
 // A `NotificationChannel` is a medium through which an alert is
@@ -68,6 +85,14 @@ message NotificationChannelDescriptor {
 // containing sensitive information like authentication tokens or
 // contact info are only partially populated on retrieval.
 message NotificationChannel {
+  option (google.api.resource) = {
+    type: "monitoring.googleapis.com/NotificationChannel"
+    pattern: "projects/{project}/notificationChannels/{notification_channel}"
+    pattern: "organizations/{organization}/notificationChannels/{notification_channel}"
+    pattern: "folders/{folder}/notificationChannels/{notification_channel}"
+    pattern: "*"
+  };
+
   // Indicates whether the channel has been verified or not. It is illegal
   // to specify this field in a
   // [`CreateNotificationChannel`][google.monitoring.v3.NotificationChannelService.CreateNotificationChannel]
@@ -96,9 +121,9 @@ message NotificationChannel {
   // value of the [NotificationChannelDescriptor.type][google.monitoring.v3.NotificationChannelDescriptor.type] field.
   string type = 1;
 
-  // The full REST resource name for this channel. The syntax is:
+  // The full REST resource name for this channel. The format is:
   //
-  //     projects/[PROJECT_ID]/notificationChannels/[CHANNEL_ID]
+  //     projects/[PROJECT_ID_OR_NUMBER]/notificationChannels/[CHANNEL_ID]
   //
   // The `[CHANNEL_ID]` is automatically assigned by the server on creation.
   string name = 6;
@@ -159,4 +184,10 @@ message NotificationChannel {
   // temporary and you want to receive notifications from the same set
   // of alerting policies on the channel at some point in the future.
   google.protobuf.BoolValue enabled = 11;
+
+  // Record of the creation of this channel.
+  MutationRecord creation_record = 12;
+
+  // Records of the modification of this channel.
+  repeated MutationRecord mutation_records = 13;
 }

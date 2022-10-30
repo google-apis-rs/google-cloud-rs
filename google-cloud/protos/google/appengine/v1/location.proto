@@ -1,4 +1,4 @@
-// Copyright 2016 Google Inc.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,24 +16,29 @@ syntax = "proto3";
 
 package google.appengine.v1;
 
-import "google/api/annotations.proto";
-import "google/type/latlng.proto";
+import "google/api/field_behavior.proto";
 
+option csharp_namespace = "Google.Cloud.AppEngine.V1";
 option go_package = "google.golang.org/genproto/googleapis/appengine/v1;appengine";
 option java_multiple_files = true;
 option java_outer_classname = "LocationProto";
 option java_package = "com.google.appengine.v1";
+option php_namespace = "Google\\Cloud\\AppEngine\\V1";
+option ruby_package = "Google::Cloud::AppEngine::V1";
 
-// Metadata for the given
-// [google.cloud.location.Location][google.cloud.location.Location].
+// Metadata for the given [google.cloud.location.Location][google.cloud.location.Location].
 message LocationMetadata {
-  // App Engine Standard Environment is available in the given location.
+  // App Engine standard environment is available in the given location.
   //
   // @OutputOnly
   bool standard_environment_available = 2;
 
-  // App Engine Flexible Environment is available in the given location.
+  // App Engine flexible environment is available in the given location.
   //
   // @OutputOnly
   bool flexible_environment_available = 4;
+
+  // Output only. [Search API](https://cloud.google.com/appengine/docs/standard/python/search)
+  // is available in the given location.
+  bool search_api_available = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }

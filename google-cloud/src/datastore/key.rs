@@ -71,6 +71,8 @@ impl From<IdType> for KeyID {
 pub struct Key {
     pub(crate) kind: String,
     pub(crate) id: KeyID,
+    pub(crate) is_new: bool,
+    pub(crate) delete: bool,
     pub(crate) parent: Option<Box<Key>>,
     pub(crate) namespace: Option<String>,
 }
@@ -86,6 +88,8 @@ impl Key {
         Key {
             kind: kind.into(),
             id: KeyID::Incomplete,
+            is_new: false,
+            delete: false,
             parent: None,
             namespace: None,
         }
@@ -111,6 +115,41 @@ impl Key {
     /// ```
     pub fn id(mut self, id: impl Into<KeyID>) -> Key {
         self.id = id.into();
+        self
+    }
+
+    /// Attach an new ID to the key.
+    ///
+    /// ```
+    /// # use google_cloud::datastore::Key;
+    /// let int_key = Key::new("kind").new_id(10);
+    /// let string_key = Key::new("kind").new_id("entity-name");
+    /// ```
+    pub fn new_id(mut self, id: impl Into<KeyID>) -> Key {
+        self.id = id.into();
+        self.is_new = true;
+        self
+    }
+
+    /// Mark as new Entity and the client send like INSERT.
+    ///
+    /// ```
+    /// # use google_cloud::datastore::Key;
+    /// let key = key.mark_new_entity();
+    /// ```
+    pub fn mark_new_entity(mut self) -> Key {
+        self.is_new = true;
+        self
+    }
+
+    /// Mark as delete Entity and the client send like DELETE.
+    ///
+    /// ```
+    /// # use google_cloud::datastore::Key;
+    /// let key = key.mark_new_entity();
+    /// ```
+    pub fn delete(mut self) -> Key {
+        self.delete = true;
         self
     }
 

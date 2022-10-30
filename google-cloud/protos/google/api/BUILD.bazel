@@ -1,3 +1,5 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
 # This is an API workspace, having public visibility by default makes perfect sense.
 package(default_visibility = ["//visibility:public"])
 
@@ -89,6 +91,11 @@ proto_library(
 )
 
 proto_library(
+    name = "error_reason_proto",
+    srcs = ["error_reason.proto"],
+)
+
+proto_library(
     name = "field_behavior_proto",
     srcs = ["field_behavior.proto"],
     deps = [
@@ -175,6 +182,14 @@ proto_library(
 )
 
 proto_library(
+    name = "routing_proto",
+    srcs = ["routing.proto"],
+    deps = [
+        "@com_google_protobuf//:descriptor_proto",
+    ],
+)
+
+proto_library(
     name = "service_proto",
     srcs = ["service.proto"],
     deps = [
@@ -220,13 +235,27 @@ proto_library(
 proto_library(
     name = "usage_proto",
     srcs = ["usage.proto"],
-    deps = [":annotations_proto"],
+    deps = [
+        ":annotations_proto",
+        ":visibility_proto",
+    ],
+)
+
+proto_library(
+    name = "visibility_proto",
+    srcs = ["visibility.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["@com_google_protobuf//:descriptor_proto"],
 )
 
 ##############################################################################
 # Java
 ##############################################################################
-load("@com_google_googleapis_imports//:imports.bzl", "java_proto_library")
+load(
+    "@com_google_googleapis_imports//:imports.bzl",
+    "java_gapic_assembly_gradle_pkg",
+    "java_proto_library",
+)
 
 java_proto_library(
     name = "api_java_proto",
@@ -243,6 +272,7 @@ java_proto_library(
         "distribution_proto",
         "documentation_proto",
         "endpoint_proto",
+        "error_reason_proto",
         "field_behavior_proto",
         "http_proto",
         "httpbody_proto",
@@ -255,10 +285,54 @@ java_proto_library(
         "monitoring_proto",
         "quota_proto",
         "resource_proto",
+        "routing_proto",
         "service_proto",
         "source_info_proto",
         "system_parameter_proto",
         "usage_proto",
+        "visibility_proto",
+    ],
+)
+
+# Please DO-NOT-REMOVE this section.
+# This is required to generate java files for these protos.
+# Open Source Packages
+java_gapic_assembly_gradle_pkg(
+    name = "google-api-java",
+    transport = "grpc+rest",
+    deps = [
+        "annotations_proto",
+        "auth_proto",
+        "backend_proto",
+        "billing_proto",
+        "client_proto",
+        "config_change_proto",
+        "consumer_proto",
+        "context_proto",
+        "control_proto",
+        "distribution_proto",
+        "documentation_proto",
+        "endpoint_proto",
+        "error_reason_proto",
+        "field_behavior_proto",
+        "http_proto",
+        "httpbody_proto",
+        "label_proto",
+        "launch_stage_proto",
+        "log_proto",
+        "logging_proto",
+        "metric_proto",
+        "monitored_resource_proto",
+        "monitoring_proto",
+        "quota_proto",
+        "resource_proto",
+        "routing_proto",
+        "service_proto",
+        "source_info_proto",
+        "system_parameter_proto",
+        "usage_proto",
+        "visibility_proto",
+        ":api_java_proto",
     ],
 )
 
@@ -272,7 +346,11 @@ go_proto_library(
     importpath = "google.golang.org/genproto/googleapis/api/annotations",
     protos = [
         ":annotations_proto",
+        ":client_proto",
+        ":field_behavior_proto",
         ":http_proto",
+        ":resource_proto",
+        ":routing_proto",
     ],
 )
 
@@ -350,6 +428,12 @@ go_proto_library(
 )
 
 go_proto_library(
+    name = "routing_go_proto",
+    importpath = "google.golang.org/genproto/googleapis/api/annotations;annotations",
+    protos = [":routing_proto"],
+)
+
+go_proto_library(
     name = "serviceconfig_go_proto",
     importpath = "google.golang.org/genproto/googleapis/api/serviceconfig",
     protos = [
@@ -376,6 +460,12 @@ go_proto_library(
         ":metric_go_proto",
         ":monitoredres_go_proto",
     ],
+)
+
+go_proto_library(
+    name = "visibility_go_proto",
+    importpath = "google.golang.org/genproto/googleapis/api/visibility;visibility",
+    protos = [":visibility_proto"],
 )
 
 ##############################################################################
@@ -504,6 +594,11 @@ cc_proto_library(
 )
 
 cc_proto_library(
+    name = "routing_cc_proto",
+    deps = [":routing_proto"],
+)
+
+cc_proto_library(
     name = "service_cc_proto",
     deps = [":service_proto"],
 )
@@ -521,6 +616,11 @@ cc_proto_library(
 cc_proto_library(
     name = "usage_cc_proto",
     deps = [":usage_proto"],
+)
+
+cc_proto_library(
+    name = "visibility_cc_proto",
+    deps = [":visibility_proto"],
 )
 
 ##############################################################################
@@ -649,6 +749,11 @@ py_proto_library(
 )
 
 py_proto_library(
+    name = "routing_py_proto",
+    deps = [":routing_proto"],
+)
+
+py_proto_library(
     name = "service_py_proto",
     deps = [":service_proto"],
 )
@@ -666,4 +771,9 @@ py_proto_library(
 py_proto_library(
     name = "usage_py_proto",
     deps = [":usage_proto"],
+)
+
+py_proto_library(
+    name = "visibility_py_proto",
+    deps = ["visibility_proto"],
 )

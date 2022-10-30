@@ -17,6 +17,8 @@ pub use google_cloud_derive::{FromValue, IntoValue};
 /// A value, as stored in Datastore.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
+    /// NULL
+    OptionValue(Option<Box<Value>>),
     /// A boolean value (true or false).
     BooleanValue(bool),
     /// An integer value.
@@ -43,6 +45,7 @@ impl Value {
     /// Gets the static name of the type of the value.
     pub fn type_name(&self) -> &'static str {
         match self {
+            Value::OptionValue(_) => "option",
             Value::BooleanValue(_) => "bool",
             Value::IntegerValue(_) => "integer",
             Value::DoubleValue(_) => "double",
@@ -138,6 +141,20 @@ impl IntoValue for Key {
 impl IntoValue for NaiveDateTime {
     fn into_value(self) -> Value {
         Value::TimestampValue(self)
+    }
+}
+
+impl<T> IntoValue for Option<T> 
+where
+    T: IntoValue,
+{
+    fn into_value(self) -> Value {
+        Value::OptionValue(
+            match self {
+                Some(x) => Some(Box::new(x.into_value())),
+                None => None
+            }
+        )
     }
 }
 
@@ -256,6 +273,18 @@ impl FromValue for NaiveDateTime {
     }
 }
 
+impl<T> FromValue for Option<T>
+where
+    T: FromValue,
+{
+    fn from_value(value: Value) -> Result<Option<T>, ConvertError> {
+        match value.clone() {
+            Value::OptionValue(_) => Ok(None),
+            _ => Ok(Some(FromValue::from_value(value)?)),
+        }
+    }
+}
+
 #[cfg(feature = "bytes")]
 impl FromValue for Bytes {
     fn from_value(value: Value) -> Result<Bytes, ConvertError> {
@@ -317,7 +346,7 @@ where
 impl From<ValueType> for Value {
     fn from(value: ValueType) -> Value {
         match value {
-            ValueType::NullValue(_) => unreachable!(),
+            ValueType::NullValue(_) => Value::OptionValue(None),
             ValueType::BooleanValue(val) => Value::BooleanValue(val),
             ValueType::IntegerValue(val) => Value::IntegerValue(val),
             ValueType::DoubleValue(val) => Value::DoubleValue(val),

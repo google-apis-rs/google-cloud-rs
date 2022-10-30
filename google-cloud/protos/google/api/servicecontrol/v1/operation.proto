@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,28 +16,31 @@ syntax = "proto3";
 
 package google.api.servicecontrol.v1;
 
-import "google/api/annotations.proto";
 import "google/api/servicecontrol/v1/log_entry.proto";
 import "google/api/servicecontrol/v1/metric_value.proto";
+import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
 option cc_enable_arenas = true;
+option csharp_namespace = "Google.Cloud.ServiceControl.V1";
 option go_package = "google.golang.org/genproto/googleapis/api/servicecontrol/v1;servicecontrol";
 option java_multiple_files = true;
 option java_outer_classname = "OperationProto";
 option java_package = "com.google.api.servicecontrol.v1";
+option php_namespace = "Google\\Cloud\\ServiceControl\\V1";
+option ruby_package = "Google::Cloud::ServiceControl::V1";
 
 // Represents information regarding an operation.
 message Operation {
   // Defines the importance of the data contained in the operation.
   enum Importance {
-    // The API implementation may cache and aggregate the data.
-    // The data may be lost when rare and unexpected system failures occur.
+    // Allows data caching, batching, and aggregation. It provides
+    // higher performance with higher data loss risk.
     LOW = 0;
 
-    // The API implementation doesn't cache and aggregate the data.
-    // If the method returns successfully, it's guaranteed that the data has
-    // been persisted in durable storage.
+    // Disables data aggregation to minimize data loss. It is for operations
+    // that contains significant monetary value or audit trail. This feature
+    // only applies to the client libraries.
     HIGH = 1;
   }
 
@@ -60,10 +63,13 @@ message Operation {
   // consumer, but not for service-initiated operations that are
   // not related to a specific consumer.
   //
-  // This can be in one of the following formats:
-  //   project:<project_id>,
-  //   project_number:<project_number>,
-  //   api_key:<api_key>.
+  // - This can be in one of the following formats:
+  //     - project:PROJECT_ID,
+  //     - project`_`number:PROJECT_NUMBER,
+  //     - projects/PROJECT_ID or PROJECT_NUMBER,
+  //     - folders/FOLDER_NUMBER,
+  //     - organizations/ORGANIZATION_NUMBER,
+  //     - api`_`key:API_KEY.
   string consumer_id = 3;
 
   // Required. Start time of the operation.
@@ -90,7 +96,8 @@ message Operation {
   //     - `servicecontrol.googleapis.com/service_agent` describing the service
   //        used to handle the API request (e.g. ESP),
   //     - `servicecontrol.googleapis.com/platform` describing the platform
-  //        where the API is served (e.g. GAE, GCE, GKE).
+  //        where the API is served, such as App Engine, Compute Engine, or
+  //        Kubernetes Engine.
   map<string, string> labels = 6;
 
   // Represents information about this operation. Each MetricValueSet
@@ -110,4 +117,7 @@ message Operation {
 
   // DO NOT USE. This is an experimental field.
   Importance importance = 11;
+
+  // Unimplemented.
+  repeated google.protobuf.Any extensions = 16;
 }

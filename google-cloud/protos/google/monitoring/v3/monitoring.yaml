@@ -1,13 +1,15 @@
 type: google.api.Service
 config_version: 3
 name: monitoring.googleapis.com
-title: Stackdriver Monitoring API
+title: Cloud Monitoring API
 
 apis:
 - name: google.monitoring.v3.AlertPolicyService
 - name: google.monitoring.v3.GroupService
 - name: google.monitoring.v3.MetricService
 - name: google.monitoring.v3.NotificationChannelService
+- name: google.monitoring.v3.QueryService
+- name: google.monitoring.v3.ServiceMonitoringService
 - name: google.monitoring.v3.UptimeCheckService
 
 types:
@@ -15,13 +17,7 @@ types:
 - name: google.monitoring.v3.SpanContext
 
 documentation:
-  summary: |-
-    Manages your Stackdriver Monitoring data and configurations. Most projects
-    must be associated with a Stackdriver account, with a few exceptions as
-    noted on the individual method pages. The table entries below are
-    presented in alphabetical order, not in order of common use. For
-    explanations of the concepts found in the table entries, read the
-    [Stackdriver Monitoring documentation](/monitoring/docs).
+  summary: Manages your Cloud Monitoring data and configurations.
 
 backend:
   rules:
@@ -29,15 +25,29 @@ backend:
     deadline: 30.0
   - selector: 'google.monitoring.v3.GroupService.*'
     deadline: 30.0
+  - selector: google.monitoring.v3.GroupService.UpdateGroup
+    deadline: 180.0
   - selector: 'google.monitoring.v3.MetricService.*'
     deadline: 30.0
+  - selector: google.monitoring.v3.MetricService.CreateServiceTimeSeries
+    deadline: 12.0
   - selector: google.monitoring.v3.MetricService.CreateTimeSeries
     deadline: 12.0
+  - selector: google.monitoring.v3.MetricService.ListTimeSeries
+    deadline: 90.0
   - selector: 'google.monitoring.v3.NotificationChannelService.*'
     deadline: 30.0
+  - selector: google.monitoring.v3.QueryService.QueryTimeSeries
+    deadline: 90.0
 
 authentication:
   rules:
+  - selector: google.longrunning.Operations.GetOperation
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform,
+        https://www.googleapis.com/auth/monitoring,
+        https://www.googleapis.com/auth/monitoring.read
   - selector: 'google.monitoring.v3.AlertPolicyService.*'
     oauth:
       canonical_scopes: |-
@@ -89,6 +99,12 @@ authentication:
         https://www.googleapis.com/auth/cloud-platform,
         https://www.googleapis.com/auth/monitoring,
         https://www.googleapis.com/auth/monitoring.write
+  - selector: google.monitoring.v3.MetricService.CreateServiceTimeSeries
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform,
+        https://www.googleapis.com/auth/monitoring,
+        https://www.googleapis.com/auth/monitoring.write
   - selector: google.monitoring.v3.MetricService.CreateTimeSeries
     oauth:
       canonical_scopes: |-
@@ -130,6 +146,41 @@ authentication:
         https://www.googleapis.com/auth/monitoring,
         https://www.googleapis.com/auth/monitoring.read
   - selector: google.monitoring.v3.NotificationChannelService.ListNotificationChannels
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform,
+        https://www.googleapis.com/auth/monitoring,
+        https://www.googleapis.com/auth/monitoring.read
+  - selector: google.monitoring.v3.QueryService.QueryTimeSeries
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform,
+        https://www.googleapis.com/auth/monitoring,
+        https://www.googleapis.com/auth/monitoring.read
+  - selector: 'google.monitoring.v3.ServiceMonitoringService.*'
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform,
+        https://www.googleapis.com/auth/monitoring
+  - selector: google.monitoring.v3.ServiceMonitoringService.GetService
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform,
+        https://www.googleapis.com/auth/monitoring,
+        https://www.googleapis.com/auth/monitoring.read
+  - selector: google.monitoring.v3.ServiceMonitoringService.GetServiceLevelObjective
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform,
+        https://www.googleapis.com/auth/monitoring,
+        https://www.googleapis.com/auth/monitoring.read
+  - selector: google.monitoring.v3.ServiceMonitoringService.ListServiceLevelObjectives
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform,
+        https://www.googleapis.com/auth/monitoring,
+        https://www.googleapis.com/auth/monitoring.read
+  - selector: google.monitoring.v3.ServiceMonitoringService.ListServices
     oauth:
       canonical_scopes: |-
         https://www.googleapis.com/auth/cloud-platform,

@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,13 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.cloud.talent.v4beta1;
-
-import "google/api/annotations.proto";
 
 option go_package = "google.golang.org/genproto/googleapis/cloud/talent/v4beta1;talent";
 option java_multiple_files = true;
@@ -30,17 +27,12 @@ message HistogramQuery {
   // An expression specifies a histogram request against matching resources
   // (for example, jobs, profiles) for searches.
   //
-  // See
-  // [SearchJobsRequest.histogram_queries][google.cloud.talent.v4beta1.SearchJobsRequest.histogram_queries]
-  // and
-  // [SearchProfilesRequest.histogram_queries][google.cloud.talent.v4beta1.SearchProfilesRequest.histogram_queries]
-  // for details about syntax.
+  // See [SearchJobsRequest.histogram_queries][google.cloud.talent.v4beta1.SearchJobsRequest.histogram_queries] and
+  // [SearchProfilesRequest.histogram_queries][google.cloud.talent.v4beta1.SearchProfilesRequest.histogram_queries] for details about syntax.
   string histogram_query = 1;
 }
 
-// Histogram result that matches
-// [HistogramQuery][google.cloud.talent.v4beta1.HistogramQuery] specified in
-// searches.
+// Histogram result that matches [HistogramQuery][google.cloud.talent.v4beta1.HistogramQuery] specified in searches.
 message HistogramQueryResult {
   // Requested histogram expression.
   string histogram_query = 1;

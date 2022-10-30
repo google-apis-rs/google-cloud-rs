@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -24,6 +23,7 @@ import "google/api/resource.proto";
 import "google/cloud/dataproc/v1/clusters.proto";
 import "google/cloud/dataproc/v1/jobs.proto";
 import "google/longrunning/operations.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -33,7 +33,7 @@ option java_outer_classname = "WorkflowTemplatesProto";
 option java_package = "com.google.cloud.dataproc.v1";
 
 // The API interface for managing Workflow Templates in the
-// Cloud Dataproc API.
+// Dataproc API.
 service WorkflowTemplateService {
   option (google.api.default_host) = "dataproc.googleapis.com";
   option (google.api.oauth_scopes) = "https://www.googleapis.com/auth/cloud-platform";
@@ -78,9 +78,9 @@ service WorkflowTemplateService {
   // clusters to be deleted.
   //
   // The [Operation.metadata][google.longrunning.Operation.metadata] will be
-  // [WorkflowMetadata](/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#workflowmetadata).
+  // [WorkflowMetadata](https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#workflowmetadata).
   // Also see [Using
-  // WorkflowMetadata](/dataproc/docs/concepts/workflows/debugging#using_workflowmetadata).
+  // WorkflowMetadata](https://cloud.google.com/dataproc/docs/concepts/workflows/debugging#using_workflowmetadata).
   //
   // On successful completion,
   // [Operation.response][google.longrunning.Operation.response] will be
@@ -119,9 +119,9 @@ service WorkflowTemplateService {
   // clusters to be deleted.
   //
   // The [Operation.metadata][google.longrunning.Operation.metadata] will be
-  // [WorkflowMetadata](/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#workflowmetadata).
+  // [WorkflowMetadata](https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#workflowmetadata).
   // Also see [Using
-  // WorkflowMetadata](/dataproc/docs/concepts/workflows/debugging#using_workflowmetadata).
+  // WorkflowMetadata](https://cloud.google.com/dataproc/docs/concepts/workflows/debugging#using_workflowmetadata).
   //
   // On successful completion,
   // [Operation.response][google.longrunning.Operation.response] will be
@@ -179,7 +179,7 @@ service WorkflowTemplateService {
   }
 }
 
-// A Cloud Dataproc workflow template resource.
+// A Dataproc workflow template resource.
 message WorkflowTemplate {
   option (google.api.resource) = {
     type: "dataproc.googleapis.com/WorkflowTemplate"
@@ -239,10 +239,22 @@ message WorkflowTemplate {
   // Required. The Directed Acyclic Graph of Jobs to submit.
   repeated OrderedJob jobs = 8 [(google.api.field_behavior) = REQUIRED];
 
-  // Optional. emplate parameters whose values are substituted into the
+  // Optional. Template parameters whose values are substituted into the
   // template. Values for parameters must be provided when the template is
   // instantiated.
   repeated TemplateParameter parameters = 9 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Timeout duration for the DAG of jobs, expressed in seconds (see
+  // [JSON representation of
+  // duration](https://developers.google.com/protocol-buffers/docs/proto3#json)).
+  // The timeout duration must be from 10 minutes ("600s") to 24 hours
+  // ("86400s"). The timer begins when the first job is submitted. If the
+  // workflow is running at the end of the timeout period, any remaining jobs
+  // are cancelled, the workflow is ended, and if the workflow was running on a
+  // [managed
+  // cluster](/dataproc/docs/concepts/workflows/using-workflows#configuring_or_selecting_a_cluster),
+  // the cluster is deleted.
+  google.protobuf.Duration dag_timeout = 10 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Specifies workflow execution target.
@@ -320,23 +332,29 @@ message OrderedJob {
 
   // Required. The job definition.
   oneof job_type {
-    // Job is a Hadoop job.
-    HadoopJob hadoop_job = 2;
+    // Optional. Job is a Hadoop job.
+    HadoopJob hadoop_job = 2 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a Spark job.
-    SparkJob spark_job = 3;
+    // Optional. Job is a Spark job.
+    SparkJob spark_job = 3 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a Pyspark job.
-    PySparkJob pyspark_job = 4;
+    // Optional. Job is a PySpark job.
+    PySparkJob pyspark_job = 4 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a Hive job.
-    HiveJob hive_job = 5;
+    // Optional. Job is a Hive job.
+    HiveJob hive_job = 5 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a Pig job.
-    PigJob pig_job = 6;
+    // Optional. Job is a Pig job.
+    PigJob pig_job = 6 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a SparkSql job.
-    SparkSqlJob spark_sql_job = 7;
+    // Optional. Job is a SparkR job.
+    SparkRJob spark_r_job = 11 [(google.api.field_behavior) = OPTIONAL];
+
+    // Optional. Job is a SparkSql job.
+    SparkSqlJob spark_sql_job = 7 [(google.api.field_behavior) = OPTIONAL];
+
+    // Optional. Job is a Presto job.
+    PrestoJob presto_job = 12 [(google.api.field_behavior) = OPTIONAL];
   }
 
   // Optional. The labels to associate with this job.
@@ -458,7 +476,7 @@ message ValueValidation {
   repeated string values = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
-// A Cloud Dataproc workflow template resource.
+// A Dataproc workflow template resource.
 message WorkflowMetadata {
   // The operation state.
   enum State {
@@ -517,6 +535,18 @@ message WorkflowMetadata {
 
   // Output only. The UUID of target cluster.
   string cluster_uuid = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. The timeout duration for the DAG of jobs, expressed in seconds (see
+  // [JSON representation of
+  // duration](https://developers.google.com/protocol-buffers/docs/proto3#json)).
+  google.protobuf.Duration dag_timeout = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. DAG start time, only set for workflows with [dag_timeout][google.cloud.dataproc.v1.WorkflowMetadata.dag_timeout] when DAG
+  // begins.
+  google.protobuf.Timestamp dag_start_time = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. DAG end time, only set for workflows with [dag_timeout][google.cloud.dataproc.v1.WorkflowMetadata.dag_timeout] when DAG ends.
+  google.protobuf.Timestamp dag_end_time = 14 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // The cluster operation triggered by a workflow.
@@ -582,7 +612,7 @@ message CreateWorkflowTemplateRequest {
   // Required. The resource name of the region or location, as described
   // in https://cloud.google.com/apis/design/resource_names.
   //
-  // * For `projects.regions.workflowTemplates,create`, the resource name of the
+  // * For `projects.regions.workflowTemplates.create`, the resource name of the
   //   region has the following format:
   //   `projects/{project_id}/regions/{region}`
   //
@@ -665,7 +695,7 @@ message InstantiateWorkflowTemplateRequest {
   string request_id = 5 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. Map from parameter names to values that should be used for those
-  // parameters. Values may not exceed 100 characters.
+  // parameters. Values may not exceed 1000 characters.
   map<string, string> parameters = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
@@ -708,12 +738,7 @@ message UpdateWorkflowTemplateRequest {
   // Required. The updated workflow template.
   //
   // The `template.version` field must match the current version.
-  WorkflowTemplate template = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {
-      type: "dataproc.googleapis.com/WorkflowTemplate"
-    }
-  ];
+  WorkflowTemplate template = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // A request to list workflow templates in a project.

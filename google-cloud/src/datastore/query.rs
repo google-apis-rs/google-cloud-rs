@@ -1,4 +1,5 @@
-use crate::datastore::{Key, Value};
+use crate::datastore::Value;
+use super::{IntoValue, Key};
 
 /// Represents Datastore query result orderings.
 #[derive(Debug, Clone, PartialEq)]
@@ -22,6 +23,14 @@ pub enum Filter {
     GreaterThanOrEqual(String, Value),
     /// Lesser-than-or-equal filter (<=).
     LesserThanEqual(String, Value),
+    /// Append ancestor to the Query
+    HasAncestor(Value),
+    /// In
+    In(String, Value),
+    /// NotIn
+    NotIn(String, Value),
+    /// NotEqual
+    NotEqual(String, Value),
 }
 
 /// Represents a Datastore query.
@@ -32,12 +41,12 @@ pub struct Query {
     pub(crate) keys_only: bool,
     pub(crate) offset: i32,
     pub(crate) limit: Option<i32>,
-    pub(crate) ancestor: Option<Key>,
     pub(crate) namespace: Option<String>,
     pub(crate) projections: Vec<String>,
     pub(crate) distinct_on: Vec<String>,
     pub(crate) ordering: Vec<Order>,
     pub(crate) filters: Vec<Filter>,
+    pub(crate) cursor: Option<Vec<u8>>,
 }
 
 impl Query {
@@ -54,12 +63,12 @@ impl Query {
             keys_only: false,
             offset: 0,
             limit: None,
-            ancestor: None,
             namespace: None,
             projections: Vec::new(),
             distinct_on: Vec::new(),
             ordering: Vec::new(),
             filters: Vec::new(),
+            cursor: None,
         }
     }
 
@@ -120,7 +129,7 @@ impl Query {
     /// let query = Query::new("users").ancestor(key);
     /// ```
     pub fn ancestor(mut self, key: Key) -> Query {
-        self.ancestor = Some(key);
+        self.filters.push(Filter::HasAncestor(key.into_value()));
         self
     }
 
@@ -203,6 +212,19 @@ impl Query {
     /// ```
     pub fn order(mut self, order: Order) -> Query {
         self.ordering.push(order);
+        self
+    }
+
+    /// We indicate by which entity the search begins, with this we can 
+    /// implement a pagination system
+    /// 
+    /// ```
+    /// let query = Query::new("users")
+    ///     .cursor(cursor);
+    /// ```
+    /// 
+    pub fn cursor(mut self, cursor: Vec<u8>) -> Query {
+        self.cursor = Some(cursor);
         self
     }
 }

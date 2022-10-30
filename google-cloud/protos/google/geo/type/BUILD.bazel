@@ -1,4 +1,13 @@
-load("@com_google_googleapis_imports//:imports.bzl", "java_proto_library", "go_proto_library","cc_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load(
+    "@com_google_googleapis_imports//:imports.bzl",
+    "cc_proto_library",
+    "go_proto_library",
+    "java_gapic_assembly_gradle_pkg",
+    "java_proto_library",
+    "py_gapic_library",
+    "py_proto_library",
+)
 
 package(default_visibility = ["//visibility:public"])
 
@@ -11,13 +20,24 @@ proto_library(
     deps = ["//google/type:latlng_proto"],
 )
 
-
 ##############################################################################
 # Java
 ##############################################################################
 java_proto_library(
     name = "viewport_java_proto",
     deps = [
+        ":viewport_proto",
+    ],
+)
+
+# Please DO-NOT-REMOVE this section.
+# This is required to generate java files for these protos.
+# Open Source Packages
+java_gapic_assembly_gradle_pkg(
+    name = "google-geo-type-java",
+    transport = "grpc+rest",
+    deps = [
+        ":viewport_java_proto",
         ":viewport_proto",
     ],
 )
@@ -30,6 +50,14 @@ go_proto_library(
     importpath = "google.golang.org/genproto/googleapis/geo/type",
     protos = [":viewport_proto"],
     deps = ["//google/type:latlng_go_proto"],
+)
+
+##############################################################################
+# Python
+##############################################################################
+py_proto_library(
+    name = "viewport_py_proto",
+    deps = [":viewport_proto"],
 )
 
 ##############################################################################

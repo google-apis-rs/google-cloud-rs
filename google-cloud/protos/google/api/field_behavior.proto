@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -76,4 +75,16 @@ enum FieldBehavior {
   // This indicates that the field may be set once in a request to create a
   // resource, but may not be changed thereafter.
   IMMUTABLE = 5;
+
+  // Denotes that a (repeated) field is an unordered list.
+  // This indicates that the service may provide the elements of the list
+  // in any arbitrary  order, rather than the order the user originally
+  // provided. Additionally, the list's order may or may not be stable.
+  UNORDERED_LIST = 6;
+
+  // Denotes that this field returns a non-empty default value if not set.
+  // This indicates that if the user provides the empty value in a request,
+  // a non-empty value will be returned. The user will not be aware of what
+  // non-empty value to expect.
+  NON_EMPTY_DEFAULT = 7;
 }

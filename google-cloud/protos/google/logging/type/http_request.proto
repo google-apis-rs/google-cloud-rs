@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,14 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.logging.type;
 
 import "google/protobuf/duration.proto";
-import "google/api/annotations.proto";
 
 option csharp_namespace = "Google.Cloud.Logging.Type";
 option go_package = "google.golang.org/genproto/googleapis/logging/type;ltype";
@@ -26,6 +24,7 @@ option java_multiple_files = true;
 option java_outer_classname = "HttpRequestProto";
 option java_package = "com.google.logging.type";
 option php_namespace = "Google\\Cloud\\Logging\\Type";
+option ruby_package = "Google::Cloud::Logging::Type";
 
 // A common proto for logging HTTP requests. Only contains semantics
 // defined by the HTTP specification. Product-specific logging
@@ -57,11 +56,13 @@ message HttpRequest {
   string user_agent = 6;
 
   // The IP address (IPv4 or IPv6) of the client that issued the HTTP
-  // request. Examples: `"192.168.1.1"`, `"FE80::0202:B3FF:FE1E:8329"`.
+  // request. This field can include port information. Examples:
+  // `"192.168.1.1"`, `"10.0.0.1:80"`, `"FE80::0202:B3FF:FE1E:8329"`.
   string remote_ip = 7;
 
   // The IP address (IPv4 or IPv6) of the origin server that the request was
-  // sent to.
+  // sent to. This field can include port information. Examples:
+  // `"192.168.1.1"`, `"10.0.0.1:80"`, `"FE80::0202:B3FF:FE1E:8329"`.
   string server_ip = 13;
 
   // The referer URL of the request, as defined in

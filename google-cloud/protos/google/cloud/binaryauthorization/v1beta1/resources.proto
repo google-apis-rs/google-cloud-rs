@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -20,26 +19,32 @@ package google.cloud.binaryauthorization.v1beta1;
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
-import "google/api/annotations.proto";
 
 option cc_enable_arenas = true;
+option csharp_namespace = "Google.Cloud.BinaryAuthorization.V1Beta1";
 option go_package = "google.golang.org/genproto/googleapis/cloud/binaryauthorization/v1beta1;binaryauthorization";
+option java_multiple_files = true;
+option java_outer_classname = "BinaryAuthorizationResourcesProto";
+option java_package = "com.google.cloud.binaryauthorization.v1beta1";
+option php_namespace = "Google\\Cloud\\BinaryAuthorization\\V1beta1";
+option ruby_package = "Google::Cloud::BinaryAuthorization::V1beta1";
 
-// A [policy][google.cloud.binaryauthorization.v1beta1.Policy] for container image binary authorization.
+// A [policy][google.cloud.binaryauthorization.v1beta1.Policy] for Binary Authorization.
 message Policy {
   option (google.api.resource) = {
     type: "binaryauthorization.googleapis.com/Policy"
     pattern: "projects/{project}/policy"
+    pattern: "locations/{location}/policy"
   };
 
   enum GlobalPolicyEvaluationMode {
     // Not specified: DISABLE is assumed.
     GLOBAL_POLICY_EVALUATION_MODE_UNSPECIFIED = 0;
 
-    // Enables global policy evaluation.
+    // Enables system policy evaluation.
     ENABLE = 1;
 
-    // Disables global policy evaluation.
+    // Disables system policy evaluation.
     DISABLE = 2;
   }
 
@@ -56,7 +61,7 @@ message Policy {
   // has no effect when specified inside a global admission policy.
   GlobalPolicyEvaluationMode global_policy_evaluation_mode = 7 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. Admission policy whitelisting. A matching admission request will
+  // Optional. Admission policy allowlisting. A matching admission request will
   // always be permitted. This feature is typically used to exclude Google or
   // third-party infrastructure images from Binary Authorization policies.
   repeated AdmissionWhitelistPattern admission_whitelist_patterns = 2 [(google.api.field_behavior) = OPTIONAL];
@@ -70,6 +75,21 @@ message Policy {
   // https://cloud.google.com/container-engine/reference/rest/v1/projects.zones.clusters.
   map<string, AdmissionRule> cluster_admission_rules = 3 [(google.api.field_behavior) = OPTIONAL];
 
+  // Optional. Per-kubernetes-namespace admission rules. K8s namespace spec format:
+  //   `[a-z.-]+`, e.g. `some-namespace`
+  map<string, AdmissionRule> kubernetes_namespace_admission_rules = 10 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Per-kubernetes-service-account admission rules. Service account
+  // spec format: `namespace:serviceaccount`. e.g. `test-ns:default`
+  map<string, AdmissionRule> kubernetes_service_account_admission_rules = 8 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Per-istio-service-identity admission rules. Istio service
+  // identity spec format:
+  // `spiffe://<domain>/ns/<namespace>/sa/<serviceaccount>` or
+  // `<domain>/ns/<namespace>/sa/<serviceaccount>`
+  // e.g. `spiffe://example.com/ns/test-ns/sa/default`
+  map<string, AdmissionRule> istio_service_identity_admission_rules = 9 [(google.api.field_behavior) = OPTIONAL];
+
   // Required. Default admission rule for a cluster without a per-cluster, per-
   // kubernetes-service-account, or per-istio-service-identity admission rule.
   AdmissionRule default_admission_rule = 4 [(google.api.field_behavior) = REQUIRED];
@@ -78,12 +98,16 @@ message Policy {
   google.protobuf.Timestamp update_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
-// An [admission whitelist pattern][google.cloud.binaryauthorization.v1beta1.AdmissionWhitelistPattern] exempts images
+// An [admission allowlist pattern][google.cloud.binaryauthorization.v1beta1.AdmissionWhitelistPattern] exempts images
 // from checks by [admission rules][google.cloud.binaryauthorization.v1beta1.AdmissionRule].
 message AdmissionWhitelistPattern {
-  // An image name pattern to whitelist, in the form `registry/path/to/image`.
+  // An image name pattern to allowlist, in the form `registry/path/to/image`.
   // This supports a trailing `*` as a wildcard, but this is allowed only in
-  // text after the `registry/` part.
+  // text after the `registry/` part. `*` wildcard does not match `/`, i.e.,
+  // `gcr.io/nginx*` matches `gcr.io/nginx@latest`, but it does not match
+  // `gcr.io/nginx/image`. This also supports a trailing `**` wildcard which
+  // matches subdirectories, i.e., `gcr.io/nginx**` matches
+  // `gcr.io/nginx/image`.
   string name_pattern = 1;
 }
 
@@ -92,7 +116,7 @@ message AdmissionWhitelistPattern {
 // [attestors][google.cloud.binaryauthorization.v1beta1.Attestor], that all pod creations will be allowed, or that all
 // pod creations will be denied.
 //
-// Images matching an [admission whitelist pattern][google.cloud.binaryauthorization.v1beta1.AdmissionWhitelistPattern]
+// Images matching an [admission allowlist pattern][google.cloud.binaryauthorization.v1beta1.AdmissionWhitelistPattern]
 // are exempted from admission rules and will never block a pod creation.
 message AdmissionRule {
   enum EvaluationMode {
@@ -103,7 +127,7 @@ message AdmissionRule {
     ALWAYS_ALLOW = 1;
 
     // This rule allows a pod creation if all the attestors listed in
-    // 'require_attestations_by' have valid attestations for all of the
+    // `require_attestations_by` have valid attestations for all of the
     // images in the pod spec.
     REQUIRE_ATTESTATION = 2;
 
@@ -163,7 +187,7 @@ message Attestor {
   // container image artifact. This determines how an attestation will
   // be stored, and how it will be used during policy
   // enforcement. Updates may not change the attestor type, but individual
-  // attestor fields may be updated
+  // attestor fields may be updated.
   oneof attestor_type {
     // A Drydock ATTESTATION_AUTHORITY Note, created by the user.
     UserOwnedDrydockNote user_owned_drydock_note = 3;
@@ -220,6 +244,8 @@ message PkixPublicKey {
   // See https://cloud.google.com/kms/docs/algorithms. In the future, BinAuthz
   // might support additional public key types independently of Tink and/or KMS.
   enum SignatureAlgorithm {
+    option allow_alias = true;
+
     // Not specified.
     SIGNATURE_ALGORITHM_UNSPECIFIED = 0;
 
@@ -250,11 +276,20 @@ message PkixPublicKey {
     // ECDSA on the NIST P-256 curve with a SHA256 digest.
     ECDSA_P256_SHA256 = 9;
 
+    // ECDSA on the NIST P-256 curve with a SHA256 digest.
+    EC_SIGN_P256_SHA256 = 9;
+
     // ECDSA on the NIST P-384 curve with a SHA384 digest.
     ECDSA_P384_SHA384 = 10;
 
+    // ECDSA on the NIST P-384 curve with a SHA384 digest.
+    EC_SIGN_P384_SHA384 = 10;
+
     // ECDSA on the NIST P-521 curve with a SHA512 digest.
     ECDSA_P521_SHA512 = 11;
+
+    // ECDSA on the NIST P-521 curve with a SHA512 digest.
+    EC_SIGN_P521_SHA512 = 11;
   }
 
   // A PEM-encoded public key, as described in

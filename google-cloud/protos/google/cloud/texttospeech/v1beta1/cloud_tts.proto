@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -20,14 +19,20 @@ package google.cloud.texttospeech.v1beta1;
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 
 option cc_enable_arenas = true;
-option csharp_namespace = "Google.Cloud.TextToSpeech.V1beta1";
+option csharp_namespace = "Google.Cloud.TextToSpeech.V1Beta1";
 option go_package = "google.golang.org/genproto/googleapis/cloud/texttospeech/v1beta1;texttospeech";
 option java_multiple_files = true;
 option java_outer_classname = "TextToSpeechProto";
 option java_package = "com.google.cloud.texttospeech.v1beta1";
 option php_namespace = "Google\\Cloud\\TextToSpeech\\V1beta1";
+option ruby_package = "Google::Cloud::TextToSpeech::V1beta1";
+option (google.api.resource_definition) = {
+  type: "automl.googleapis.com/Model"
+  pattern: "projects/{project}/locations/{location}/models/{model}"
+};
 
 // Service that implements Google Cloud Text-to-Speech API.
 service TextToSpeech {
@@ -56,13 +61,13 @@ service TextToSpeech {
 // The top-level message sent by the client for the `ListVoices` method.
 message ListVoicesRequest {
   // Optional. Recommended.
-  // [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) language tag. If
-  // specified, the ListVoices call will only return voices that can be used to
-  // synthesize this language_code. E.g. when specifying "en-NZ", you will get
-  // supported "en-*" voices; when specifying "no", you will get supported
-  // "no-*" (Norwegian) and "nb-*" (Norwegian Bokmal) voices; specifying "zh"
-  // will also get supported "cmn-*" voices; specifying "zh-hk" will also get
-  // supported "yue-*" voices.
+  // [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) language tag.
+  // If not specified, the API will return all supported voices.
+  // If specified, the ListVoices call will only return voices that can be used
+  // to synthesize this language_code. For example, if you specify `"en-NZ"`,
+  // all `"en-NZ"` voices will be returned. If you specify `"no"`, both
+  // `"no-\*"` (Norwegian) and `"nb-\*"` (Norwegian Bokmal) voices will be
+  // returned.
   string language_code = 1 [(google.api.field_behavior) = OPTIONAL];
 }
 
@@ -82,7 +87,7 @@ enum SsmlVoiceGender {
   // A female voice.
   FEMALE = 2;
 
-  // A gender-neutral voice.
+  // A gender-neutral voice. This voice is not yet supported.
   NEUTRAL = 3;
 }
 
@@ -99,11 +104,22 @@ enum AudioEncoding {
   // MP3 audio at 32kbps.
   MP3 = 2;
 
+  // MP3 at 64kbps.
+  MP3_64_KBPS = 4;
+
   // Opus encoded audio wrapped in an ogg container. The result will be a
   // file which can be played natively on Android, and in browsers (at least
   // Chrome and Firefox). The quality of the encoding is considerably higher
   // than MP3 while using approximately the same bitrate.
   OGG_OPUS = 3;
+
+  // 8-bit samples that compand 14-bit audio samples using G.711 PCMU/mu-law.
+  // Audio content returned as MULAW also contains a WAV header.
+  MULAW = 5;
+
+  // 8-bit samples that compand 14-bit audio samples using G.711 PCMU/A-law.
+  // Audio content returned as ALAW also contains a WAV header.
+  ALAW = 6;
 }
 
 // The message returned to the client by the `ListVoices` method.
@@ -131,6 +147,15 @@ message Voice {
 
 // The top-level message sent by the client for the `SynthesizeSpeech` method.
 message SynthesizeSpeechRequest {
+  // The type of timepoint information that is returned in the response.
+  enum TimepointType {
+    // Not specified. No timepoint information will be returned.
+    TIMEPOINT_TYPE_UNSPECIFIED = 0;
+
+    // Timepoint information of `<mark>` tags in SSML input will be returned.
+    SSML_MARK = 1;
+  }
+
   // Required. The Synthesizer requires either plain text or SSML as input.
   SynthesisInput input = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -139,6 +164,9 @@ message SynthesizeSpeechRequest {
 
   // Required. The configuration of the synthesized audio.
   AudioConfig audio_config = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether and what timepoints are returned in the response.
+  repeated TimepointType enable_time_pointing = 4;
 }
 
 // Contains text input to be synthesized. Either `text` or `ssml` must be
@@ -154,7 +182,7 @@ message SynthesisInput {
     // The SSML document to be synthesized. The SSML document must be valid
     // and well-formed. Otherwise the RPC will fail and return
     // [google.rpc.Code.INVALID_ARGUMENT][]. For more information, see
-    // [SSML](/speech/text-to-speech/docs/ssml).
+    // [SSML](https://cloud.google.com/text-to-speech/docs/ssml).
     string ssml = 2;
   }
 }
@@ -184,6 +212,11 @@ message VoiceSelectionParams {
   // voice of the appropriate gender is not available, the synthesizer should
   // substitute a voice with a different gender rather than failing the request.
   SsmlVoiceGender ssml_gender = 3;
+
+  // The configuration for a custom voice. If [CustomVoiceParams.model] is set,
+  // the service will choose the custom voice matching the specified
+  // configuration.
+  CustomVoiceParams custom_voice = 4;
 }
 
 // Description of audio data to be synthesized.
@@ -242,6 +275,37 @@ message AudioConfig {
   ];
 }
 
+// Description of the custom voice to be synthesized.
+message CustomVoiceParams {
+  // The usage of the synthesized audio. You must report your honest and
+  // correct usage of the service as it's regulated by contract and will cause
+  // significant difference in billing.
+  enum ReportedUsage {
+    // Request with reported usage unspecified will be rejected.
+    REPORTED_USAGE_UNSPECIFIED = 0;
+
+    // For scenarios where the synthesized audio is not downloadable and can
+    // only be used once. For example, real-time request in IVR system.
+    REALTIME = 1;
+
+    // For scenarios where the synthesized audio is downloadable and can be
+    // reused. For example, the synthesized audio is downloaded, stored in
+    // customer service system and played repeatedly.
+    OFFLINE = 2;
+  }
+
+  // Required. The name of the AutoML model that synthesizes the custom voice.
+  string model = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "automl.googleapis.com/Model"
+    }
+  ];
+
+  // Optional. The usage of the synthesized audio to be reported.
+  ReportedUsage reported_usage = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
 // The message returned to the client by the `SynthesizeSpeech` method.
 message SynthesizeSpeechResponse {
   // The audio data bytes encoded as specified in the request, including the
@@ -250,4 +314,21 @@ message SynthesizeSpeechResponse {
   // with all bytes fields, protobuffers use a pure binary representation,
   // whereas JSON representations use base64.
   bytes audio_content = 1;
+
+  // A link between a position in the original request input and a corresponding
+  // time in the output audio. It's only supported via `<mark>` of SSML input.
+  repeated Timepoint timepoints = 2;
+
+  // The audio metadata of `audio_content`.
+  AudioConfig audio_config = 4;
+}
+
+// This contains a mapping between a certain point in the input text and a
+// corresponding time in the output audio.
+message Timepoint {
+  // Timepoint name as received from the client within `<mark>` tag.
+  string mark_name = 4;
+
+  // Time offset in seconds from the start of the synthesized audio.
+  double time_seconds = 3;
 }

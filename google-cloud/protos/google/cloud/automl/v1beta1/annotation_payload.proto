@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -23,8 +22,6 @@ import "google/cloud/automl/v1beta1/tables.proto";
 import "google/cloud/automl/v1beta1/text_extraction.proto";
 import "google/cloud/automl/v1beta1/text_sentiment.proto";
 import "google/cloud/automl/v1beta1/translation.proto";
-import "google/protobuf/any.proto";
-import "google/api/annotations.proto";
 
 option go_package = "google.golang.org/genproto/googleapis/cloud/automl/v1beta1;automl";
 option java_multiple_files = true;

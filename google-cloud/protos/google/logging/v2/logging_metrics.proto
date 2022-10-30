@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,19 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.logging.v2;
 
-import "google/api/distribution.proto";
-import "google/api/metric.proto";
-import "google/protobuf/empty.proto";
-import "google/protobuf/field_mask.proto";
-import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
+import "google/api/distribution.proto";
+import "google/api/field_behavior.proto";
+import "google/api/metric.proto";
+import "google/api/resource.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option cc_enable_arenas = true;
 option csharp_namespace = "Google.Cloud.Logging.V2";
@@ -32,6 +32,7 @@ option java_multiple_files = true;
 option java_outer_classname = "LoggingMetricsProto";
 option java_package = "com.google.logging.v2";
 option php_namespace = "Google\\Cloud\\Logging\\V2";
+option ruby_package = "Google::Cloud::Logging::V2";
 
 // Service for configuring logs-based metrics.
 service MetricsServiceV2 {
@@ -48,6 +49,7 @@ service MetricsServiceV2 {
     option (google.api.http) = {
       get: "/v2/{parent=projects/*}/metrics"
     };
+    option (google.api.method_signature) = "parent";
   }
 
   // Gets a logs-based metric.
@@ -55,6 +57,7 @@ service MetricsServiceV2 {
     option (google.api.http) = {
       get: "/v2/{metric_name=projects/*/metrics/*}"
     };
+    option (google.api.method_signature) = "metric_name";
   }
 
   // Creates a logs-based metric.
@@ -63,6 +66,7 @@ service MetricsServiceV2 {
       post: "/v2/{parent=projects/*}/metrics"
       body: "metric"
     };
+    option (google.api.method_signature) = "parent,metric";
   }
 
   // Creates or updates a logs-based metric.
@@ -71,6 +75,7 @@ service MetricsServiceV2 {
       put: "/v2/{metric_name=projects/*/metrics/*}"
       body: "metric"
     };
+    option (google.api.method_signature) = "metric_name,metric";
   }
 
   // Deletes a logs-based metric.
@@ -78,17 +83,23 @@ service MetricsServiceV2 {
     option (google.api.http) = {
       delete: "/v2/{metric_name=projects/*/metrics/*}"
     };
+    option (google.api.method_signature) = "metric_name";
   }
 }
 
 // Describes a logs-based metric. The value of the metric is the number of log
 // entries that match a logs filter in a given time interval.
 //
-// Logs-based metric can also be used to extract values from logs and create a
-// a distribution of the values. The distribution records the statistics of the
+// Logs-based metrics can also be used to extract values from logs and create a
+// distribution of the values. The distribution records the statistics of the
 // extracted values along with an optional histogram of the values as specified
 // by the bucket options.
 message LogMetric {
+  option (google.api.resource) = {
+    type: "logging.googleapis.com/LogMetric"
+    pattern: "projects/{project}/metrics/{metric}"
+  };
+
   // Logging API version.
   enum ApiVersion {
     // Logging API v2.
@@ -106,25 +117,29 @@ message LogMetric {
   // `_-.,+!*',()%/`. The forward-slash character (`/`) denotes a hierarchy of
   // name pieces, and it cannot be the first character of the name.
   //
-  // The metric identifier in this field must not be
-  // [URL-encoded](https://en.wikipedia.org/wiki/Percent-encoding).
-  // However, when the metric identifier appears as the `[METRIC_ID]` part of a
-  // `metric_name` API parameter, then the metric identifier must be
-  // URL-encoded. Example: `"projects/my-project/metrics/nginx%2Frequests"`.
-  string name = 1;
+  // This field is the `[METRIC_ID]` part of a metric resource name in the
+  // format "projects/[PROJECT_ID]/metrics/[METRIC_ID]". Example: If the
+  // resource name of a metric is
+  // `"projects/my-project/metrics/nginx%2Frequests"`, this field's value is
+  // `"nginx/requests"`.
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Optional. A description of this metric, which is used in documentation.
   // The maximum length of the description is 8000 characters.
-  string description = 2;
+  string description = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Required. An [advanced logs filter](/logging/docs/view/advanced_filters)
-  // which is used to match log entries.
-  // Example:
+  // Required. An [advanced logs
+  // filter](https://cloud.google.com/logging/docs/view/advanced_filters) which
+  // is used to match log entries. Example:
   //
   //     "resource.type=gae_app AND severity>=ERROR"
   //
   // The maximum length of the filter is 20000 characters.
-  string filter = 3;
+  string filter = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. If set to True, then this metric is disabled and it does not
+  // generate any points.
+  bool disabled = 12 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The metric descriptor associated with the logs-based metric.
   // If unspecified, it uses a default metric descriptor with a DELTA metric
@@ -147,7 +162,7 @@ message LogMetric {
   // be updated once initially configured. New labels can be added in the
   // `metric_descriptor`, but existing labels cannot be modified except for
   // their description.
-  google.api.MetricDescriptor metric_descriptor = 5;
+  google.api.MetricDescriptor metric_descriptor = 5 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. A `value_extractor` is required when using a distribution
   // logs-based metric to extract the values to record from a log entry.
@@ -168,7 +183,7 @@ message LogMetric {
   // distribution.
   //
   // Example: `REGEXP_EXTRACT(jsonPayload.request, ".*quantity=(\d+).*")`
-  string value_extractor = 6;
+  string value_extractor = 6 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. A map from a label key string to an extractor expression which is
   // used to extract data from a log entry field and assign as the label value.
@@ -184,22 +199,22 @@ message LogMetric {
   //
   // Note that there are upper bounds on the maximum number of labels and the
   // number of active time series that are allowed in a project.
-  map<string, string> label_extractors = 7;
+  map<string, string> label_extractors = 7 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The `bucket_options` are required when the logs-based metric is
   // using a DISTRIBUTION value type and it describes the bucket boundaries
   // used to create a histogram of the extracted values.
-  google.api.Distribution.BucketOptions bucket_options = 8;
+  google.api.Distribution.BucketOptions bucket_options = 8 [(google.api.field_behavior) = OPTIONAL];
 
   // Output only. The creation timestamp of the metric.
   //
   // This field may not be present for older metrics.
-  google.protobuf.Timestamp create_time = 9;
+  google.protobuf.Timestamp create_time = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. The last update timestamp of the metric.
   //
   // This field may not be present for older metrics.
-  google.protobuf.Timestamp update_time = 10;
+  google.protobuf.Timestamp update_time = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Deprecated. The API version that created or updated this metric.
   // The v2 format is used by default and cannot be changed.
@@ -211,18 +226,23 @@ message ListLogMetricsRequest {
   // Required. The name of the project containing the metrics:
   //
   //     "projects/[PROJECT_ID]"
-  string parent = 1;
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "cloudresourcemanager.googleapis.com/Project"
+    }
+  ];
 
   // Optional. If present, then retrieve the next batch of results from the
   // preceding call to this method. `pageToken` must be the value of
   // `nextPageToken` from the previous response. The values of other method
   // parameters should be identical to those in the previous call.
-  string page_token = 2;
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The maximum number of results to return from this request.
   // Non-positive values are ignored. The presence of `nextPageToken` in the
   // response indicates that more results might be available.
-  int32 page_size = 3;
+  int32 page_size = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Result returned from ListLogMetrics.
@@ -238,45 +258,65 @@ message ListLogMetricsResponse {
 
 // The parameters to GetLogMetric.
 message GetLogMetricRequest {
-  // The resource name of the desired metric:
+  // Required. The resource name of the desired metric:
   //
   //     "projects/[PROJECT_ID]/metrics/[METRIC_ID]"
-  string metric_name = 1;
+  string metric_name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "logging.googleapis.com/LogMetric"
+    }
+  ];
 }
 
 // The parameters to CreateLogMetric.
 message CreateLogMetricRequest {
-  // The resource name of the project in which to create the metric:
+  // Required. The resource name of the project in which to create the metric:
   //
   //     "projects/[PROJECT_ID]"
   //
   // The new metric must be provided in the request.
-  string parent = 1;
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "logging.googleapis.com/LogMetric"
+    }
+  ];
 
-  // The new logs-based metric, which must not have an identifier that
+  // Required. The new logs-based metric, which must not have an identifier that
   // already exists.
-  LogMetric metric = 2;
+  LogMetric metric = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // The parameters to UpdateLogMetric.
 message UpdateLogMetricRequest {
-  // The resource name of the metric to update:
+  // Required. The resource name of the metric to update:
   //
   //     "projects/[PROJECT_ID]/metrics/[METRIC_ID]"
   //
   // The updated metric must be provided in the request and it's
   // `name` field must be the same as `[METRIC_ID]` If the metric
   // does not exist in `[PROJECT_ID]`, then a new metric is created.
-  string metric_name = 1;
+  string metric_name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "logging.googleapis.com/LogMetric"
+    }
+  ];
 
-  // The updated metric.
-  LogMetric metric = 2;
+  // Required. The updated metric.
+  LogMetric metric = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // The parameters to DeleteLogMetric.
 message DeleteLogMetricRequest {
-  // The resource name of the metric to delete:
+  // Required. The resource name of the metric to delete:
   //
   //     "projects/[PROJECT_ID]/metrics/[METRIC_ID]"
-  string metric_name = 1;
+  string metric_name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "logging.googleapis.com/LogMetric"
+    }
+  ];
 }

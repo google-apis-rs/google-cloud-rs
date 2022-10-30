@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,33 +16,36 @@ syntax = "proto3";
 
 package google.api.servicecontrol.v1;
 
-import "google/api/annotations.proto";
 import "google/api/servicecontrol/v1/distribution.proto";
 import "google/protobuf/timestamp.proto";
-import "google/type/money.proto";
 
 option cc_enable_arenas = true;
+option csharp_namespace = "Google.Cloud.ServiceControl.V1";
 option go_package = "google.golang.org/genproto/googleapis/api/servicecontrol/v1;servicecontrol";
 option java_multiple_files = true;
 option java_outer_classname = "MetricValueSetProto";
 option java_package = "com.google.api.servicecontrol.v1";
+option php_namespace = "Google\\Cloud\\ServiceControl\\V1";
+option ruby_package = "Google::Cloud::ServiceControl::V1";
 
 // Represents a single metric value.
 message MetricValue {
   // The labels describing the metric value.
-  // See comments on
-  // [google.api.servicecontrol.v1.Operation.labels][google.api.servicecontrol.v1.Operation.labels]
-  // for the overriding relationship.
+  // See comments on [google.api.servicecontrol.v1.Operation.labels][google.api.servicecontrol.v1.Operation.labels] for
+  // the overriding relationship.
+  // Note that this map must not contain monitored resource labels.
   map<string, string> labels = 1;
 
   // The start of the time period over which this metric value's measurement
   // applies. The time period has different semantics for different metric
   // types (cumulative, delta, and gauge). See the metric definition
-  // documentation in the service configuration for details.
+  // documentation in the service configuration for details. If not specified,
+  // [google.api.servicecontrol.v1.Operation.start_time][google.api.servicecontrol.v1.Operation.start_time] will be used.
   google.protobuf.Timestamp start_time = 2;
 
   // The end of the time period over which this metric value's measurement
-  // applies.
+  // applies.  If not specified,
+  // [google.api.servicecontrol.v1.Operation.end_time][google.api.servicecontrol.v1.Operation.end_time] will be used.
   google.protobuf.Timestamp end_time = 3;
 
   // The value. The type of value used in the request must
