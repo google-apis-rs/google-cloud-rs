@@ -1,0 +1,19 @@
+type: google.api.Service
+config_version: 3
+name: videostitcher.googleapis.com
+title: Video Stitcher API
+
+apis:
+- name: google.cloud.video.stitcher.v1.VideoStitcherService
+
+backend:
+  rules:
+  - selector: 'google.cloud.video.stitcher.v1.VideoStitcherService.*'
+    deadline: 30.0
+
+authentication:
+  rules:
+  - selector: 'google.cloud.video.stitcher.v1.VideoStitcherService.*'
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform

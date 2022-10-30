@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC.
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,21 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.cloud.securitycenter.v1beta1;
 
-import "google/api/annotations.proto";
+import "google/api/resource.proto";
 
 option go_package = "google.golang.org/genproto/googleapis/cloud/securitycenter/v1beta1;securitycenter";
 option java_multiple_files = true;
 option java_package = "com.google.cloud.securitycenter.v1beta1";
 
-// User specified settings that are attached to the Cloud Security Command
-// Center (Cloud SCC) organization.
+// User specified settings that are attached to the Security Command
+// Center organization.
 message OrganizationSettings {
+  option (google.api.resource) = {
+    type: "securitycenter.googleapis.com/OrganizationSettings"
+    pattern: "organizations/{organization}/organizationSettings"
+  };
+
   // The configuration used for Asset Discovery runs.
   message AssetDiscoveryConfig {
     // The mode of inclusion when running Asset Discovery.
@@ -60,7 +64,7 @@ message OrganizationSettings {
   // The relative resource name of the settings. See:
   // https://cloud.google.com/apis/design/resource_names#relative_resource_name
   // Example:
-  // "organizations/123/organizationSettings".
+  // "organizations/{organization_id}/organizationSettings".
   string name = 1;
 
   // A flag that indicates if Asset Discovery should be enabled. If the flag is

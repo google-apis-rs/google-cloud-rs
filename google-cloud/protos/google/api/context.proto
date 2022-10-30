@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2015 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -41,7 +40,7 @@ option objc_class_prefix = "GAPI";
 // Available context types are defined in package
 // `google.rpc.context`.
 //
-// This also provides mechanism to whitelist any protobuf message extension that
+// This also provides mechanism to allowlist any protobuf message extension that
 // can be sent in grpc metadata using “x-goog-ext-<extension_id>-bin” and
 // “x-goog-ext-<extension_id>-jspb” format. For example, list any service
 // specific protobuf types that can appear in grpc metadata as follows in your

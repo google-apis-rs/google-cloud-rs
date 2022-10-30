@@ -1,3 +1,5 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
 # This is an API workspace, having public visibility by default makes perfect sense.
 package(default_visibility = ["//visibility:public"])
 
@@ -29,7 +31,11 @@ proto_library(
 ##############################################################################
 # Java
 ##############################################################################
-load("@com_google_googleapis_imports//:imports.bzl", "java_proto_library")
+load(
+    "@com_google_googleapis_imports//:imports.bzl",
+    "java_gapic_assembly_gradle_pkg",
+    "java_proto_library",
+)
 
 java_proto_library(
     name = "rpc_java_proto",
@@ -37,6 +43,20 @@ java_proto_library(
         ":code_proto",
         ":error_details_proto",
         ":status_proto",
+    ],
+)
+
+# Please DO-NOT-REMOVE this section.
+# This is required to generate java files for these protos.
+# Open Source Packages
+java_gapic_assembly_gradle_pkg(
+    name = "google-rpc-java",
+    transport = "grpc+rest",
+    deps = [
+        "error_details_proto",
+        "status_proto",
+        ":code_proto",
+        ":rpc_java_proto",
     ],
 )
 
@@ -105,4 +125,3 @@ py_proto_library(
     name = "status_py_proto",
     deps = [":status_proto"],
 )
-

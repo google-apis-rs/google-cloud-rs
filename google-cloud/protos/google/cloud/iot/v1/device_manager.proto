@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -26,7 +25,6 @@ import "google/iam/v1/iam_policy.proto";
 import "google/iam/v1/policy.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
-import "google/rpc/status.proto";
 
 option cc_enable_arenas = true;
 option go_package = "google.golang.org/genproto/googleapis/cloud/iot/v1;iot";
@@ -295,7 +293,7 @@ message GetDeviceRegistryRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "cloudiot.googleapis.com/DeviceRegistry"
+      type: "cloudiot.googleapis.com/Registry"
     }
   ];
 }
@@ -307,7 +305,7 @@ message DeleteDeviceRegistryRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "cloudiot.googleapis.com/DeviceRegistry"
+      type: "cloudiot.googleapis.com/Registry"
     }
   ];
 }
@@ -369,7 +367,7 @@ message CreateDeviceRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "cloudiot.googleapis.com/DeviceRegistry"
+      type: "cloudiot.googleapis.com/Registry"
     }
   ];
 
@@ -392,7 +390,8 @@ message GetDeviceRequest {
   ];
 
   // The fields of the `Device` resource to be returned in the response. If the
-  // field mask is unset or empty, all fields are returned.
+  // field mask is unset or empty, all fields are returned. Fields have to be
+  // provided in snake_case format, for example: `last_heartbeat_time`.
   google.protobuf.FieldMask field_mask = 2;
 }
 
@@ -431,7 +430,7 @@ message ListDevicesRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "cloudiot.googleapis.com/DeviceRegistry"
+      type: "cloudiot.googleapis.com/Registry"
     }
   ];
 
@@ -445,7 +444,8 @@ message ListDevicesRequest {
 
   // The fields of the `Device` resource to be returned in the response. The
   // fields `id` and `num_id` are always returned, along with any
-  // other fields specified.
+  // other fields specified in snake_case format, for example:
+  // `last_heartbeat_time`.
   google.protobuf.FieldMask field_mask = 4;
 
   // Options related to gateways.
@@ -605,7 +605,7 @@ message BindDeviceToGatewayRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "cloudiot.googleapis.com/DeviceRegistry"
+      type: "cloudiot.googleapis.com/Registry"
     }
   ];
 
@@ -631,7 +631,7 @@ message UnbindDeviceFromGatewayRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "cloudiot.googleapis.com/DeviceRegistry"
+      type: "cloudiot.googleapis.com/Registry"
     }
   ];
 

@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -20,6 +19,7 @@ package google.cloud.dataproc.v1;
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/longrunning/operations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
@@ -41,6 +41,19 @@ service JobController {
       body: "*"
     };
     option (google.api.method_signature) = "project_id,region,job";
+  }
+
+  // Submits job to a cluster.
+  rpc SubmitJobAsOperation(SubmitJobRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id}/regions/{region}/jobs:submitAsOperation"
+      body: "*"
+    };
+    option (google.api.method_signature) = "project_id, region, job";
+    option (google.longrunning.operation_info) = {
+      response_type: "Job"
+      metadata_type: "JobMetadata"
+    };
   }
 
   // Gets the resource representation for a job in a project.
@@ -70,9 +83,9 @@ service JobController {
 
   // Starts a job cancellation request. To access the job resource
   // after cancellation, call
-  // [regions/{region}/jobs.list](/dataproc/docs/reference/rest/v1/projects.regions.jobs/list)
+  // [regions/{region}/jobs.list](https://cloud.google.com/dataproc/docs/reference/rest/v1/projects.regions.jobs/list)
   // or
-  // [regions/{region}/jobs.get](/dataproc/docs/reference/rest/v1/projects.regions.jobs/get).
+  // [regions/{region}/jobs.get](https://cloud.google.com/dataproc/docs/reference/rest/v1/projects.regions.jobs/get).
   rpc CancelJob(CancelJobRequest) returns (Job) {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}/regions/{region}/jobs/{job_id}:cancel"
@@ -94,7 +107,7 @@ service JobController {
 // The runtime logging config of the job.
 message LoggingConfig {
   // The Log4j level for job execution. When running an
-  // [Apache Hive](http://hive.apache.org/) job, Cloud
+  // [Apache Hive](https://hive.apache.org/) job, Cloud
   // Dataproc configures the Hive client to an equivalent verbosity level.
   enum Level {
     // Level is unspecified. Use default level for log4j.
@@ -132,7 +145,7 @@ message LoggingConfig {
   map<string, Level> driver_log_levels = 2;
 }
 
-// A Cloud Dataproc job for running
+// A Dataproc job for running
 // [Apache Hadoop
 // MapReduce](https://hadoop.apache.org/docs/current/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html)
 // jobs on [Apache Hadoop
@@ -176,7 +189,7 @@ message HadoopJob {
   repeated string archive_uris = 6 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. A mapping of property names to values, used to configure Hadoop.
-  // Properties that conflict with values set by the Cloud Dataproc API may be
+  // Properties that conflict with values set by the Dataproc API may be
   // overwritten. Can include properties set in /etc/hadoop/conf/*-site and
   // classes in user code.
   map<string, string> properties = 7 [(google.api.field_behavior) = OPTIONAL];
@@ -185,7 +198,7 @@ message HadoopJob {
   LoggingConfig logging_config = 8 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// A Cloud Dataproc job for running [Apache Spark](http://spark.apache.org/)
+// A Dataproc job for running [Apache Spark](http://spark.apache.org/)
 // applications on YARN.
 message SparkJob {
   // Required. The specification of the main method to call to drive the job.
@@ -211,17 +224,17 @@ message SparkJob {
   // Spark driver and tasks.
   repeated string jar_file_uris = 4 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. HCFS URIs of files to be copied to the working directory of
-  // Spark drivers and distributed tasks. Useful for naively parallel tasks.
+  // Optional. HCFS URIs of files to be placed in the working directory of
+  // each executor. Useful for naively parallel tasks.
   repeated string file_uris = 5 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. HCFS URIs of archives to be extracted in the working directory
-  // of Spark drivers and tasks. Supported file types:
+  // Optional. HCFS URIs of archives to be extracted into the working directory
+  // of each executor. Supported file types:
   // .jar, .tar, .tar.gz, .tgz, and .zip.
   repeated string archive_uris = 6 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. A mapping of property names to values, used to configure Spark.
-  // Properties that conflict with values set by the Cloud Dataproc API may be
+  // Properties that conflict with values set by the Dataproc API may be
   // overwritten. Can include properties set in
   // /etc/spark/conf/spark-defaults.conf and classes in user code.
   map<string, string> properties = 7 [(google.api.field_behavior) = OPTIONAL];
@@ -230,7 +243,7 @@ message SparkJob {
   LoggingConfig logging_config = 8 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// A Cloud Dataproc job for running
+// A Dataproc job for running
 // [Apache
 // PySpark](https://spark.apache.org/docs/0.9.0/python-programming-guide.html)
 // applications on YARN.
@@ -252,16 +265,17 @@ message PySparkJob {
   // Python driver and tasks.
   repeated string jar_file_uris = 4 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. HCFS URIs of files to be copied to the working directory of
-  // Python drivers and distributed tasks. Useful for naively parallel tasks.
+  // Optional. HCFS URIs of files to be placed in the working directory of
+  // each executor. Useful for naively parallel tasks.
   repeated string file_uris = 5 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. HCFS URIs of archives to be extracted in the working directory of
+  // Optional. HCFS URIs of archives to be extracted into the working directory
+  // of each executor. Supported file types:
   // .jar, .tar, .tar.gz, .tgz, and .zip.
   repeated string archive_uris = 6 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. A mapping of property names to values, used to configure PySpark.
-  // Properties that conflict with values set by the Cloud Dataproc API may be
+  // Properties that conflict with values set by the Dataproc API may be
   // overwritten. Can include properties set in
   // /etc/spark/conf/spark-defaults.conf and classes in user code.
   map<string, string> properties = 7 [(google.api.field_behavior) = OPTIONAL];
@@ -272,9 +286,9 @@ message PySparkJob {
 
 // A list of queries to run on a cluster.
 message QueryList {
-  // Required. The queries to execute. You do not need to terminate a query
-  // with a semicolon. Multiple queries can be specified in one string
-  // by separating each with a semicolon. Here is an example of an Cloud
+  // Required. The queries to execute. You do not need to end a query expression
+  // with a semicolon. Multiple queries can be specified in one
+  // string by separating each with a semicolon. Here is an example of a
   // Dataproc API snippet that uses a QueryList to specify a HiveJob:
   //
   //     "hiveJob": {
@@ -289,7 +303,7 @@ message QueryList {
   repeated string queries = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
-// A Cloud Dataproc job for running [Apache Hive](https://hive.apache.org/)
+// A Dataproc job for running [Apache Hive](https://hive.apache.org/)
 // queries on YARN.
 message HiveJob {
   // Required. The sequence of Hive queries to execute, specified as either
@@ -312,7 +326,7 @@ message HiveJob {
   map<string, string> script_variables = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. A mapping of property names and values, used to configure Hive.
-  // Properties that conflict with values set by the Cloud Dataproc API may be
+  // Properties that conflict with values set by the Dataproc API may be
   // overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml,
   // /etc/hive/conf/hive-site.xml, and classes in user code.
   map<string, string> properties = 5 [(google.api.field_behavior) = OPTIONAL];
@@ -323,7 +337,7 @@ message HiveJob {
   repeated string jar_file_uris = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// A Cloud Dataproc job for running [Apache Spark
+// A Dataproc job for running [Apache Spark
 // SQL](http://spark.apache.org/sql/) queries.
 message SparkSqlJob {
   // Required. The sequence of Spark SQL queries to execute, specified as
@@ -342,7 +356,7 @@ message SparkSqlJob {
 
   // Optional. A mapping of property names to values, used to configure
   // Spark SQL's SparkConf. Properties that conflict with values set by the
-  // Cloud Dataproc API may be overwritten.
+  // Dataproc API may be overwritten.
   map<string, string> properties = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. HCFS URIs of jar files to be added to the Spark CLASSPATH.
@@ -352,7 +366,7 @@ message SparkSqlJob {
   LoggingConfig logging_config = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// A Cloud Dataproc job for running [Apache Pig](https://pig.apache.org/)
+// A Dataproc job for running [Apache Pig](https://pig.apache.org/)
 // queries on YARN.
 message PigJob {
   // Required. The sequence of Pig queries to execute, specified as an HCFS
@@ -375,7 +389,7 @@ message PigJob {
   map<string, string> script_variables = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. A mapping of property names to values, used to configure Pig.
-  // Properties that conflict with values set by the Cloud Dataproc API may be
+  // Properties that conflict with values set by the Dataproc API may be
   // overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml,
   // /etc/pig/conf/pig.properties, and classes in user code.
   map<string, string> properties = 5 [(google.api.field_behavior) = OPTIONAL];
@@ -388,17 +402,89 @@ message PigJob {
   LoggingConfig logging_config = 7 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// Cloud Dataproc job config.
+// A Dataproc job for running
+// [Apache SparkR](https://spark.apache.org/docs/latest/sparkr.html)
+// applications on YARN.
+message SparkRJob {
+  // Required. The HCFS URI of the main R file to use as the driver.
+  // Must be a .R file.
+  string main_r_file_uri = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. The arguments to pass to the driver.  Do not include arguments,
+  // such as `--conf`, that can be set as job properties, since a collision may
+  // occur that causes an incorrect job submission.
+  repeated string args = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. HCFS URIs of files to be placed in the working directory of
+  // each executor. Useful for naively parallel tasks.
+  repeated string file_uris = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. HCFS URIs of archives to be extracted into the working directory
+  // of each executor. Supported file types:
+  // .jar, .tar, .tar.gz, .tgz, and .zip.
+  repeated string archive_uris = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. A mapping of property names to values, used to configure SparkR.
+  // Properties that conflict with values set by the Dataproc API may be
+  // overwritten. Can include properties set in
+  // /etc/spark/conf/spark-defaults.conf and classes in user code.
+  map<string, string> properties = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The runtime log config for job execution.
+  LoggingConfig logging_config = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// A Dataproc job for running [Presto](https://prestosql.io/) queries.
+// **IMPORTANT**: The [Dataproc Presto Optional
+// Component](https://cloud.google.com/dataproc/docs/concepts/components/presto)
+// must be enabled when the cluster is created to submit a Presto job to the
+// cluster.
+message PrestoJob {
+  // Required. The sequence of Presto queries to execute, specified as
+  // either an HCFS file URI or as a list of queries.
+  oneof queries {
+    // The HCFS URI of the script that contains SQL queries.
+    string query_file_uri = 1;
+
+    // A list of queries.
+    QueryList query_list = 2;
+  }
+
+  // Optional. Whether to continue executing queries if a query fails.
+  // The default value is `false`. Setting to `true` can be useful when
+  // executing independent parallel queries.
+  bool continue_on_failure = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The format in which query output will be displayed. See the
+  // Presto documentation for supported output formats
+  string output_format = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Presto client tags to attach to this query
+  repeated string client_tags = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. A mapping of property names to values. Used to set Presto
+  // [session properties](https://prestodb.io/docs/current/sql/set-session.html)
+  // Equivalent to using the --session flag in the Presto CLI
+  map<string, string> properties = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The runtime log config for job execution.
+  LoggingConfig logging_config = 7 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Dataproc job config.
 message JobPlacement {
   // Required. The name of the cluster where the job will be submitted.
   string cluster_name = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Output only. A cluster UUID generated by the Cloud Dataproc service when
+  // Output only. A cluster UUID generated by the Dataproc service when
   // the job is submitted.
   string cluster_uuid = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Optional. Cluster labels to identify a cluster where the job will be submitted.
+  map<string, string> cluster_labels = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// Cloud Dataproc job status.
+// Dataproc job status.
 message JobStatus {
   // The job state.
   enum State {
@@ -456,7 +542,7 @@ message JobStatus {
     QUEUED = 2;
 
     // The agent-reported status is out of date, which may be caused by a
-    // loss of communication between the agent and Cloud Dataproc. If the
+    // loss of communication between the agent and Dataproc. If the
     // agent does not send a timely update, the job will fail.
     //
     // Applies to RUNNING state.
@@ -483,9 +569,9 @@ message JobStatus {
 
 // Encapsulates the full scoping used to reference a job.
 message JobReference {
-  // Required. The ID of the Google Cloud Platform project that the job
-  // belongs to.
-  string project_id = 1 [(google.api.field_behavior) = REQUIRED];
+  // Optional. The ID of the Google Cloud Platform project that the job belongs to. If
+  // specified, must match the request project ID.
+  string project_id = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The job ID, which must be unique within the project.
   //
@@ -549,7 +635,7 @@ message YarnApplication {
   string tracking_url = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// A Cloud Dataproc job resource.
+// A Dataproc job resource.
 message Job {
   // Optional. The fully qualified reference to the job, which can be used to
   // obtain the equivalent REST path of the job resource. If this property
@@ -563,23 +649,29 @@ message Job {
 
   // Required. The application/framework-specific portion of the job.
   oneof type_job {
-    // Job is a Hadoop job.
-    HadoopJob hadoop_job = 3;
+    // Optional. Job is a Hadoop job.
+    HadoopJob hadoop_job = 3 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a Spark job.
-    SparkJob spark_job = 4;
+    // Optional. Job is a Spark job.
+    SparkJob spark_job = 4 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a Pyspark job.
-    PySparkJob pyspark_job = 5;
+    // Optional. Job is a PySpark job.
+    PySparkJob pyspark_job = 5 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a Hive job.
-    HiveJob hive_job = 6;
+    // Optional. Job is a Hive job.
+    HiveJob hive_job = 6 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a Pig job.
-    PigJob pig_job = 7;
+    // Optional. Job is a Pig job.
+    PigJob pig_job = 7 [(google.api.field_behavior) = OPTIONAL];
 
-    // Job is a SparkSql job.
-    SparkSqlJob spark_sql_job = 12;
+    // Optional. Job is a SparkR job.
+    SparkRJob spark_r_job = 21 [(google.api.field_behavior) = OPTIONAL];
+
+    // Optional. Job is a SparkSql job.
+    SparkSqlJob spark_sql_job = 12 [(google.api.field_behavior) = OPTIONAL];
+
+    // Optional. Job is a Presto job.
+    PrestoJob presto_job = 23 [(google.api.field_behavior) = OPTIONAL];
   }
 
   // Output only. The job status. Additional application-specific
@@ -621,19 +713,42 @@ message Job {
   // over time. This is in contrast to a user-settable reference.job_id that
   // may be reused over time.
   string job_uuid = 22 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. Indicates whether the job is completed. If the value is `false`,
+  // the job is still in progress. If `true`, the job is completed, and
+  // `status.state` field will indicate if it was successful, failed,
+  // or cancelled.
+  bool done = 24 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Job scheduling options.
 message JobScheduling {
   // Optional. Maximum number of times per hour a driver may be restarted as
-  // a result of driver terminating with non-zero code before job is
+  // a result of driver exiting with non-zero code before job is
   // reported failed.
   //
   // A job may be reported as thrashing if driver exits with non-zero code
   // 4 times within 10 minute window.
   //
   // Maximum value is 10.
+  //
+  // **Note:** Currently, this restartable job option is
+  // not supported in Dataproc
+  // [workflow
+  // template](https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template)
+  // jobs.
   int32 max_failures_per_hour = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Maximum number of times in total a driver may be restarted as a result of
+  // driver exiting with non-zero code before job is reported failed.
+  // Maximum value is 240.
+  //
+  // **Note:** Currently, this restartable job option is
+  // not supported in Dataproc
+  // [workflow
+  // template](https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template)
+  // jobs.
+  int32 max_failures_total = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // A request to submit a job.
@@ -642,15 +757,16 @@ message SubmitJobRequest {
   // belongs to.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Required. The Cloud Dataproc region in which to handle the request.
+  // Required. The Dataproc region in which to handle the request.
   string region = 3 [(google.api.field_behavior) = REQUIRED];
 
   // Required. The job resource.
   Job job = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Optional. A unique id used to identify the request. If the server
-  // receives two [SubmitJobRequest][google.cloud.dataproc.v1.SubmitJobRequest] requests  with the same
-  // id, then the second request will be ignored and the
+  // receives two
+  // [SubmitJobRequest](https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.SubmitJobRequest)s
+  // with the same id, then the second request will be ignored and the
   // first [Job][google.cloud.dataproc.v1.Job] created and stored in the backend
   // is returned.
   //
@@ -662,13 +778,28 @@ message SubmitJobRequest {
   string request_id = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
+// Job Operation metadata.
+message JobMetadata {
+  // Output only. The job id.
+  string job_id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. Most recent job status.
+  JobStatus status = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. Operation type.
+  string operation_type = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. Job submission time.
+  google.protobuf.Timestamp start_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
 // A request to get the resource representation for a job in a project.
 message GetJobRequest {
   // Required. The ID of the Google Cloud Platform project that the job
   // belongs to.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Required. The Cloud Dataproc region in which to handle the request.
+  // Required. The Dataproc region in which to handle the request.
   string region = 3 [(google.api.field_behavior) = REQUIRED];
 
   // Required. The job ID.
@@ -694,7 +825,7 @@ message ListJobsRequest {
   // belongs to.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Required. The Cloud Dataproc region in which to handle the request.
+  // Required. The Dataproc region in which to handle the request.
   string region = 6 [(google.api.field_behavior) = REQUIRED];
 
   // Optional. The number of results to return in each response.
@@ -737,7 +868,7 @@ message UpdateJobRequest {
   // belongs to.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Required. The Cloud Dataproc region in which to handle the request.
+  // Required. The Dataproc region in which to handle the request.
   string region = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Required. The job ID.
@@ -772,7 +903,7 @@ message CancelJobRequest {
   // belongs to.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Required. The Cloud Dataproc region in which to handle the request.
+  // Required. The Dataproc region in which to handle the request.
   string region = 3 [(google.api.field_behavior) = REQUIRED];
 
   // Required. The job ID.
@@ -785,7 +916,7 @@ message DeleteJobRequest {
   // belongs to.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Required. The Cloud Dataproc region in which to handle the request.
+  // Required. The Dataproc region in which to handle the request.
   string region = 3 [(google.api.field_behavior) = REQUIRED];
 
   // Required. The job ID.

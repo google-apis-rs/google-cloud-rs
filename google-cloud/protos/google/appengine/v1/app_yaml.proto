@@ -1,4 +1,4 @@
-// Copyright 2016 Google Inc.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@ syntax = "proto3";
 
 package google.appengine.v1;
 
-import "google/api/annotations.proto";
 import "google/protobuf/duration.proto";
 
+option csharp_namespace = "Google.Cloud.AppEngine.V1";
 option go_package = "google.golang.org/genproto/googleapis/appengine/v1;appengine";
 option java_multiple_files = true;
 option java_outer_classname = "AppYamlProto";
 option java_package = "com.google.appengine.v1";
+option php_namespace = "Google\\Cloud\\AppEngine\\V1";
+option ruby_package = "Google::Cloud::AppEngine::V1";
 
-// [Google Cloud
-// Endpoints](https://cloud.google.com/appengine/docs/python/endpoints/)
+// [Google Cloud Endpoints](https://cloud.google.com/appengine/docs/python/endpoints/)
 // configuration for API handlers.
 message ApiConfigHandler {
   // Action to take when users access resources that require
@@ -112,8 +113,9 @@ message UrlMap {
     // Returns the contents of a file, such as an image, as the response.
     StaticFilesHandler static_files = 2;
 
-    // Executes a script to handle the request that matches this URL
-    // pattern.
+    // Executes a script to handle the requests that match this URL
+    // pattern. Only the `auto` value is supported for Node.js in the
+    // App Engine standard environment, for example `"script": "auto"`.
     ScriptHandler script = 3;
 
     // Uses API Endpoints to handle requests.
@@ -123,7 +125,8 @@ message UrlMap {
   // Security (HTTPS) enforcement for this URL.
   SecurityLevel security_level = 5;
 
-  // Level of login required to access this resource.
+  // Level of login required to access this resource. Not supported for Node.js
+  // in the App Engine standard environment.
   LoginRequirement login = 6;
 
   // Action to take when users access resources that require
@@ -214,6 +217,64 @@ message HealthCheck {
 
   // Time before the health check is considered failed.
   google.protobuf.Duration timeout = 7;
+}
+
+// Readiness checking configuration for VM instances. Unhealthy instances
+// are removed from traffic rotation.
+message ReadinessCheck {
+  // The request path.
+  string path = 1;
+
+  // Host header to send when performing a HTTP Readiness check.
+  // Example: "myapp.appspot.com"
+  string host = 2;
+
+  // Number of consecutive failed checks required before removing
+  // traffic.
+  uint32 failure_threshold = 3;
+
+  // Number of consecutive successful checks required before receiving
+  // traffic.
+  uint32 success_threshold = 4;
+
+  // Interval between health checks.
+  google.protobuf.Duration check_interval = 5;
+
+  // Time before the check is considered failed.
+  google.protobuf.Duration timeout = 6;
+
+  // A maximum time limit on application initialization, measured from moment
+  // the application successfully replies to a healthcheck until it is ready to
+  // serve traffic.
+  google.protobuf.Duration app_start_timeout = 7;
+}
+
+// Health checking configuration for VM instances. Unhealthy instances
+// are killed and replaced with new instances.
+message LivenessCheck {
+  // The request path.
+  string path = 1;
+
+  // Host header to send when performing a HTTP Liveness check.
+  // Example: "myapp.appspot.com"
+  string host = 2;
+
+  // Number of consecutive failed checks required before considering the
+  // VM unhealthy.
+  uint32 failure_threshold = 3;
+
+  // Number of consecutive successful checks required before considering
+  // the VM healthy.
+  uint32 success_threshold = 4;
+
+  // Interval between health checks.
+  google.protobuf.Duration check_interval = 5;
+
+  // Time before the check is considered failed.
+  google.protobuf.Duration timeout = 6;
+
+  // The initial delay before starting to execute the checks.
+  google.protobuf.Duration initial_delay = 7;
 }
 
 // Third-party Python runtime library that is required by the application.

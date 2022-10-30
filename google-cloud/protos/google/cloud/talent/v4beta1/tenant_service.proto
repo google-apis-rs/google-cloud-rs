@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -20,6 +19,7 @@ package google.cloud.talent.v4beta1;
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "google/cloud/talent/v4beta1/common.proto";
 import "google/cloud/talent/v4beta1/tenant.proto";
 import "google/protobuf/empty.proto";
@@ -44,6 +44,7 @@ service TenantService {
       post: "/v4beta1/{parent=projects/*}/tenants"
       body: "*"
     };
+    option (google.api.method_signature) = "parent,tenant";
   }
 
   // Retrieves specified tenant.
@@ -51,6 +52,7 @@ service TenantService {
     option (google.api.http) = {
       get: "/v4beta1/{name=projects/*/tenants/*}"
     };
+    option (google.api.method_signature) = "name";
   }
 
   // Updates specified tenant.
@@ -59,6 +61,7 @@ service TenantService {
       patch: "/v4beta1/{tenant.name=projects/*/tenants/*}"
       body: "*"
     };
+    option (google.api.method_signature) = "tenant";
   }
 
   // Deletes specified tenant.
@@ -66,6 +69,7 @@ service TenantService {
     option (google.api.http) = {
       delete: "/v4beta1/{name=projects/*/tenants/*}"
     };
+    option (google.api.method_signature) = "name";
   }
 
   // Lists all tenants associated with the project.
@@ -73,6 +77,7 @@ service TenantService {
     option (google.api.http) = {
       get: "/v4beta1/{parent=projects/*}/tenants"
     };
+    option (google.api.method_signature) = "parent";
   }
 }
 
@@ -82,7 +87,12 @@ message CreateTenantRequest {
   //
   // The format is "projects/{project_id}", for example,
   // "projects/foo".
-  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "cloudresourcemanager.googleapis.com/Project"
+    }
+  ];
 
   // Required. The tenant to be created.
   Tenant tenant = 2 [(google.api.field_behavior) = REQUIRED];
@@ -94,26 +104,26 @@ message GetTenantRequest {
   //
   // The format is "projects/{project_id}/tenants/{tenant_id}", for example,
   // "projects/foo/tenants/bar".
-  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "jobs.googleapis.com/Tenant"
+    }
+  ];
 }
 
 // Request for updating a specified tenant.
 message UpdateTenantRequest {
-  // Required. The tenant resource to replace the current resource in the
-  // system.
+  // Required. The tenant resource to replace the current resource in the system.
   Tenant tenant = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Strongly recommended for the best service experience.
   //
-  // If
-  // [update_mask][google.cloud.talent.v4beta1.UpdateTenantRequest.update_mask]
-  // is provided, only the specified fields in
-  // [tenant][google.cloud.talent.v4beta1.UpdateTenantRequest.tenant] are
-  // updated. Otherwise all the fields are updated.
+  // If [update_mask][google.cloud.talent.v4beta1.UpdateTenantRequest.update_mask] is provided, only the specified fields in
+  // [tenant][google.cloud.talent.v4beta1.UpdateTenantRequest.tenant] are updated. Otherwise all the fields are updated.
   //
   // A field mask to specify the tenant fields to be updated. Only
-  // top level fields of [Tenant][google.cloud.talent.v4beta1.Tenant] are
-  // supported.
+  // top level fields of [Tenant][google.cloud.talent.v4beta1.Tenant] are supported.
   google.protobuf.FieldMask update_mask = 2;
 }
 
@@ -123,7 +133,12 @@ message DeleteTenantRequest {
   //
   // The format is "projects/{project_id}/tenants/{tenant_id}", for example,
   // "projects/foo/tenants/bar".
-  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "jobs.googleapis.com/Tenant"
+    }
+  ];
 }
 
 // List tenants for which the client has ACL visibility.
@@ -132,7 +147,12 @@ message ListTenantsRequest {
   //
   // The format is "projects/{project_id}", for example,
   // "projects/foo".
-  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "cloudresourcemanager.googleapis.com/Project"
+    }
+  ];
 
   // The starting indicator from which to return results.
   string page_token = 2;

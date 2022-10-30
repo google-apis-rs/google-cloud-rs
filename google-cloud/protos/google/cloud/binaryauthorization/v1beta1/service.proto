@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -25,7 +24,13 @@ import "google/cloud/binaryauthorization/v1beta1/resources.proto";
 import "google/protobuf/empty.proto";
 
 option cc_enable_arenas = true;
+option csharp_namespace = "Google.Cloud.BinaryAuthorization.V1Beta1";
 option go_package = "google.golang.org/genproto/googleapis/cloud/binaryauthorization/v1beta1;binaryauthorization";
+option java_multiple_files = true;
+option java_outer_classname = "BinaryAuthorizationServiceProto";
+option java_package = "com.google.cloud.binaryauthorization.v1beta1";
+option php_namespace = "Google\\Cloud\\BinaryAuthorization\\V1beta1";
+option ruby_package = "Google::Cloud::BinaryAuthorization::V1beta1";
 
 // Customer-facing API for Cloud Binary Authorization.
 
@@ -129,6 +134,20 @@ message GetPolicyRequest {
   ];
 }
 
+// API for working with the system policy.
+service SystemPolicyV1Beta1 {
+  option (google.api.default_host) = "binaryauthorization.googleapis.com";
+  option (google.api.oauth_scopes) = "https://www.googleapis.com/auth/cloud-platform";
+
+  // Gets the current system policy in the specified location.
+  rpc GetSystemPolicy(GetSystemPolicyRequest) returns (Policy) {
+    option (google.api.http) = {
+      get: "/v1beta1/{name=locations/*/policy}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}
+
 // Request message for [BinauthzManagementService.UpdatePolicy][].
 message UpdatePolicyRequest {
   // Required. A new or updated [policy][google.cloud.binaryauthorization.v1beta1.Policy] value. The service will
@@ -216,6 +235,18 @@ message DeleteAttestorRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
       type: "binaryauthorization.googleapis.com/Attestor"
+    }
+  ];
+}
+
+// Request to read the current system policy.
+message GetSystemPolicyRequest {
+  // Required. The resource name, in the format `locations/*/policy`.
+  // Note that the system policy is not associated with a project.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "binaryauthorization.googleapis.com/Policy"
     }
   ];
 }

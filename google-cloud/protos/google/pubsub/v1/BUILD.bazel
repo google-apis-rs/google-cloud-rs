@@ -1,3 +1,5 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
 # This is an API workspace, having public visibility by default makes perfect sense.
 package(default_visibility = ["//visibility:public"])
 
@@ -8,10 +10,15 @@ load("@com_google_googleapis_imports//:imports.bzl", "proto_library_with_info")
 
 proto_library(
     name = "pubsub_proto",
-    srcs = ["pubsub.proto"],
+    srcs = [
+        "pubsub.proto",
+        "schema.proto",
+    ],
     deps = [
         "//google/api:annotations_proto",
         "//google/api:client_proto",
+        "//google/api:field_behavior_proto",
+        "//google/api:resource_proto",
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:empty_proto",
         "@com_google_protobuf//:field_mask_proto",
@@ -34,12 +41,11 @@ proto_library_with_info(
 ##############################################################################
 load(
     "@com_google_googleapis_imports//:imports.bzl",
-    "java_grpc_library",
-    "java_gapic_library",
     "java_gapic_assembly_gradle_pkg",
-    "java_proto_library",
-    "java_resource_name_proto_library",
+    "java_gapic_library",
     "java_gapic_test",
+    "java_grpc_library",
+    "java_proto_library",
 )
 
 java_proto_library(
@@ -53,27 +59,18 @@ java_grpc_library(
     deps = [":pubsub_java_proto"],
 )
 
-java_resource_name_proto_library(
-    name = "pubsub_java_gapic_resource_name",
-    gapic_yaml = "pubsub_gapic.yaml",
-    deps = [
-        ":pubsub_proto",
-        "//google/cloud:common_resources_proto",
-    ],
-)
-
 java_gapic_library(
     name = "pubsub_java_gapic",
-    src = ":pubsub_proto_with_info",
+    srcs = [":pubsub_proto_with_info"],
     gapic_yaml = "pubsub_gapic.yaml",
-    gen_resource_name = False,
-    service_yaml = "//google/pubsub:pubsub.yaml",
+    grpc_service_config = "pubsub_grpc_service_config.json",
+    service_yaml = ":pubsub_v1.yaml",
     test_deps = [
         ":pubsub_java_grpc",
         "//google/iam/v1:iam_java_grpc",
     ],
+    transport = "grpc+rest",
     deps = [
-        ":pubsub_java_gapic_resource_name",
         ":pubsub_java_proto",
         "//google/iam/v1:iam_java_proto",
     ],
@@ -82,21 +79,64 @@ java_gapic_library(
 java_gapic_test(
     name = "pubsub_java_gapic_test_suite",
     test_classes = [
+        "com.google.cloud.pubsub.v1.SubscriptionAdminClientHttpJsonTest",
         "com.google.cloud.pubsub.v1.SubscriptionAdminClientTest",
+        "com.google.cloud.pubsub.v1.TopicAdminClientHttpJsonTest",
         "com.google.cloud.pubsub.v1.TopicAdminClientTest",
     ],
     runtime_deps = [":pubsub_java_gapic_test"],
 )
 
-# Opensource Packages
+# Open Source Packages
 java_gapic_assembly_gradle_pkg(
     name = "google-cloud-pubsub-v1-java",
+    transport = "grpc+rest",
     deps = [
         ":pubsub_java_gapic",
-        ":pubsub_java_gapic_resource_name",
         ":pubsub_java_grpc",
         ":pubsub_java_proto",
         ":pubsub_proto",
+    ],
+)
+
+##############################################################################
+# Python
+##############################################################################
+load(
+    "@com_google_googleapis_imports//:imports.bzl",
+    "py_gapic_assembly_pkg",
+    "py_gapic_library",
+    "py_test",
+)
+
+py_gapic_library(
+    name = "pubsub_py_gapic",
+    srcs = [":pubsub_proto"],
+    grpc_service_config = "pubsub_grpc_service_config.json",
+    opt_args = [
+        "warehouse-package-name=google-cloud-pubsub",
+        "add-iam-methods",
+    ],
+    transport = "grpc",
+    deps = [
+        "//google/iam/v1:iam_policy_py_proto",
+    ],
+)
+
+py_test(
+    name = "pubsub_py_gapic_test",
+    srcs = [
+        "pubsub_py_gapic_pytest.py",
+        "pubsub_py_gapic_test.py",
+    ],
+    legacy_create_init = False,
+    deps = [":pubsub_py_gapic"],
+)
+
+py_gapic_assembly_pkg(
+    name = "pubsub-v1-py",
+    deps = [
+        ":pubsub_py_gapic",
     ],
 )
 
@@ -105,10 +145,10 @@ java_gapic_assembly_gradle_pkg(
 ##############################################################################
 load(
     "@com_google_googleapis_imports//:imports.bzl",
+    "go_gapic_assembly_pkg",
+    "go_gapic_library",
     "go_proto_library",
     "go_test",
-    "go_gapic_library",
-    "go_gapic_assembly_pkg",
 )
 
 go_proto_library(
@@ -121,11 +161,15 @@ go_proto_library(
 
 go_gapic_library(
     name = "pubsub_go_gapic",
-    src = ":pubsub_proto_with_info",
-    gapic_yaml = "pubsub_gapic.yaml",
-    importpath = "cloud.google.com/go/pubsub/apiv1",
-    service_yaml = "//google/pubsub:pubsub.yaml",
-    deps = [":pubsub_go_proto"],
+    srcs = [":pubsub_proto_with_info"],
+    grpc_service_config = "pubsub_grpc_service_config.json",
+    importpath = "cloud.google.com/go/pubsub/apiv1;pubsub",
+    service_yaml = ":pubsub_v1.yaml",
+    transport = "grpc+rest",
+    deps = [
+        ":pubsub_go_proto",
+        "//google/iam/v1:iam_go_proto",
+    ],
 )
 
 go_test(
@@ -136,12 +180,11 @@ go_test(
     deps = ["//google/iam/v1:iam_go_proto"],
 )
 
-# Opensource Packages
+# Open Source Packages
 go_gapic_assembly_pkg(
     name = "gapi-cloud-pubsub-v1-go",
     deps = [
         ":pubsub_go_gapic",
-        ":pubsub_go_gapic_srcjar-smoke-test.srcjar",
         ":pubsub_go_gapic_srcjar-test.srcjar",
         ":pubsub_go_proto",
     ],
@@ -152,10 +195,10 @@ go_gapic_assembly_pkg(
 ##############################################################################
 load(
     "@com_google_googleapis_imports//:imports.bzl",
-    "php_proto_library",
-    "php_grpc_library",
-    "php_gapic_library",
     "php_gapic_assembly_pkg",
+    "php_gapic_library",
+    "php_grpc_library",
+    "php_proto_library",
 )
 
 php_proto_library(
@@ -171,16 +214,17 @@ php_grpc_library(
 
 php_gapic_library(
     name = "pubsub_php_gapic",
-    src = ":pubsub_proto_with_info",
+    srcs = [":pubsub_proto_with_info"],
     gapic_yaml = "pubsub_gapic.yaml",
-    service_yaml = "//google/pubsub:pubsub.yaml",
+    grpc_service_config = "pubsub_grpc_service_config.json",
+    service_yaml = ":pubsub_v1.yaml",
     deps = [
         ":pubsub_php_grpc",
         ":pubsub_php_proto",
     ],
 )
 
-# Opensource Packages
+# Open Source Packages
 php_gapic_assembly_pkg(
     name = "google-cloud-pubsub-v1-php",
     deps = [
@@ -195,15 +239,20 @@ php_gapic_assembly_pkg(
 ##############################################################################
 load(
     "@com_google_googleapis_imports//:imports.bzl",
-    "nodejs_gapic_library",
     "nodejs_gapic_assembly_pkg",
+    "nodejs_gapic_library",
 )
 
 nodejs_gapic_library(
     name = "pubsub_nodejs_gapic",
+    package_name = "@google-cloud/pubsub",
     src = ":pubsub_proto_with_info",
-    gapic_yaml = "pubsub_gapic.yaml",
-    service_yaml = "//google/pubsub:pubsub.yaml",
+    bundle_config = "pubsub_gapic.yaml",
+    extra_protoc_parameters = ["template=typescript_gapic"],
+    grpc_service_config = "pubsub_grpc_service_config.json",
+    handwritten_layer = True,
+    main_service = "pubsub",
+    service_yaml = ":pubsub_v1.yaml",
     deps = [],
 )
 
@@ -220,10 +269,10 @@ nodejs_gapic_assembly_pkg(
 ##############################################################################
 load(
     "@com_google_googleapis_imports//:imports.bzl",
-    "ruby_proto_library",
-    "ruby_grpc_library",
-    "ruby_gapic_library",
+    "ruby_cloud_gapic_library",
     "ruby_gapic_assembly_pkg",
+    "ruby_grpc_library",
+    "ruby_proto_library",
 )
 
 ruby_proto_library(
@@ -237,18 +286,29 @@ ruby_grpc_library(
     deps = [":pubsub_ruby_proto"],
 )
 
-ruby_gapic_library(
+ruby_cloud_gapic_library(
     name = "pubsub_ruby_gapic",
-    src = ":pubsub_proto_with_info",
-    gapic_yaml = "pubsub_gapic.yaml",
-    service_yaml = "//google/pubsub:pubsub.yaml",
+    srcs = [":pubsub_proto_with_info"],
+    extra_protoc_parameters = [
+        "ruby-cloud-gem-name=google-cloud-pubsub-v1",
+        "ruby-cloud-env-prefix=PUBSUB",
+        "ruby-cloud-path-override=pub_sub=pubsub",
+        "ruby-cloud-namespace-override=Pubsub=PubSub",
+        "ruby-cloud-product-url=https://cloud.google.com/pubsub",
+        "ruby-cloud-api-id=pubsub.googleapis.com",
+        "ruby-cloud-api-shortname=pubsub",
+    ],
+    grpc_service_config = "pubsub_grpc_service_config.json",
+    service_yaml = ":pubsub_v1.yaml",
+    ruby_cloud_description = "Cloud Pub/Sub is a fully-managed real-time messaging service that allows you to send and receive messages between independent applications.",
+    ruby_cloud_title = "Cloud Pub/Sub V1",
     deps = [
         ":pubsub_ruby_grpc",
         ":pubsub_ruby_proto",
     ],
 )
 
-# Opensource Packages
+# Open Source Packages
 ruby_gapic_assembly_pkg(
     name = "google-cloud-pubsub-v1-ruby",
     deps = [
@@ -263,10 +323,10 @@ ruby_gapic_assembly_pkg(
 ##############################################################################
 load(
     "@com_google_googleapis_imports//:imports.bzl",
-    "csharp_proto_library",
-    "csharp_grpc_library",
-    "csharp_gapic_library",
     "csharp_gapic_assembly_pkg",
+    "csharp_gapic_library",
+    "csharp_grpc_library",
+    "csharp_proto_library",
 )
 
 csharp_proto_library(
@@ -282,16 +342,16 @@ csharp_grpc_library(
 
 csharp_gapic_library(
     name = "pubsub_csharp_gapic",
-    src = ":pubsub_proto_with_info",
-    gapic_yaml = "pubsub_gapic.yaml",
-    service_yaml = "//google/pubsub:pubsub.yaml",
+    srcs = [":pubsub_proto_with_info"],
+    grpc_service_config = "pubsub_grpc_service_config.json",
+    service_yaml = ":pubsub_v1.yaml",
     deps = [
         ":pubsub_csharp_grpc",
         ":pubsub_csharp_proto",
     ],
 )
 
-# Opensource Packages
+# Open Source Packages
 csharp_gapic_assembly_pkg(
     name = "google-cloud-pubsub-v1-csharp",
     deps = [

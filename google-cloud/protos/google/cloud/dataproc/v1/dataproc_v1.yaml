@@ -1,17 +1,20 @@
 type: google.api.Service
-config_version: 2
+config_version: 3
 name: dataproc.googleapis.com
 title: Cloud Dataproc API
 
 apis:
 - name: google.cloud.dataproc.v1.AutoscalingPolicyService
+- name: google.cloud.dataproc.v1.BatchController
 - name: google.cloud.dataproc.v1.ClusterController
 - name: google.cloud.dataproc.v1.JobController
 - name: google.cloud.dataproc.v1.WorkflowTemplateService
 
 types:
+- name: google.cloud.dataproc.v1.BatchOperationMetadata
 - name: google.cloud.dataproc.v1.ClusterOperationMetadata
 - name: google.cloud.dataproc.v1.DiagnoseClusterResults
+- name: google.cloud.dataproc.v1.JobMetadata
 - name: google.cloud.dataproc.v1.WorkflowMetadata
 
 documentation:
@@ -27,14 +30,14 @@ documentation:
       Sets the access control policy on the specified resource. Replaces
       any existing policy.
 
-      Can return Public Errors: NOT_FOUND, INVALID_ARGUMENT and
-      PERMISSION_DENIED
+      Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED`
+      errors.
 
   - selector: google.iam.v1.IAMPolicy.TestIamPermissions
     description: |-
       Returns permissions that a caller has on the specified resource. If the
       resource does not exist, this will return an empty set of
-      permissions, not a NOT_FOUND error.
+      permissions, not a `NOT_FOUND` error.
 
       Note: This operation is designed to be used for building
       permission-aware UIs and command-line tools, not for authorization
@@ -102,6 +105,10 @@ http:
 authentication:
   rules:
   - selector: 'google.cloud.dataproc.v1.AutoscalingPolicyService.*'
+    oauth:
+      canonical_scopes: |-
+        https://www.googleapis.com/auth/cloud-platform
+  - selector: 'google.cloud.dataproc.v1.BatchController.*'
     oauth:
       canonical_scopes: |-
         https://www.googleapis.com/auth/cloud-platform

@@ -66,9 +66,9 @@ pub struct Product {
     #[prost(string, tag = "3")]
     pub description: ::prost::alloc::string::String,
     /// Immutable. The category for the product identified by the reference image. This should
-    /// be either "homegoods-v2", "apparel-v2", or "toys-v2". The legacy categories
-    /// "homegoods", "apparel", and "toys" are still supported, but these should
-    /// not be used for new products.
+    /// be one of "homegoods-v2", "apparel-v2", "toys-v2", "packagedgoods-v1" or
+    /// "general-v1". The legacy categories "homegoods", "apparel", and "toys" are
+    /// still supported, but these should not be used for new products.
     #[prost(string, tag = "4")]
     pub product_category: ::prost::alloc::string::String,
     /// Key-value pairs that can be attached to a product. At query time,
@@ -141,7 +141,6 @@ pub struct ReferenceImage {
     /// The resource name of the reference image.
     ///
     /// Format is:
-    ///
     /// `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID`.
     ///
     /// This field is ignored when creating a reference image.
@@ -294,7 +293,7 @@ pub struct GetProductSetRequest {
     /// Required. Resource name of the ProductSet to get.
     ///
     /// Format is:
-    /// `projects/PROJECT_ID/locations/LOG_ID/productSets/PRODUCT_SET_ID`
+    /// `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -379,7 +378,6 @@ pub struct GetReferenceImageRequest {
     /// Required. The resource name of the ReferenceImage to get.
     ///
     /// Format is:
-    ///
     /// `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -390,7 +388,6 @@ pub struct DeleteReferenceImageRequest {
     /// Required. The resource name of the reference image to delete.
     ///
     /// Format is:
-    ///
     /// `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -1195,7 +1192,7 @@ pub mod product_search_client {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProductSearchParams {
     /// The bounding polygon around the area of interest in the image.
-    /// Optional. If it is not specified, system discretion will be applied.
+    /// If it is not specified, system discretion will be applied.
     #[prost(message, optional, tag = "9")]
     pub bounding_poly: ::core::option::Option<BoundingPoly>,
     /// The resource name of a \[ProductSet][google.cloud.vision.v1.ProductSet\] to be searched for similar images.
@@ -1638,7 +1635,8 @@ pub struct Feature {
     pub max_results: i32,
     /// Model to use for the feature.
     /// Supported values: "builtin/stable" (the default if unset) and
-    /// "builtin/latest".
+    /// "builtin/latest". `DOCUMENT_TEXT_DETECTION` and `TEXT_DETECTION` also
+    /// support "builtin/weekly" for the bleeding edge release updated weekly.
     #[prost(string, tag = "3")]
     pub model: ::prost::alloc::string::String,
 }
@@ -1718,6 +1716,9 @@ pub struct Image {
     /// Image content, represented as a stream of bytes.
     /// Note: As with all `bytes` fields, protobuffers use a pure binary
     /// representation, whereas JSON representations use base64.
+    ///
+    /// Currently, this field only works for BatchAnnotateImages requests. It does
+    /// not work for AsyncBatchAnnotateImages requests.
     #[prost(bytes = "vec", tag = "1")]
     pub content: ::prost::alloc::vec::Vec<u8>,
     /// Google Cloud Storage image location, or publicly-accessible image
@@ -1884,6 +1885,10 @@ pub mod face_annotation {
             ChinLeftGonion = 33,
             /// Chin right gonion.
             ChinRightGonion = 34,
+            /// Left cheek center.
+            LeftCheekCenter = 35,
+            /// Right cheek center.
+            RightCheekCenter = 36,
         }
     }
 }
@@ -2004,30 +2009,6 @@ pub struct SafeSearchAnnotation {
     /// body areas.
     #[prost(enumeration = "Likelihood", tag = "9")]
     pub racy: i32,
-    /// Confidence of adult_score. Range [0, 1]. 0 means not confident, 1 means
-    /// very confident.
-    #[prost(float, tag = "16")]
-    pub adult_confidence: f32,
-    /// Confidence of spoof_score. Range [0, 1]. 0 means not confident, 1 means
-    /// very confident.
-    #[prost(float, tag = "18")]
-    pub spoof_confidence: f32,
-    /// Confidence of medical_score. Range [0, 1]. 0 means not confident, 1 means
-    /// very confident.
-    #[prost(float, tag = "20")]
-    pub medical_confidence: f32,
-    /// Confidence of violence_score. Range [0, 1]. 0 means not confident, 1 means
-    /// very confident.
-    #[prost(float, tag = "22")]
-    pub violence_confidence: f32,
-    /// Confidence of racy_score. Range [0, 1]. 0 means not confident, 1 means very
-    /// confident.
-    #[prost(float, tag = "24")]
-    pub racy_confidence: f32,
-    /// Confidence of nsfw_score. Range [0, 1]. 0 means not confident, 1 means very
-    /// confident.
-    #[prost(float, tag = "26")]
-    pub nsfw_confidence: f32,
 }
 /// Rectangle determined by min and max `LatLng` pairs.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2109,6 +2090,19 @@ pub struct WebDetectionParams {
     #[prost(bool, tag = "2")]
     pub include_geo_results: bool,
 }
+/// Parameters for text detections. This is used to control TEXT_DETECTION and
+/// DOCUMENT_TEXT_DETECTION features.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TextDetectionParams {
+    /// By default, Cloud Vision API only includes confidence score for
+    /// DOCUMENT_TEXT_DETECTION result. Set the flag to true to include confidence
+    /// score for TEXT_DETECTION as well.
+    #[prost(bool, tag = "9")]
+    pub enable_text_detection_confidence_score: bool,
+    /// A list of advanced OCR options to fine-tune OCR behavior.
+    #[prost(string, repeated, tag = "11")]
+    pub advanced_ocr_options: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
 /// Image context and/or feature-specific parameters.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ImageContext {
@@ -2122,7 +2116,7 @@ pub struct ImageContext {
     /// setting a hint will help get better results (although it will be a
     /// significant hindrance if the hint is wrong). Text detection returns an
     /// error if one or more of the specified languages is not one of the
-    /// [supported languages](/vision/docs/languages).
+    /// [supported languages](<https://cloud.google.com/vision/docs/languages>).
     #[prost(string, repeated, tag = "2")]
     pub language_hints: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Parameters for crop hints annotation request.
@@ -2134,6 +2128,9 @@ pub struct ImageContext {
     /// Parameters for web detection.
     #[prost(message, optional, tag = "6")]
     pub web_detection_params: ::core::option::Option<WebDetectionParams>,
+    /// Parameters for text detection and document text detection.
+    #[prost(message, optional, tag = "12")]
+    pub text_detection_params: ::core::option::Option<TextDetectionParams>,
 }
 /// Request for performing Google Cloud Vision API tasks over a user-provided
 /// image, with user-requested features, and with context information.

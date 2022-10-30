@@ -1,4 +1,4 @@
-// Copyright 2016 Google Inc.
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,10 +20,13 @@ import "google/logging/type/log_severity.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
+option csharp_namespace = "Google.Cloud.AppEngine.Logging.V1";
 option go_package = "google.golang.org/genproto/googleapis/appengine/logging/v1;logging";
 option java_multiple_files = true;
 option java_outer_classname = "RequestLogProto";
 option java_package = "com.google.appengine.logging.v1";
+option php_namespace = "Google\\Cloud\\AppEngine\\Logging\\V1";
+option ruby_package = "Google::Cloud::AppEngine::Logging::V1";
 
 // Application log line emitted while processing a request.
 message LogLine {
@@ -181,6 +184,10 @@ message RequestLog {
 
   // Stackdriver Trace identifier for this request.
   string trace_id = 39;
+
+  // If true, the value in the 'trace_id' field was sampled for storage in a
+  // trace backend.
+  bool trace_sampled = 43;
 
   // Source code for the application that handled this request. There can be
   // more than one source reference per deployed application if source code is

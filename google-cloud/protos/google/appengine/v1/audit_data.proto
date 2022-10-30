@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc.
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ syntax = "proto3";
 package google.appengine.v1;
 
 import "google/appengine/v1/appengine.proto";
-import "google/iam/v1/iam_policy.proto";
 
+option csharp_namespace = "Google.Cloud.AppEngine.V1";
 option go_package = "google.golang.org/genproto/googleapis/appengine/v1;appengine";
 option java_multiple_files = true;
 option java_outer_classname = "AuditDataProto";
 option java_package = "com.google.appengine.v1";
+option php_namespace = "Google\\Cloud\\AppEngine\\V1";
+option ruby_package = "Google::Cloud::AppEngine::V1";
 
 // App Engine admin service audit log.
 message AuditData {
@@ -42,11 +44,11 @@ message AuditData {
 // Detailed information about UpdateService call.
 message UpdateServiceMethod {
   // Update service request.
-  google.appengine.v1.UpdateServiceRequest request = 1;
+  UpdateServiceRequest request = 1;
 }
 
 // Detailed information about CreateVersion call.
 message CreateVersionMethod {
   // Create version request.
-  google.appengine.v1.CreateVersionRequest request = 1;
+  CreateVersionRequest request = 1;
 }
