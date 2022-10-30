@@ -1,4 +1,4 @@
-// Copyright 2016 Google Inc.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@ syntax = "proto3";
 
 package google.appengine.v1;
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
+option csharp_namespace = "Google.Cloud.AppEngine.V1";
 option go_package = "google.golang.org/genproto/googleapis/appengine/v1;appengine";
 option java_multiple_files = true;
 option java_outer_classname = "OperationProto";
 option java_package = "com.google.appengine.v1";
+option php_namespace = "Google\\Cloud\\AppEngine\\V1";
+option ruby_package = "Google::Cloud::AppEngine::V1";
 
-// Metadata for the given
-// [google.longrunning.Operation][google.longrunning.Operation].
+// Metadata for the given [google.longrunning.Operation][google.longrunning.Operation].
 message OperationMetadataV1 {
   // API method that initiated this operation. Example:
   // `google.appengine.v1.Versions.CreateVersion`.
@@ -53,4 +54,26 @@ message OperationMetadataV1 {
   //
   // @OutputOnly
   string target = 5;
+
+  // Ephemeral message that may change every time the operation is polled.
+  // @OutputOnly
+  string ephemeral_message = 6;
+
+  // Durable messages that persist on every operation poll.
+  // @OutputOnly
+  repeated string warning = 7;
+
+  // Metadata specific to the type of operation in progress.
+  // @OutputOnly
+  oneof method_metadata {
+    CreateVersionMetadataV1 create_version_metadata = 8;
+  }
+}
+
+// Metadata for the given [google.longrunning.Operation][google.longrunning.Operation] during a
+// [google.appengine.v1.CreateVersionRequest][google.appengine.v1.CreateVersionRequest].
+message CreateVersionMetadataV1 {
+  // The Cloud Build ID if one was created as part of the version create.
+  // @OutputOnly
+  string cloud_build_id = 1;
 }

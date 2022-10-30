@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ syntax = "proto3";
 package google.datastore.admin.v1;
 
 import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
 import "google/datastore/admin/v1/index.proto";
+import "google/datastore/admin/v1/migration.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -26,8 +29,11 @@ option go_package = "google.golang.org/genproto/googleapis/datastore/admin/v1;ad
 option java_multiple_files = true;
 option java_outer_classname = "DatastoreAdminProto";
 option java_package = "com.google.datastore.admin.v1";
+option php_namespace = "Google\\Cloud\\Datastore\\Admin\\V1";
+option ruby_package = "Google::Cloud::Datastore::Admin::V1";
 
 // Google Cloud Datastore Admin API
+//
 //
 // The Datastore Admin API provides several admin services for Cloud Datastore.
 //
@@ -88,6 +94,11 @@ option java_package = "com.google.datastore.admin.v1";
 // Operations are created by service DatastoreAdmin,
 // but are accessed via service google.longrunning.Operations.
 service DatastoreAdmin {
+  option (google.api.default_host) = "datastore.googleapis.com";
+  option (google.api.oauth_scopes) =
+      "https://www.googleapis.com/auth/cloud-platform,"
+      "https://www.googleapis.com/auth/datastore";
+
   // Exports a copy of all or a subset of entities from Google Cloud Datastore
   // to another storage system, such as Google Cloud Storage. Recent updates to
   // entities may not be reflected in the export. The export occurs in the
@@ -96,11 +107,15 @@ service DatastoreAdmin {
   // used once the associated operation is done. If an export operation is
   // cancelled before completion it may leave partial data behind in Google
   // Cloud Storage.
-  rpc ExportEntities(ExportEntitiesRequest)
-      returns (google.longrunning.Operation) {
+  rpc ExportEntities(ExportEntitiesRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}:export"
       body: "*"
+    };
+    option (google.api.method_signature) = "project_id,labels,entity_filter,output_url_prefix";
+    option (google.longrunning.operation_info) = {
+      response_type: "ExportEntitiesResponse"
+      metadata_type: "ExportEntitiesMetadata"
     };
   }
 
@@ -109,11 +124,60 @@ service DatastoreAdmin {
   // progress can be monitored and managed via the Operation resource that is
   // created. If an ImportEntities operation is cancelled, it is possible
   // that a subset of the data has already been imported to Cloud Datastore.
-  rpc ImportEntities(ImportEntitiesRequest)
-      returns (google.longrunning.Operation) {
+  rpc ImportEntities(ImportEntitiesRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}:import"
       body: "*"
+    };
+    option (google.api.method_signature) = "project_id,labels,input_url,entity_filter";
+    option (google.longrunning.operation_info) = {
+      response_type: "google.protobuf.Empty"
+      metadata_type: "ImportEntitiesMetadata"
+    };
+  }
+
+  // Creates the specified index.
+  // A newly created index's initial state is `CREATING`. On completion of the
+  // returned [google.longrunning.Operation][google.longrunning.Operation], the state will be `READY`.
+  // If the index already exists, the call will return an `ALREADY_EXISTS`
+  // status.
+  //
+  // During index creation, the process could result in an error, in which
+  // case the index will move to the `ERROR` state. The process can be recovered
+  // by fixing the data that caused the error, removing the index with
+  // [delete][google.datastore.admin.v1.DatastoreAdmin.DeleteIndex], then
+  // re-creating the index with [create]
+  // [google.datastore.admin.v1.DatastoreAdmin.CreateIndex].
+  //
+  // Indexes with a single property cannot be created.
+  rpc CreateIndex(CreateIndexRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id}/indexes"
+      body: "index"
+    };
+    option (google.longrunning.operation_info) = {
+      response_type: "Index"
+      metadata_type: "IndexOperationMetadata"
+    };
+  }
+
+  // Deletes an existing index.
+  // An index can only be deleted if it is in a `READY` or `ERROR` state. On
+  // successful execution of the request, the index will be in a `DELETING`
+  // [state][google.datastore.admin.v1.Index.State]. And on completion of the
+  // returned [google.longrunning.Operation][google.longrunning.Operation], the index will be removed.
+  //
+  // During index deletion, the process could result in an error, in which
+  // case the index will move to the `ERROR` state. The process can be recovered
+  // by fixing the data that caused the error, followed by calling
+  // [delete][google.datastore.admin.v1.DatastoreAdmin.DeleteIndex] again.
+  rpc DeleteIndex(DeleteIndexRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      delete: "/v1/projects/{project_id}/indexes/{index_id}"
+    };
+    option (google.longrunning.operation_info) = {
+      response_type: "Index"
+      metadata_type: "IndexOperationMetadata"
     };
   }
 
@@ -197,8 +261,8 @@ message Progress {
 // The request for
 // [google.datastore.admin.v1.DatastoreAdmin.ExportEntities][google.datastore.admin.v1.DatastoreAdmin.ExportEntities].
 message ExportEntitiesRequest {
-  // Project ID against which to make the request.
-  string project_id = 1;
+  // Required. Project ID against which to make the request.
+  string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Client-assigned labels.
   map<string, string> labels = 2;
@@ -206,7 +270,7 @@ message ExportEntitiesRequest {
   // Description of what data from the project is included in the export.
   EntityFilter entity_filter = 3;
 
-  // Location for the export metadata and data files.
+  // Required. Location for the export metadata and data files.
   //
   // The full resource URL of the external storage location. Currently, only
   // Google Cloud Storage is supported. So output_url_prefix should be of the
@@ -219,24 +283,24 @@ message ExportEntitiesRequest {
   //
   // The resulting files will be nested deeper than the specified URL prefix.
   // The final output URL will be provided in the
-  // [google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url]
-  // field. That value should be used for subsequent ImportEntities operations.
+  // [google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url] field. That
+  // value should be used for subsequent ImportEntities operations.
   //
   // By nesting the data files deeper, the same Cloud Storage bucket can be used
   // in multiple ExportEntities operations without conflict.
-  string output_url_prefix = 4;
+  string output_url_prefix = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 // The request for
 // [google.datastore.admin.v1.DatastoreAdmin.ImportEntities][google.datastore.admin.v1.DatastoreAdmin.ImportEntities].
 message ImportEntitiesRequest {
-  // Project ID against which to make the request.
-  string project_id = 1;
+  // Required. Project ID against which to make the request.
+  string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Client-assigned labels.
   map<string, string> labels = 2;
 
-  // The full resource URL of the external storage location. Currently, only
+  // Required. The full resource URL of the external storage location. Currently, only
   // Google Cloud Storage is supported. So input_url should be of the form:
   // `gs://BUCKET_NAME[/NAMESPACE_PATH]/OVERALL_EXPORT_METADATA_FILE`, where
   // `BUCKET_NAME` is the name of the Cloud Storage bucket, `NAMESPACE_PATH` is
@@ -249,7 +313,7 @@ message ImportEntitiesRequest {
   //
   // For more information, see
   // [google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url].
-  string input_url = 3;
+  string input_url = 3 [(google.api.field_behavior) = REQUIRED];
 
   // Optionally specify which kinds/namespaces are to be imported. If provided,
   // the list must be a subset of the EntityFilter used in creating the export,
@@ -305,9 +369,7 @@ message ImportEntitiesMetadata {
   EntityFilter entity_filter = 4;
 
   // The location of the import metadata file. This will be the same value as
-  // the
-  // [google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url]
-  // field.
+  // the [google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url] field.
   string input_url = 5;
 }
 
@@ -345,7 +407,27 @@ message EntityFilter {
 }
 
 // The request for
-// [google.datastore.admin.v1.DatastoreAdmin.GetIndex][google.datastore.admin.v1.DatastoreAdmin.GetIndex].
+// [google.datastore.admin.v1.DatastoreAdmin.CreateIndex][google.datastore.admin.v1.DatastoreAdmin.CreateIndex].
+message CreateIndexRequest {
+  // Project ID against which to make the request.
+  string project_id = 1;
+
+  // The index to create. The name and state fields are output only and will be
+  // ignored. Single property indexes cannot be created or deleted.
+  Index index = 3;
+}
+
+// The request for
+// [google.datastore.admin.v1.DatastoreAdmin.DeleteIndex][google.datastore.admin.v1.DatastoreAdmin.DeleteIndex].
+message DeleteIndexRequest {
+  // Project ID against which to make the request.
+  string project_id = 1;
+
+  // The resource ID of the index to delete.
+  string index_id = 3;
+}
+
+// The request for [google.datastore.admin.v1.DatastoreAdmin.GetIndex][google.datastore.admin.v1.DatastoreAdmin.GetIndex].
 message GetIndexRequest {
   // Project ID against which to make the request.
   string project_id = 1;
@@ -390,6 +472,24 @@ message IndexOperationMetadata {
 
   // The index resource ID that this operation is acting on.
   string index_id = 3;
+}
+
+// Metadata for Datastore to Firestore migration operations.
+//
+// The DatastoreFirestoreMigration operation is not started by the end-user via
+// an explicit "creation" method. This is an intentional deviation from the LRO
+// design pattern.
+//
+// This singleton resource can be accessed at:
+// "projects/{project_id}/operations/datastore-firestore-migration"
+message DatastoreFirestoreMigrationMetadata {
+  // The current state of migration from Cloud Datastore to Cloud Firestore in
+  // Datastore mode.
+  MigrationState migration_state = 1;
+
+  // The current step of migration from Cloud Datastore to Cloud Firestore in
+  // Datastore mode.
+  MigrationStep migration_step = 2;
 }
 
 // Operation types.

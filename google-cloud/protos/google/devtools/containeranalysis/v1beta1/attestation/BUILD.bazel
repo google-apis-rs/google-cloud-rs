@@ -1,3 +1,5 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
 # This is an API workspace, having public visibility by default makes perfect sense.
 package(default_visibility = ["//visibility:public"])
 
@@ -11,7 +13,9 @@ proto_library(
     srcs = [
         "attestation.proto",
     ],
-    deps = [],
+    deps = [
+        "//google/devtools/containeranalysis/v1beta1/common:common_proto",
+    ],
 )
 
 proto_library_with_info(
@@ -26,7 +30,6 @@ load(
     "@com_google_googleapis_imports//:imports.bzl",
     "java_grpc_library",
     "java_proto_library",
-
 )
 
 java_proto_library(
@@ -50,5 +53,7 @@ go_proto_library(
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
     importpath = "google.golang.org/genproto/googleapis/devtools/containeranalysis/v1beta1/attestation",
     protos = [":attestation_proto"],
-    deps = [],
+    deps = [
+        "//google/devtools/containeranalysis/v1beta1/common:common_go_proto",
+    ],
 )

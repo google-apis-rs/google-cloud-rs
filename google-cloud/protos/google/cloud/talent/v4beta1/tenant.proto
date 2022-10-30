@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,15 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.cloud.talent.v4beta1;
 
-import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
-import "google/protobuf/timestamp.proto";
+import "google/api/resource.proto";
 
 option go_package = "google.golang.org/genproto/googleapis/cloud/talent/v4beta1;talent";
 option java_multiple_files = true;
@@ -32,6 +30,11 @@ option objc_class_prefix = "CTS";
 // profiles. Customer may create multiple tenants to provide data isolation for
 // different groups.
 message Tenant {
+  option (google.api.resource) = {
+    type: "jobs.googleapis.com/Tenant"
+    pattern: "projects/{project}/tenants/{tenant}"
+  };
+
   // Enum that represents how user data owned by the tenant is used.
   enum DataUsageType {
     // Default value.
@@ -55,8 +58,7 @@ message Tenant {
   // "projects/foo/tenants/bar".
   string name = 1;
 
-  // Required. Client side tenant identifier, used to uniquely identify the
-  // tenant.
+  // Required. Client side tenant identifier, used to uniquely identify the tenant.
   //
   // The maximum number of allowed characters is 255.
   string external_id = 2 [(google.api.field_behavior) = REQUIRED];
@@ -64,15 +66,12 @@ message Tenant {
   // Indicates whether data owned by this tenant may be used to provide product
   // improvements across other tenants.
   //
-  // Defaults behavior is
-  // [DataUsageType.ISOLATED][google.cloud.talent.v4beta1.Tenant.DataUsageType.ISOLATED]
-  // if it's unset.
+  // Defaults behavior is [DataUsageType.ISOLATED][google.cloud.talent.v4beta1.Tenant.DataUsageType.ISOLATED] if it's unset.
   DataUsageType usage_type = 3;
 
-  // A list of keys of filterable
-  // [Profile.custom_attributes][google.cloud.talent.v4beta1.Profile.custom_attributes],
-  // whose corresponding `string_values` are used in keyword searches. Profiles
-  // with `string_values` under these specified field keys are returned if any
+  // A list of keys of filterable [Profile.custom_attributes][google.cloud.talent.v4beta1.Profile.custom_attributes], whose
+  // corresponding `string_values` are used in keyword searches. Profiles with
+  // `string_values` under these specified field keys are returned if any
   // of the values match the search keyword. Custom field values with
   // parenthesis, brackets and special symbols are not searchable as-is,
   // and must be surrounded by quotes.

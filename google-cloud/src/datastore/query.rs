@@ -1,4 +1,5 @@
 use crate::datastore::Value;
+use super::{IntoValue, Key};
 
 /// Represents Datastore query result orderings.
 #[derive(Debug, Clone, PartialEq)]
@@ -24,6 +25,12 @@ pub enum Filter {
     LesserThanEqual(String, Value),
     /// Append ancestor to the Query
     HasAncestor(Value),
+    /// In
+    In(String, Value),
+    /// NotIn
+    NotIn(String, Value),
+    /// NotEqual
+    NotEqual(String, Value),
 }
 
 /// Represents a Datastore query.
@@ -39,6 +46,7 @@ pub struct Query {
     pub(crate) distinct_on: Vec<String>,
     pub(crate) ordering: Vec<Order>,
     pub(crate) filters: Vec<Filter>,
+    pub(crate) cursor: Option<Vec<u8>>,
 }
 
 impl Query {
@@ -60,6 +68,7 @@ impl Query {
             distinct_on: Vec::new(),
             ordering: Vec::new(),
             filters: Vec::new(),
+            cursor: None,
         }
     }
 
@@ -119,8 +128,8 @@ impl Query {
     /// let key = Key::new("dev").id(10);
     /// let query = Query::new("users").ancestor(key);
     /// ```
-    pub fn ancestor(mut self, key: Value) -> Query {
-        self.filters.push(Filter::HasAncestor(key));
+    pub fn ancestor(mut self, key: Key) -> Query {
+        self.filters.push(Filter::HasAncestor(key.into_value()));
         self
     }
 
@@ -203,6 +212,19 @@ impl Query {
     /// ```
     pub fn order(mut self, order: Order) -> Query {
         self.ordering.push(order);
+        self
+    }
+
+    /// We indicate by which entity the search begins, with this we can 
+    /// implement a pagination system
+    /// 
+    /// ```
+    /// let query = Query::new("users")
+    ///     .cursor(cursor);
+    /// ```
+    /// 
+    pub fn cursor(mut self, cursor: Vec<u8>) -> Query {
+        self.cursor = Some(cursor);
         self
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2016 Google Inc.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package google.type;
 
+option cc_enable_arenas = true;
 option go_package = "google.golang.org/genproto/googleapis/type/postaladdress;postaladdress";
 option java_multiple_files = true;
 option java_outer_classname = "PostalAddressProto";
@@ -40,7 +41,9 @@ option objc_class_prefix = "GTP";
 // For more guidance on how to use this schema, please see:
 // https://support.google.com/business/answer/6397478
 message PostalAddress {
-  // The schema revision of the `PostalAddress`.
+  // The schema revision of the `PostalAddress`. This must be set to 0, which is
+  // the latest revision.
+  //
   // All new revisions **must** be backward compatible with old revisions.
   int32 revision = 1;
 

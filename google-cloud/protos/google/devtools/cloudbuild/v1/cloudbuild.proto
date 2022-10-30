@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -20,15 +19,48 @@ package google.devtools.cloudbuild.v1;
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/api/httpbody.proto";
+import "google/api/resource.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
+option csharp_namespace = "Google.Cloud.CloudBuild.V1";
 option go_package = "google.golang.org/genproto/googleapis/devtools/cloudbuild/v1;cloudbuild";
 option java_multiple_files = true;
 option java_package = "com.google.cloudbuild.v1";
 option objc_class_prefix = "GCB";
+option ruby_package = "Google::Cloud::Build::V1";
+option (google.api.resource_definition) = {
+  type: "compute.googleapis.com/Network"
+  pattern: "projects/{project}/global/networks/{network}"
+};
+option (google.api.resource_definition) = {
+  type: "iam.googleapis.com/ServiceAccount"
+  pattern: "projects/{project}/serviceAccounts/{service_account}"
+};
+option (google.api.resource_definition) = {
+  type: "secretmanager.googleapis.com/Secret"
+  pattern: "projects/{project}/secrets/{secret}"
+};
+option (google.api.resource_definition) = {
+  type: "secretmanager.googleapis.com/SecretVersion"
+  pattern: "projects/{project}/secrets/{secret}/versions/{version}"
+};
+option (google.api.resource_definition) = {
+  type: "cloudkms.googleapis.com/CryptoKey"
+  pattern: "projects/{project}/locations/{location}/keyRings/{keyring}/cryptoKeys/{key}"
+};
+option (google.api.resource_definition) = {
+  type: "pubsub.googleapis.com/Subscription"
+  pattern: "projects/{project}/subscriptions/{subscription}"
+};
+option (google.api.resource_definition) = {
+  type: "pubsub.googleapis.com/Topic"
+  pattern: "projects/{project}/topics/{topic}"
+};
 
 // Creates and manages builds on Google Cloud Platform.
 //
@@ -52,6 +84,10 @@ service CloudBuild {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}/builds"
       body: "build"
+      additional_bindings {
+        post: "/v1/{parent=projects/*/locations/*}/builds"
+        body: "build"
+      }
     };
     option (google.api.method_signature) = "project_id,build";
     option (google.longrunning.operation_info) = {
@@ -67,6 +103,7 @@ service CloudBuild {
   rpc GetBuild(GetBuildRequest) returns (Build) {
     option (google.api.http) = {
       get: "/v1/projects/{project_id}/builds/{id}"
+      additional_bindings { get: "/v1/{name=projects/*/locations/*/builds/*}" }
     };
     option (google.api.method_signature) = "project_id,id";
   }
@@ -78,6 +115,7 @@ service CloudBuild {
   rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse) {
     option (google.api.http) = {
       get: "/v1/projects/{project_id}/builds"
+      additional_bindings { get: "/v1/{parent=projects/*/locations/*}/builds" }
     };
     option (google.api.method_signature) = "project_id,filter";
   }
@@ -87,6 +125,10 @@ service CloudBuild {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}/builds/{id}:cancel"
       body: "*"
+      additional_bindings {
+        post: "/v1/{name=projects/*/locations/*/builds/*}:cancel"
+        body: "*"
+      }
     };
     option (google.api.method_signature) = "project_id,id";
   }
@@ -122,8 +164,34 @@ service CloudBuild {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}/builds/{id}:retry"
       body: "*"
+      additional_bindings {
+        post: "/v1/{name=projects/*/locations/*/builds/*}:retry"
+        body: "*"
+      }
     };
     option (google.api.method_signature) = "project_id,id";
+    option (google.longrunning.operation_info) = {
+      response_type: "Build"
+      metadata_type: "BuildOperationMetadata"
+    };
+  }
+
+  // Approves or rejects a pending build.
+  //
+  // If approved, the returned LRO will be analogous to the LRO returned from
+  // a CreateBuild call.
+  //
+  // If rejected, the returned LRO will be immediately done.
+  rpc ApproveBuild(ApproveBuildRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/{name=projects/*/builds/*}:approve"
+      body: "*"
+      additional_bindings {
+        post: "/v1/{name=projects/*/locations/*/builds/*}:approve"
+        body: "*"
+      }
+    };
+    option (google.api.method_signature) = "name,approval_result";
     option (google.longrunning.operation_info) = {
       response_type: "Build"
       metadata_type: "BuildOperationMetadata"
@@ -137,6 +205,10 @@ service CloudBuild {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}/triggers"
       body: "trigger"
+      additional_bindings {
+        post: "/v1/{parent=projects/*/locations/*}/triggers"
+        body: "trigger"
+      }
     };
     option (google.api.method_signature) = "project_id,trigger";
   }
@@ -147,6 +219,9 @@ service CloudBuild {
   rpc GetBuildTrigger(GetBuildTriggerRequest) returns (BuildTrigger) {
     option (google.api.http) = {
       get: "/v1/projects/{project_id}/triggers/{trigger_id}"
+      additional_bindings {
+        get: "/v1/{name=projects/*/locations/*/triggers/*}"
+      }
     };
     option (google.api.method_signature) = "project_id,trigger_id";
   }
@@ -158,6 +233,9 @@ service CloudBuild {
       returns (ListBuildTriggersResponse) {
     option (google.api.http) = {
       get: "/v1/projects/{project_id}/triggers"
+      additional_bindings {
+        get: "/v1/{parent=projects/*/locations/*}/triggers"
+      }
     };
     option (google.api.method_signature) = "project_id";
   }
@@ -169,6 +247,9 @@ service CloudBuild {
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/projects/{project_id}/triggers/{trigger_id}"
+      additional_bindings {
+        delete: "/v1/{name=projects/*/locations/*/triggers/*}"
+      }
     };
     option (google.api.method_signature) = "project_id,trigger_id";
   }
@@ -180,6 +261,10 @@ service CloudBuild {
     option (google.api.http) = {
       patch: "/v1/projects/{project_id}/triggers/{trigger_id}"
       body: "trigger"
+      additional_bindings {
+        patch: "/v1/{trigger.resource_name=projects/*/locations/*/triggers/*}"
+        body: "trigger"
+      }
     };
     option (google.api.method_signature) = "project_id,trigger_id,trigger";
   }
@@ -190,6 +275,10 @@ service CloudBuild {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}/triggers/{trigger_id}:run"
       body: "source"
+      additional_bindings {
+        post: "/v1/{name=projects/*/locations/*/triggers/*}:run"
+        body: "*"
+      }
     };
     option (google.api.method_signature) = "project_id,trigger_id,source";
     option (google.longrunning.operation_info) = {
@@ -198,36 +287,87 @@ service CloudBuild {
     };
   }
 
-  // Creates a `WorkerPool` to run the builds, and returns the new worker pool.
-  //
-  // This API is experimental.
-  rpc CreateWorkerPool(CreateWorkerPoolRequest) returns (WorkerPool) {}
+  // ReceiveTriggerWebhook [Experimental] is called when the API receives a
+  // webhook request targeted at a specific trigger.
+  rpc ReceiveTriggerWebhook(ReceiveTriggerWebhookRequest)
+      returns (ReceiveTriggerWebhookResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id}/triggers/{trigger}:webhook"
+      body: "body"
+      additional_bindings {
+        post: "/v1/{name=projects/*/locations/*/triggers/*}:webhook"
+        body: "body"
+      }
+    };
+  }
 
-  // Returns information about a `WorkerPool`.
-  //
-  // This API is experimental.
-  rpc GetWorkerPool(GetWorkerPoolRequest) returns (WorkerPool) {}
+  // Creates a `WorkerPool`.
+  rpc CreateWorkerPool(CreateWorkerPoolRequest)
+      returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/{parent=projects/*/locations/*}/workerPools"
+      body: "worker_pool"
+    };
+    option (google.api.method_signature) = "parent,worker_pool,worker_pool_id";
+    option (google.longrunning.operation_info) = {
+      response_type: "WorkerPool"
+      metadata_type: "CreateWorkerPoolOperationMetadata"
+    };
+  }
 
-  // Deletes a `WorkerPool` by its project ID and WorkerPool name.
-  //
-  // This API is experimental.
+  // Returns details of a `WorkerPool`.
+  rpc GetWorkerPool(GetWorkerPoolRequest) returns (WorkerPool) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/locations/*/workerPools/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Deletes a `WorkerPool`.
   rpc DeleteWorkerPool(DeleteWorkerPoolRequest)
-      returns (google.protobuf.Empty) {}
+      returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*/locations/*/workerPools/*}"
+    };
+    option (google.api.method_signature) = "name";
+    option (google.longrunning.operation_info) = {
+      response_type: "google.protobuf.Empty"
+      metadata_type: "DeleteWorkerPoolOperationMetadata"
+    };
+  }
 
-  // Update a `WorkerPool`.
-  //
-  // This API is experimental.
-  rpc UpdateWorkerPool(UpdateWorkerPoolRequest) returns (WorkerPool) {}
+  // Updates a `WorkerPool`.
+  rpc UpdateWorkerPool(UpdateWorkerPoolRequest)
+      returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      patch: "/v1/{worker_pool.name=projects/*/locations/*/workerPools/*}"
+      body: "worker_pool"
+    };
+    option (google.api.method_signature) = "worker_pool,update_mask";
+    option (google.longrunning.operation_info) = {
+      response_type: "WorkerPool"
+      metadata_type: "UpdateWorkerPoolOperationMetadata"
+    };
+  }
 
-  // List project's `WorkerPool`s.
-  //
-  // This API is experimental.
+  // Lists `WorkerPool`s.
   rpc ListWorkerPools(ListWorkerPoolsRequest)
-      returns (ListWorkerPoolsResponse) {}
+      returns (ListWorkerPoolsResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=projects/*/locations/*}/workerPools"
+    };
+    option (google.api.method_signature) = "parent";
+  }
 }
 
 // Specifies a build to retry.
 message RetryBuildRequest {
+  // The name of the `Build` to retry.
+  // Format: `projects/{project}/locations/{location}/builds/{build}`
+  string name = 3 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/Build"
+  }];
+
   // Required. ID of the project.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -237,14 +377,20 @@ message RetryBuildRequest {
 
 // Specifies a build trigger to run and the source to use.
 message RunBuildTriggerRequest {
+  // The name of the `Trigger` to run.
+  // Format: `projects/{project}/locations/{location}/triggers/{trigger}`
+  string name = 4 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/BuildTrigger"
+  }];
+
   // Required. ID of the project.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Required. ID of the trigger.
   string trigger_id = 2 [(google.api.field_behavior) = REQUIRED];
 
-  // Required. Source to build against this trigger.
-  RepoSource source = 3 [(google.api.field_behavior) = REQUIRED];
+  // Source to build against this trigger.
+  RepoSource source = 3;
 }
 
 // Location of the source in an archive file in Google Cloud Storage.
@@ -271,8 +417,7 @@ message RepoSource {
   // project ID requesting the build is assumed.
   string project_id = 1;
 
-  // Name of the Cloud Source Repository. If omitted, the name "default" is
-  // assumed.
+  // Name of the Cloud Source Repository.
   string repo_name = 2;
 
   // A revision within the Cloud Source Repository must be specified in
@@ -299,6 +444,33 @@ message RepoSource {
   // This must be a relative path. If a step's `dir` is specified and is an
   // absolute path, this value is ignored for that step's execution.
   string dir = 7;
+
+  // Only trigger a build if the revision regex does NOT match the revision
+  // regex.
+  bool invert_regex = 8;
+
+  // Substitutions to use in a triggered build.
+  // Should only be used with RunBuildTrigger
+  map<string, string> substitutions = 9;
+}
+
+// Location of the source manifest in Google Cloud Storage.
+// This feature is in Preview; see description
+// [here](https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/gcs-fetcher).
+message StorageSourceManifest {
+  // Google Cloud Storage bucket containing the source manifest (see [Bucket
+  // Name
+  // Requirements](https://cloud.google.com/storage/docs/bucket-naming#requirements)).
+  string bucket = 1;
+
+  // Google Cloud Storage object containing the source manifest.
+  //
+  // This object must be a JSON file.
+  string object = 2;
+
+  // Google Cloud Storage generation for the object. If the generation is
+  // omitted, the latest generation will be used.
+  int64 generation = 3;
 }
 
 // Location of the source in a supported storage service.
@@ -311,6 +483,11 @@ message Source {
     // If provided, get the source from this location in a Cloud Source
     // Repository.
     RepoSource repo_source = 3;
+
+    // If provided, get the source from this manifest in Google Cloud Storage.
+    // This feature is in Preview; see description
+    // [here](https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/gcs-fetcher).
+    StorageSourceManifest storage_source_manifest = 8;
   }
 }
 
@@ -324,7 +501,31 @@ message BuiltImage {
   string digest = 3;
 
   // Output only. Stores timing information for pushing the specified image.
-  TimeSpan push_timing = 4;
+  TimeSpan push_timing = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Artifact uploaded using the PythonPackage directive.
+message UploadedPythonPackage {
+  // URI of the uploaded artifact.
+  string uri = 1;
+
+  // Hash types and values of the Python Artifact.
+  FileHashes file_hashes = 2;
+
+  // Output only. Stores timing information for pushing the specified artifact.
+  TimeSpan push_timing = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A Maven artifact uploaded using the MavenArtifact directive.
+message UploadedMavenArtifact {
+  // URI of the uploaded artifact.
+  string uri = 1;
+
+  // Hash types and values of the Maven Artifact.
+  FileHashes file_hashes = 2;
+
+  // Output only. Stores timing information for pushing the specified artifact.
+  TimeSpan push_timing = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // A step in the build pipeline.
@@ -405,11 +606,11 @@ message BuildStep {
   repeated Volume volumes = 9;
 
   // Output only. Stores timing information for executing this build step.
-  TimeSpan timing = 10;
+  TimeSpan timing = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. Stores timing information for pulling this build step's
   // builder image only.
-  TimeSpan pull_timing = 13;
+  TimeSpan pull_timing = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Time limit for executing this build step. If not defined, the step has no
   // time limit and will be allowed to continue to run until either it completes
@@ -419,7 +620,27 @@ message BuildStep {
   // Output only. Status of the build step. At this time, build step status is
   // only updated on build completion; step status is not updated in real-time
   // as the build progresses.
-  Build.Status status = 12;
+  Build.Status status = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Allow this build step to fail without failing the entire build.
+  //
+  // If false, the entire build will fail if this step fails. Otherwise, the
+  // build will succeed, but this step will still have a failure status.
+  // Error information will be reported in the failure_detail field.
+  bool allow_failure = 14;
+
+  // Output only. Return code from running the step.
+  int32 exit_code = 16 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Allow this build step to fail without failing the entire build if and
+  // only if the exit code is one of the specified codes. If allow_failure
+  // is also specified, this field will take precedence.
+  repeated int32 allow_exit_codes = 18;
+
+  // A shell script to be executed in the step.
+  //
+  // When script is provided, the user cannot specify the entrypoint or args.
+  string script = 19;
 }
 
 // Volume describes a Docker container volume which is mounted into build steps
@@ -463,6 +684,12 @@ message Results {
 
   // Time to push all non-container artifacts.
   TimeSpan artifact_timing = 7;
+
+  // Python artifacts uploaded to Artifact Registry at the end of the build.
+  repeated UploadedPythonPackage python_packages = 8;
+
+  // Maven artifacts uploaded to Artifact Registry at the end of the build.
+  repeated UploadedMavenArtifact maven_artifacts = 9;
 }
 
 // An artifact that was uploaded during a build. This
@@ -487,6 +714,7 @@ message ArtifactResult {
 // build is created:
 //
 // - $PROJECT_ID: the project ID of the build.
+// - $PROJECT_NUMBER: the project number of the build.
 // - $BUILD_ID: the autogenerated ID of the build.
 // - $REPO_NAME: the source repository name specified by RepoSource.
 // - $BRANCH_NAME: the branch name specified by RepoSource.
@@ -495,10 +723,78 @@ message ArtifactResult {
 //   resolved from the specified branch or tag.
 // - $SHORT_SHA: first 7 characters of $REVISION_ID or $COMMIT_SHA.
 message Build {
+  option (google.api.resource) = {
+    type: "cloudbuild.googleapis.com/Build"
+    pattern: "projects/{project}/builds/{build}"
+    pattern: "projects/{project}/locations/{location}/builds/{build}"
+  };
+
+  // A non-fatal problem encountered during the execution of the build.
+  message Warning {
+    // The relative importance of this warning.
+    enum Priority {
+      // Should not be used.
+      PRIORITY_UNSPECIFIED = 0;
+
+      // e.g. deprecation warnings and alternative feature highlights.
+      INFO = 1;
+
+      // e.g. automated detection of possible issues with the build.
+      WARNING = 2;
+
+      // e.g. alerts that a feature used in the build is pending removal
+      ALERT = 3;
+    }
+
+    // Explanation of the warning generated.
+    string text = 1;
+
+    // The priority for this warning.
+    Priority priority = 2;
+  }
+
+  // A fatal problem encountered during the execution of the build.
+  message FailureInfo {
+    // The name of a fatal problem encountered during the execution of the
+    // build.
+    enum FailureType {
+      // Type unspecified
+      FAILURE_TYPE_UNSPECIFIED = 0;
+
+      // Unable to push the image to the repository.
+      PUSH_FAILED = 1;
+
+      // Final image not found.
+      PUSH_IMAGE_NOT_FOUND = 2;
+
+      // Unauthorized push of the final image.
+      PUSH_NOT_AUTHORIZED = 3;
+
+      // Backend logging failures. Should retry.
+      LOGGING_FAILURE = 4;
+
+      // A build step has failed.
+      USER_BUILD_STEP = 5;
+
+      // The source fetching has failed.
+      FETCH_SOURCE_FAILED = 6;
+    }
+
+    // The name of the failure.
+    FailureType type = 1;
+
+    // Explains the failure issue in more detail using hard-coded text.
+    string detail = 2;
+  }
+
   // Possible status of a build or build step.
   enum Status {
     // Status of the build is unknown.
     STATUS_UNKNOWN = 0;
+
+    // Build has been created and is pending execution and queuing. It has not
+    // been queued.
+    PENDING = 10;
 
     // Build or step is queued; work has not yet begun.
     QUEUED = 1;
@@ -520,19 +816,27 @@ message Build {
 
     // Build or step was canceled by a user.
     CANCELLED = 7;
+
+    // Build was enqueued for longer than the value of `queue_ttl`.
+    EXPIRED = 9;
   }
 
+  // Output only. The 'Build' name with format:
+  // `projects/{project}/locations/{location}/builds/{build}`, where {build}
+  // is a unique identifier generated by the service.
+  string name = 45 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // Output only. Unique identifier of the build.
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. ID of the project.
-  string project_id = 16;
+  string project_id = 16 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. Status of the build.
-  Status status = 2;
+  Status status = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. Customer-readable message about the current status.
-  string status_detail = 24;
+  string status_detail = 24 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The location of the source files to build.
   Source source = 3;
@@ -541,23 +845,28 @@ message Build {
   repeated BuildStep steps = 11;
 
   // Output only. Results of the build.
-  Results results = 10;
+  Results results = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. Time at which the request to create the build was received.
-  google.protobuf.Timestamp create_time = 6;
+  google.protobuf.Timestamp create_time = 6
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. Time at which execution of the build was started.
-  google.protobuf.Timestamp start_time = 7;
+  google.protobuf.Timestamp start_time = 7
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. Time at which execution of the build was finished.
   //
   // The difference between finish_time and start_time is the duration of the
   // build's execution.
-  google.protobuf.Timestamp finish_time = 8;
+  google.protobuf.Timestamp finish_time = 8
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Amount of time that this build should be allowed to run, to second
   // granularity. If this amount of time elapses, work on the build will cease
   // and the build status will be `TIMEOUT`.
+  //
+  // `timeout` starts ticking from `startTime`.
   //
   // Default time is ten minutes.
   google.protobuf.Duration timeout = 12;
@@ -574,6 +883,13 @@ message Build {
   // `FAILURE`.
   repeated string images = 13;
 
+  // TTL in queue for this build. If provided and the build is enqueued longer
+  // than this value, the build will expire and the build status will be
+  // `EXPIRED`.
+  //
+  // The TTL starts ticking from create_time.
+  google.protobuf.Duration queue_ttl = 40;
+
   // Artifacts produced by the build that should be uploaded upon
   // successful completion of all build steps.
   Artifacts artifacts = 37;
@@ -585,17 +901,18 @@ message Build {
   string logs_bucket = 19;
 
   // Output only. A permanent fixed identifier for source.
-  SourceProvenance source_provenance = 21;
+  SourceProvenance source_provenance = 21
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. The ID of the `BuildTrigger` that triggered this build, if it
   // was triggered automatically.
-  string build_trigger_id = 22;
+  string build_trigger_id = 22 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Special options for this build.
   BuildOptions options = 23;
 
   // Output only. URL to logs for this build in Google Cloud Console.
-  string log_url = 25;
+  string log_url = 25 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Substitutions data for `Build` resource.
   map<string, string> substitutions = 29;
@@ -604,18 +921,45 @@ message Build {
   repeated string tags = 31;
 
   // Secrets to decrypt using Cloud Key Management Service.
+  // Note: Secret Manager is the recommended technique
+  // for managing sensitive data with Cloud Build. Use `available_secrets` to
+  // configure builds to access secrets from Secret Manager. For instructions,
+  // see: https://cloud.google.com/cloud-build/docs/securing-builds/use-secrets
   repeated Secret secrets = 32;
 
   // Output only. Stores timing information for phases of the build. Valid keys
   // are:
   //
-  // * BUILD: time to execute all build steps
+  // * BUILD: time to execute all build steps.
   // * PUSH: time to push all specified images.
   // * FETCHSOURCE: time to fetch source.
+  // * SETUPBUILD: time to set up build.
   //
   // If the build does not specify source or images,
   // these keys will not be included.
-  map<string, TimeSpan> timing = 33;
+  map<string, TimeSpan> timing = 33 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. Describes this build's approval configuration, status,
+  // and result.
+  BuildApproval approval = 44 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // IAM service account whose credentials will be used at build runtime.
+  // Must be of the format `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`.
+  // ACCOUNT can be email address or uniqueId of the service account.
+  //
+  string service_account = 42 [(google.api.resource_reference) = {
+    type: "iam.googleapis.com/ServiceAccount"
+  }];
+
+  // Secrets and secret environment variables.
+  Secrets available_secrets = 47;
+
+  // Output only. Non-fatal problems encountered during the execution of the
+  // build.
+  repeated Warning warnings = 49 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. Contains information about the build when status=FAILURE.
+  FailureInfo failure_info = 51 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Artifacts produced by a build that should be uploaded upon
@@ -636,7 +980,55 @@ message Artifacts {
     repeated string paths = 2;
 
     // Output only. Stores timing information for pushing all artifact objects.
-    TimeSpan timing = 3;
+    TimeSpan timing = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  }
+
+  // A Maven artifact to upload to Artifact Registry upon successful completion
+  // of all build steps.
+  message MavenArtifact {
+    // Artifact Registry repository, in the form
+    // "https://$REGION-maven.pkg.dev/$PROJECT/$REPOSITORY"
+    //
+    // Artifact in the workspace specified by path will be uploaded to
+    // Artifact Registry with this location as a prefix.
+    string repository = 1;
+
+    // Path to an artifact in the build's workspace to be uploaded to
+    // Artifact Registry.
+    // This can be either an absolute path,
+    // e.g. /workspace/my-app/target/my-app-1.0.SNAPSHOT.jar
+    // or a relative path from /workspace,
+    // e.g. my-app/target/my-app-1.0.SNAPSHOT.jar.
+    string path = 2;
+
+    // Maven `artifactId` value used when uploading the artifact to Artifact
+    // Registry.
+    string artifact_id = 3;
+
+    // Maven `groupId` value used when uploading the artifact to Artifact
+    // Registry.
+    string group_id = 4;
+
+    // Maven `version` value used when uploading the artifact to Artifact
+    // Registry.
+    string version = 5;
+  }
+
+  // Python package to upload to Artifact Registry upon successful completion
+  // of all build steps. A package can encapsulate multiple objects to be
+  // uploaded to a single repository.
+  message PythonPackage {
+    // Artifact Registry repository, in the form
+    // "https://$REGION-python.pkg.dev/$PROJECT/$REPOSITORY"
+    //
+    // Files in the workspace matching any path pattern will be uploaded to
+    // Artifact Registry with this location as a prefix.
+    string repository = 1;
+
+    // Path globs used to match files in the build's workspace. For Python/
+    // Twine, this is usually `dist/*`, and sometimes additionally an `.asc`
+    // file.
+    repeated string paths = 2;
   }
 
   // A list of images to be pushed upon the successful completion of all build
@@ -662,6 +1054,24 @@ message Artifacts {
   //
   // If any objects fail to be pushed, the build is marked FAILURE.
   ArtifactObjects objects = 2;
+
+  // A list of Maven artifacts to be uploaded to Artifact Registry upon
+  // successful completion of all build steps.
+  //
+  // Artifacts in the workspace matching specified paths globs will be uploaded
+  // to the specified Artifact Registry repository using the builder service
+  // account's credentials.
+  //
+  // If any artifacts fail to be pushed, the build is marked FAILURE.
+  repeated MavenArtifact maven_artifacts = 3;
+
+  // A list of Python packages to be uploaded to Artifact Registry upon
+  // successful completion of all build steps.
+  //
+  // The build service account credentials will be used to perform the upload.
+  //
+  // If any objects fail to be pushed, the build is marked FAILURE.
+  repeated PythonPackage python_packages = 5;
 }
 
 // Start and end times for a build execution phase.
@@ -690,6 +1100,11 @@ message SourceProvenance {
   // revisions resolved.
   RepoSource resolved_repo_source = 6;
 
+  // A copy of the build's `source.storage_source_manifest`, if exists, with any
+  // revisions resolved.
+  // This feature is in Preview.
+  StorageSourceManifest resolved_storage_source_manifest = 9;
+
   // Output only. Hash(es) of the build source, which can be used to verify that
   // the original source integrity was maintained in the build. Note that
   // `FileHashes` will only be populated if `BuildOptions` has requested a
@@ -700,7 +1115,8 @@ message SourceProvenance {
   //
   // If the build source came in a single package such as a gzipped tarfile
   // (`.tar.gz`), the `FileHash` will be for the single path to that file.
-  map<string, FileHashes> file_hashes = 4;
+  map<string, FileHashes> file_hashes = 4
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Container message for hashes of byte content of files, used in
@@ -731,8 +1147,53 @@ message Hash {
   bytes value = 2;
 }
 
+// Secrets and secret environment variables.
+message Secrets {
+  // Secrets in Secret Manager and associated secret environment variable.
+  repeated SecretManagerSecret secret_manager = 1;
+
+  // Secrets encrypted with KMS key and the associated secret environment
+  // variable.
+  repeated InlineSecret inline = 2;
+}
+
+// Pairs a set of secret environment variables mapped to encrypted
+// values with the Cloud KMS key to use to decrypt the value.
+message InlineSecret {
+  // Resource name of Cloud KMS crypto key to decrypt the encrypted value.
+  // In format: projects/*/locations/*/keyRings/*/cryptoKeys/*
+  string kms_key_name = 1 [(google.api.resource_reference) = {
+    type: "cloudkms.googleapis.com/CryptoKey"
+  }];
+
+  // Map of environment variable name to its encrypted value.
+  //
+  // Secret environment variables must be unique across all of a build's
+  // secrets, and must be used by at least one build step. Values can be at most
+  // 64 KB in size. There can be at most 100 secret values across all of a
+  // build's secrets.
+  map<string, bytes> env_map = 2;
+}
+
+// Pairs a secret environment variable with a SecretVersion in Secret Manager.
+message SecretManagerSecret {
+  // Resource name of the SecretVersion. In format:
+  // projects/*/secrets/*/versions/*
+  string version_name = 1 [(google.api.resource_reference) = {
+    type: "secretmanager.googleapis.com/SecretVersion"
+  }];
+
+  // Environment variable name to associate with the secret.
+  // Secret environment variables must be unique across all of a build's
+  // secrets, and must be used by at least one build step.
+  string env = 2;
+}
+
 // Pairs a set of secret environment variables containing encrypted
 // values with the Cloud KMS key to use to decrypt the value.
+// Note: Use `kmsKeyName` with  `available_secrets` instead of using
+// `kmsKeyName` with `secret`. For instructions see:
+// https://cloud.google.com/cloud-build/docs/securing-builds/use-encrypted-credentials.
 message Secret {
   // Cloud KMS key name to use to decrypt these envs.
   string kms_key_name = 1;
@@ -748,6 +1209,12 @@ message Secret {
 
 // Request to create a new build.
 message CreateBuildRequest {
+  // The parent resource where this build will be created.
+  // Format: `projects/{project}/locations/{location}`
+  string parent = 4 [(google.api.resource_reference) = {
+    child_type: "cloudbuild.googleapis.com/Build"
+  }];
+
   // Required. ID of the project.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -757,6 +1224,12 @@ message CreateBuildRequest {
 
 // Request to get a build.
 message GetBuildRequest {
+  // The name of the `Build` to retrieve.
+  // Format: `projects/{project}/locations/{location}/builds/{build}`
+  string name = 4 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/Build"
+  }];
+
   // Required. ID of the project.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -766,13 +1239,27 @@ message GetBuildRequest {
 
 // Request to list builds.
 message ListBuildsRequest {
+  // The parent of the collection of `Builds`.
+  // Format: `projects/{project}/locations/location`
+  string parent = 9 [(google.api.resource_reference) = {
+    child_type: "cloudbuild.googleapis.com/Build"
+  }];
+
   // Required. ID of the project.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Number of results to return in the list.
   int32 page_size = 2;
 
-  // Token to provide to skip to a particular spot in the list.
+  // The page token for the next page of Builds.
+  //
+  // If unspecified, the first page of results is returned.
+  //
+  // If the token is rejected for any reason, INVALID_ARGUMENT will be thrown.
+  // In this case, the token should be discarded, and pagination should be
+  // restarted from the first page of results.
+  //
+  // See https://google.aip.dev/158 for more.
   string page_token = 3;
 
   // The raw filter text to constrain the results.
@@ -785,11 +1272,18 @@ message ListBuildsResponse {
   repeated Build builds = 1;
 
   // Token to receive the next page of results.
+  // This will be absent if the end of the response list has been reached.
   string next_page_token = 2;
 }
 
 // Request to cancel an ongoing build.
 message CancelBuildRequest {
+  // The name of the `Build` to cancel.
+  // Format: `projects/{project}/locations/{location}/builds/{build}`
+  string name = 4 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/Build"
+  }];
+
   // Required. ID of the project.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -797,16 +1291,120 @@ message CancelBuildRequest {
   string id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
+// Request to approve or reject a pending build.
+message ApproveBuildRequest {
+  // Required. Name of the target build.
+  // For example: "projects/{$project_id}/builds/{$build_id}"
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Approval decision and metadata.
+  ApprovalResult approval_result = 2;
+}
+
+// BuildApproval describes a build's approval configuration, state, and
+// result.
+message BuildApproval {
+  // Specifies the current state of a build's approval.
+  enum State {
+    // Default enum type. This should not be used.
+    STATE_UNSPECIFIED = 0;
+
+    // Build approval is pending.
+    PENDING = 1;
+
+    // Build approval has been approved.
+    APPROVED = 2;
+
+    // Build approval has been rejected.
+    REJECTED = 3;
+
+    // Build was cancelled while it was still pending approval.
+    CANCELLED = 5;
+  }
+
+  // Output only. The state of this build's approval.
+  State state = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. Configuration for manual approval of this build.
+  ApprovalConfig config = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. Result of manual approval for this Build.
+  ApprovalResult result = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// ApprovalConfig describes configuration for manual approval of a build.
+message ApprovalConfig {
+  // Whether or not approval is needed. If this is set on a build, it will
+  // become pending when created, and will need to be explicitly approved
+  // to start.
+  bool approval_required = 1;
+}
+
+// ApprovalResult describes the decision and associated metadata of a manual
+// approval of a build.
+message ApprovalResult {
+  // Specifies whether or not this manual approval result is to approve
+  // or reject a build.
+  enum Decision {
+    // Default enum type. This should not be used.
+    DECISION_UNSPECIFIED = 0;
+
+    // Build is approved.
+    APPROVED = 1;
+
+    // Build is rejected.
+    REJECTED = 2;
+  }
+
+  // Output only. Email of the user that called the ApproveBuild API to
+  // approve or reject a build at the time that the API was called.
+  string approver_account = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. The time when the approval decision was made.
+  google.protobuf.Timestamp approval_time = 3
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Required. The decision of this manual approval.
+  Decision decision = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. An optional comment for this manual approval result.
+  string comment = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. An optional URL tied to this manual approval result. This field
+  // is essentially the same as comment, except that it will be rendered by the
+  // UI differently. An example use case is a link to an external job that
+  // approved this Build.
+  string url = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
 // Configuration for an automated build in response to source repository
 // changes.
 message BuildTrigger {
+  option (google.api.resource) = {
+    type: "cloudbuild.googleapis.com/BuildTrigger"
+    plural: "triggers"
+    singular: "trigger"
+    pattern: "projects/{project}/triggers/{trigger}"
+    pattern: "projects/{project}/locations/{location}/triggers/{trigger}"
+  };
+
+  // The `Trigger` name with format:
+  // `projects/{project}/locations/{location}/triggers/{trigger}`, where
+  // {trigger} is a unique identifier generated by the service.
+  string resource_name = 34;
+
   // Output only. Unique identifier of the trigger.
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Human-readable description of this trigger.
   string description = 10;
 
-  // User assigned name of the trigger. Must be unique within the project.
+  // User-assigned name of the trigger. Must be unique within the project.
+  // Trigger names must meet the following requirements:
+  //
+  // + They must contain only alphanumeric characters and dashes.
+  // + They can be 1-64 characters long.
+  // + They must begin and end with an alphanumeric character.
   string name = 21;
 
   // Tags for annotation of a `BuildTrigger`
@@ -827,27 +1425,48 @@ message BuildTrigger {
   // Mutually exclusive with `trigger_template`.
   GitHubEventsConfig github = 13;
 
+  // PubsubConfig describes the configuration of a trigger that
+  // creates a build whenever a Pub/Sub message is published.
+  PubsubConfig pubsub_config = 29;
+
+  // WebhookConfig describes the configuration of a trigger that
+  // creates a build whenever a webhook is sent to a trigger's webhook URL.
+  WebhookConfig webhook_config = 31;
+
   // Template describing the Build request to make when the trigger is matched.
   oneof build_template {
+    // Autodetect build configuration.  The following precedence is used (case
+    // insensitive):
+    //
+    // 1. cloudbuild.yaml
+    // 2. cloudbuild.yml
+    // 3. cloudbuild.json
+    // 4. Dockerfile
+    //
+    // Currently only available for GitHub App Triggers.
+    bool autodetect = 18;
+
     // Contents of the build template.
     Build build = 4;
 
-    // Path, from the source root, to a file whose contents is used for the
-    // template.
+    // Path, from the source root, to the build configuration file
+    // (i.e. cloudbuild.yaml).
     string filename = 8;
   }
 
   // Output only. Time when the trigger was created.
-  google.protobuf.Timestamp create_time = 5;
+  google.protobuf.Timestamp create_time = 5
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // If true, the trigger will never result in a build.
+  // If true, the trigger will never automatically execute a build.
   bool disabled = 9;
 
-  // Substitutions data for Build resource.
+  // Substitutions for Build resource. The keys must match the following
+  // regular expression: `^_[A-Z0-9_]+$`.
   map<string, string> substitutions = 11;
 
   // ignored_files and included_files are file glob matches using
-  // http://godoc/pkg/path/filepath#Match extended with support for "**".
+  // https://golang.org/pkg/path/filepath/#Match extended with support for "**".
   //
   // If ignored_files and changed files are both empty, then they are
   // not used to determine whether or not to trigger a build.
@@ -866,6 +1485,18 @@ message BuildTrigger {
   // least one of those files matches a included_files glob. If not,
   // then we do not trigger a build.
   repeated string included_files = 16;
+
+  // Optional. A Common Expression Language string.
+  string filter = 30 [(google.api.field_behavior) = OPTIONAL];
+
+  // The service account used for all user-controlled operations including
+  // UpdateBuildTrigger, RunBuildTrigger, CreateBuild, and CancelBuild.
+  // If no service account is set, then the standard Cloud Build service account
+  // ([PROJECT_NUM]@system.gserviceaccount.com) will be used instead.
+  // Format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT_ID_OR_EMAIL}`
+  string service_account = 33 [(google.api.resource_reference) = {
+    type: "iam.googleapis.com/ServiceAccount"
+  }];
 }
 
 // GitHubEventsConfig describes the configuration of a trigger that creates a
@@ -896,6 +1527,85 @@ message GitHubEventsConfig {
   }
 }
 
+// PubsubConfig describes the configuration of a trigger that
+// creates a build whenever a Pub/Sub message is published.
+message PubsubConfig {
+  // Enumerates potential issues with the underlying Pub/Sub subscription
+  // configuration.
+  enum State {
+    // The subscription configuration has not been checked.
+    STATE_UNSPECIFIED = 0;
+
+    // The Pub/Sub subscription is properly configured.
+    OK = 1;
+
+    // The subscription has been deleted.
+    SUBSCRIPTION_DELETED = 2;
+
+    // The topic has been deleted.
+    TOPIC_DELETED = 3;
+
+    // Some of the subscription's field are misconfigured.
+    SUBSCRIPTION_MISCONFIGURED = 4;
+  }
+
+  // Output only. Name of the subscription. Format is
+  // `projects/{project}/subscriptions/{subscription}`.
+  string subscription = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {
+      type: "pubsub.googleapis.com/Subscription"
+    }
+  ];
+
+  // The name of the topic from which this subscription is receiving messages.
+  // Format is `projects/{project}/topics/{topic}`.
+  string topic = 2 [
+    (google.api.resource_reference) = { type: "pubsub.googleapis.com/Topic" }
+  ];
+
+  // Service account that will make the push request.
+  string service_account_email = 3 [(google.api.resource_reference) = {
+    type: "iam.googleapis.com/ServiceAccount"
+  }];
+
+  // Potential issues with the underlying Pub/Sub subscription configuration.
+  // Only populated on get requests.
+  State state = 4;
+}
+
+// WebhookConfig describes the configuration of a trigger that
+// creates a build whenever a webhook is sent to a trigger's webhook URL.
+message WebhookConfig {
+  // Enumerates potential issues with the Secret Manager secret provided by the
+  // user.
+  enum State {
+    // The webhook auth configuration not been checked.
+    STATE_UNSPECIFIED = 0;
+
+    // The auth configuration is properly setup.
+    OK = 1;
+
+    // The secret provided in auth_method has been deleted.
+    SECRET_DELETED = 2;
+  }
+
+  // Auth method specifies how the webhook authenticates with GCP.
+  oneof auth_method {
+    // Required. Resource name for the secret required as a URL parameter.
+    string secret = 3 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {
+        type: "secretmanager.googleapis.com/SecretVersion"
+      }
+    ];
+  }
+
+  // Potential issues with the underlying Pub/Sub subscription configuration.
+  // Only populated on get requests.
+  State state = 4;
+}
+
 // PullRequestFilter contains filter properties for matching GitHub Pull
 // Requests.
 message PullRequestFilter {
@@ -907,6 +1617,10 @@ message PullRequestFilter {
     // Enforce that repository owners or collaborators must comment on Pull
     // Requests before builds are triggered.
     COMMENTS_ENABLED = 1;
+
+    // Enforce that repository owners or collaborators must comment on external
+    // contributors' Pull Requests before builds are triggered.
+    COMMENTS_ENABLED_FOR_EXTERNAL_CONTRIBUTORS_ONLY = 2;
   }
 
   // Target refs to match.
@@ -919,9 +1633,12 @@ message PullRequestFilter {
     string branch = 2;
   }
 
-  // Whether to block builds on a "/gcbrun" comment from a repository owner or
-  // collaborator.
+  // Configure builds to run whether a repository owner or collaborator need to
+  // comment `/gcbrun`.
   CommentControl comment_control = 5;
+
+  // If true, branches that do NOT match the git_ref will trigger a build.
+  bool invert_regex = 6;
 }
 
 // Push contains filter properties for matching GitHub git pushes.
@@ -941,10 +1658,20 @@ message PushFilter {
     // RE2 and described at https://github.com/google/re2/wiki/Syntax
     string tag = 3;
   }
+
+  // When true, only trigger a build if the revision regex does NOT match the
+  // git_ref regex.
+  bool invert_regex = 4;
 }
 
 // Request to create a new `BuildTrigger`.
 message CreateBuildTriggerRequest {
+  // The parent resource where this trigger will be created.
+  // Format: `projects/{project}/locations/{location}`
+  string parent = 3 [(google.api.resource_reference) = {
+    child_type: "cloudbuild.googleapis.com/BuildTrigger"
+  }];
+
   // Required. ID of the project for which to configure automatic builds.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -954,15 +1681,27 @@ message CreateBuildTriggerRequest {
 
 // Returns the `BuildTrigger` with the specified ID.
 message GetBuildTriggerRequest {
+  // The name of the `Trigger` to retrieve.
+  // Format: `projects/{project}/locations/{location}/triggers/{trigger}`
+  string name = 3 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/BuildTrigger"
+  }];
+
   // Required. ID of the project that owns the trigger.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Required. ID of the `BuildTrigger` to get.
+  // Required. Identifier (`id` or `name`) of the `BuildTrigger` to get.
   string trigger_id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Request to list existing `BuildTriggers`.
 message ListBuildTriggersRequest {
+  // The parent of the collection of `Triggers`.
+  // Format: `projects/{project}/locations/{location}`
+  string parent = 4 [(google.api.resource_reference) = {
+    child_type: "cloudbuild.googleapis.com/BuildTrigger"
+  }];
+
   // Required. ID of the project for which to list BuildTriggers.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -984,6 +1723,12 @@ message ListBuildTriggersResponse {
 
 // Request to delete a `BuildTrigger`.
 message DeleteBuildTriggerRequest {
+  // The name of the `Trigger` to delete.
+  // Format: `projects/{project}/locations/{location}/triggers/{trigger}`
+  string name = 3 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/BuildTrigger"
+  }];
+
   // Required. ID of the project that owns the trigger.
   string project_id = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -1005,6 +1750,22 @@ message UpdateBuildTriggerRequest {
 
 // Optional arguments to enable specific features of builds.
 message BuildOptions {
+  // Details about how a build should be executed on a `WorkerPool`.
+  //
+  // See [running builds in a private
+  // pool](https://cloud.google.com/build/docs/private-pools/run-builds-in-private-pool)
+  // for more information.
+  message PoolOption {
+    // The `WorkerPool` resource to execute the build on.
+    // You must have `cloudbuild.workerpools.use` on the project hosting the
+    // WorkerPool.
+    //
+    // Format projects/{project}/locations/{location}/workerPools/{workerPoolId}
+    string name = 1 [(google.api.resource_reference) = {
+      type: "cloudbuild.googleapis.com/WorkerPool"
+    }];
+  }
+
   // Specifies the manner in which the build should be verified, if at all.
   enum VerifyOption {
     // Not a verifiable build. (default)
@@ -1014,7 +1775,9 @@ message BuildOptions {
     VERIFIED = 1;
   }
 
-  // Supported VM sizes.
+  // Supported Compute Engine machine types.
+  // For more information, see [Machine
+  // types](https://cloud.google.com/compute/docs/machine-types).
   enum MachineType {
     // Standard machine type.
     UNSPECIFIED = 0;
@@ -1024,6 +1787,12 @@ message BuildOptions {
 
     // Highcpu machine with 32 CPUs.
     N1_HIGHCPU_32 = 2;
+
+    // Highcpu e2 machine with 8 CPUs.
+    E2_HIGHCPU_8 = 5;
+
+    // Highcpu e2 machine with 32 CPUs.
+    E2_HIGHCPU_32 = 6;
   }
 
   // Specifies the behavior when there is an error in the substitution checks.
@@ -1055,11 +1824,22 @@ message BuildOptions {
     // rely on the default logging behavior as it may change in the future.
     LOGGING_UNSPECIFIED = 0;
 
-    // Stackdriver logging and Cloud Storage logging are enabled.
+    // Cloud Logging and Cloud Storage logging are enabled.
     LEGACY = 1;
 
     // Only Cloud Storage logging is enabled.
     GCS_ONLY = 2;
+
+    // This option is the same as CLOUD_LOGGING_ONLY.
+    STACKDRIVER_ONLY = 3 [deprecated = true];
+
+    // Only Cloud Logging is enabled. Note that logs for both the Cloud Console
+    // UI and Cloud SDK are based on Cloud Storage logs, so neither will provide
+    // logs if this option is chosen.
+    CLOUD_LOGGING_ONLY = 5;
+
+    // Turn off all logging. No build logs will be captured.
+    NONE = 4;
   }
 
   // Requested hash for SourceProvenance.
@@ -1081,19 +1861,34 @@ message BuildOptions {
 
   // Option to specify behavior when there is an error in the substitution
   // checks.
+  //
+  // NOTE: this is always set to ALLOW_LOOSE for triggered builds and cannot
+  // be overridden in the build configuration file.
   SubstitutionOption substitution_option = 4;
+
+  // Option to specify whether or not to apply bash style string
+  // operations to the substitutions.
+  //
+  // NOTE: this is always enabled for triggered builds and cannot be
+  // overridden in the build configuration file.
+  bool dynamic_substitutions = 17;
 
   // Option to define build log streaming behavior to Google Cloud
   // Storage.
   LogStreamingOption log_streaming_option = 5;
 
-  // Option to specify a `WorkerPool` for the build. User specifies the pool
-  // with the format "[WORKERPOOL_PROJECT_ID]/[WORKERPOOL_NAME]".
-  // This is an experimental field.
-  string worker_pool = 7;
+  // This field deprecated; please use `pool.name` instead.
+  string worker_pool = 7 [deprecated = true];
 
-  // Option to specify the logging mode, which determines where the logs are
-  // stored.
+  // Optional. Specification for execution on a `WorkerPool`.
+  //
+  // See [running builds in a private
+  // pool](https://cloud.google.com/build/docs/private-pools/run-builds-in-private-pool)
+  // for more information.
+  PoolOption pool = 19 [(google.api.field_behavior) = OPTIONAL];
+
+  // Option to specify the logging mode, which determines if and where build
+  // logs are stored.
   LoggingMode logging = 11;
 
   // A list of global environment variable definitions that will exist for all
@@ -1122,36 +1917,56 @@ message BuildOptions {
   repeated Volume volumes = 14;
 }
 
-// Configuration for a WorkerPool to run the builds.
+// ReceiveTriggerWebhookRequest [Experimental] is the request object accepted by
+// the ReceiveTriggerWebhook method.
+message ReceiveTriggerWebhookRequest {
+  // The name of the `ReceiveTriggerWebhook` to retrieve.
+  // Format: `projects/{project}/locations/{location}/triggers/{trigger}`
+  string name = 5;
+
+  // HTTP request body.
+  google.api.HttpBody body = 1;
+
+  // Project in which the specified trigger lives
+  string project_id = 2;
+
+  // Name of the trigger to run the payload against
+  string trigger = 3;
+
+  // Secret token used for authorization if an OAuth token isn't provided.
+  string secret = 4;
+}
+
+// ReceiveTriggerWebhookResponse [Experimental] is the response object for the
+// ReceiveTriggerWebhook method.
+message ReceiveTriggerWebhookResponse {}
+
+// Configuration for a `WorkerPool`.
 //
-// Workers are machines that Cloud Build uses to run your builds. By default,
-// all workers run in a project owned by Cloud Build. To have full control over
-// the workers that execute your builds -- such as enabling them to access
-// private resources on your private network -- you can request Cloud Build to
-// run the workers in your own project by creating a custom workers pool.
+// Cloud Build owns and maintains a pool of workers for general use and have no
+// access to a project's private network. By default, builds submitted to
+// Cloud Build will use a worker from this pool.
+//
+// If your build needs access to resources on a private network,
+// create and use a `WorkerPool` to run your builds. Private `WorkerPool`s give
+// your builds access to any single VPC network that you
+// administer, including any on-prem resources connected to that VPC
+// network. For an overview of private pools, see
+// [Private pools
+// overview](https://cloud.google.com/build/docs/private-pools/private-pools-overview).
 message WorkerPool {
-  // Supported GCP regions to create the `WorkerPool`.
-  enum Region {
-    // no region
-    REGION_UNSPECIFIED = 0;
+  option (google.api.resource) = {
+    type: "cloudbuild.googleapis.com/WorkerPool"
+    pattern: "projects/{project}/locations/{location}/workerPools/{worker_pool}"
+    plural: "workerPools"
+    singular: "workerPool"
+    style: DECLARATIVE_FRIENDLY
+  };
 
-    // us-central1 region
-    US_CENTRAL1 = 1;
-
-    // us-west1 region
-    US_WEST1 = 2;
-
-    // us-east1 region
-    US_EAST1 = 3;
-
-    // us-east4 region
-    US_EAST4 = 4;
-  }
-
-  // `WorkerPool` status
-  enum Status {
-    // Status of the `WorkerPool` is unknown.
-    STATUS_UNSPECIFIED = 0;
+  // State of the `WorkerPool`.
+  enum State {
+    // State of the `WorkerPool` is unknown.
+    STATE_UNSPECIFIED = 0;
 
     // `WorkerPool` is being created.
     CREATING = 1;
@@ -1159,146 +1974,280 @@ message WorkerPool {
     // `WorkerPool` is running.
     RUNNING = 2;
 
-    // `WorkerPool` is being deleting: cancelling builds and draining workers.
+    // `WorkerPool` is being deleted: cancelling builds and draining workers.
     DELETING = 3;
 
     // `WorkerPool` is deleted.
     DELETED = 4;
   }
 
-  // User-defined name of the `WorkerPool`.
-  string name = 14;
+  // Output only. The resource name of the `WorkerPool`, with format
+  // `projects/{project}/locations/{location}/workerPools/{worker_pool}`.
+  // The value of `{worker_pool}` is provided by `worker_pool_id` in
+  // `CreateWorkerPool` request and the value of `{location}` is determined by
+  // the endpoint accessed.
+  string name = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // The project ID of the GCP project for which the `WorkerPool` is created.
-  string project_id = 2;
+  // A user-specified, human-readable name for the `WorkerPool`. If provided,
+  // this value must be 1-63 characters.
+  string display_name = 2;
 
-  // Output only. The service account used to manage the `WorkerPool`. The
-  // service account must have the Compute Instance Admin (Beta) permission at
-  // the project level.
-  string service_account_email = 3;
+  // Output only. A unique identifier for the `WorkerPool`.
+  string uid = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Total number of workers to be created across all requested regions.
-  int64 worker_count = 4;
-
-  // Configuration to be used for a creating workers in the `WorkerPool`.
-  WorkerConfig worker_config = 16;
-
-  // List of regions to create the `WorkerPool`. Regions can't be empty.
-  // If Cloud Build adds a new GCP region in the future, the existing
-  // `WorkerPool` will not be enabled in the new region automatically;
-  // you must add the new region to the `regions` field to enable the
-  // `WorkerPool` in that region.
-  repeated Region regions = 9;
+  // User specified annotations. See https://google.aip.dev/128#annotations
+  // for more details such as format and size limitations.
+  map<string, string> annotations = 4;
 
   // Output only. Time at which the request to create the `WorkerPool` was
   // received.
-  google.protobuf.Timestamp create_time = 11;
+  google.protobuf.Timestamp create_time = 5
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. Time at which the request to update the `WorkerPool` was
   // received.
-  google.protobuf.Timestamp update_time = 17;
+  google.protobuf.Timestamp update_time = 6
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. Time at which the request to delete the `WorkerPool` was
   // received.
-  google.protobuf.Timestamp delete_time = 12;
+  google.protobuf.Timestamp delete_time = 7
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Output only. WorkerPool Status.
-  Status status = 13;
+  // Output only. `WorkerPool` state.
+  State state = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Private Pool configuration for the `WorkerPool`.
+  oneof config {
+    // Private Pool using a v1 configuration.
+    PrivatePoolV1Config private_pool_v1_config = 12;
+  }
+
+  // Output only. Checksum computed by the server. May be sent on update and
+  // delete requests to ensure that the client has an up-to-date value before
+  // proceeding.
+  string etag = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
-// WorkerConfig defines the configuration to be used for a creating workers in
-// the pool.
-message WorkerConfig {
-  // Machine Type of the worker, such as n1-standard-1.
-  // See https://cloud.google.com/compute/docs/machine-types.
-  // If left blank, Cloud Build will use a standard unspecified machine to
-  // create the worker pool.
-  // `machine_type` is overridden if you specify a different machine type in
-  // `build_options`. In this case, the VM specified in the `build_options`
-  // will be created on demand at build time. For more information see
-  // https://cloud.google.com/cloud-build/docs/speeding-up-builds#using_custom_virtual_machine_sizes
-  string machine_type = 1;
+// Configuration for a V1 `PrivatePool`.
+message PrivatePoolV1Config {
+  // Defines the configuration to be used for creating workers in
+  // the pool.
+  message WorkerConfig {
+    // Machine type of a worker, such as `e2-medium`.
+    // See [Worker pool config
+    // file](https://cloud.google.com/build/docs/private-pools/worker-pool-config-file-schema).
+    // If left blank, Cloud Build will use a sensible default.
+    string machine_type = 1;
 
-  // Size of the disk attached to the worker, in GB.
-  // See https://cloud.google.com/compute/docs/disks/
-  // If `0` is specified, Cloud Build will use a standard disk size.
-  // `disk_size` is overridden if you specify a different disk size in
-  // `build_options`. In this case, a VM with a disk size specified in the
-  // `build_options` will be created on demand at build time. For more
-  // information see
-  // https://cloud.google.com/cloud-build/docs/api/reference/rest/v1/projects.builds#buildoptions
-  int64 disk_size_gb = 2;
+    // Size of the disk attached to the worker, in GB.
+    // See [Worker pool config
+    // file](https://cloud.google.com/build/docs/private-pools/worker-pool-config-file-schema).
+    // Specify a value of up to 1000. If `0` is specified, Cloud Build will use
+    // a standard disk size.
+    int64 disk_size_gb = 2;
+  }
 
-  // The network definition used to create the worker.
-  // If this section is left empty, the workers will be created in
-  // WorkerPool.project_id on the default network.
-  Network network = 3;
+  // Defines the network configuration for the pool.
+  message NetworkConfig {
+    // Defines the egress option for the pool.
+    enum EgressOption {
+      // If set, defaults to PUBLIC_EGRESS.
+      EGRESS_OPTION_UNSPECIFIED = 0;
 
-  // The tag applied to the worker, and the same tag used by the firewall rule.
-  // It is used to identify the Cloud Build workers among other VMs.
-  // The default value for tag is `worker`.
-  string tag = 4;
-}
+      // If set, workers are created without any public address, which prevents
+      // network egress to public IPs unless a network proxy is configured.
+      NO_PUBLIC_EGRESS = 1;
 
-// Network describes the GCP network used to create workers in.
-message Network {
-  // Project id containing the defined network and subnetwork. For a peered VPC,
-  // this will be the same as the project_id in which the workers are created.
-  // For a shared VPC, this will be the project sharing the network with the
-  // project_id project in which workers will be created. For custom workers
-  // with no VPC, this will be the same as project_id.
-  string project_id = 1;
+      // If set, workers are created with a public address which allows for
+      // public internet egress.
+      PUBLIC_EGRESS = 2;
+    }
 
-  // Network on which the workers are created.
-  // "default" network is used if empty.
-  string network = 2;
+    // Required. Immutable. The network definition that the workers are peered
+    // to. If this section is left empty, the workers will be peered to
+    // `WorkerPool.project_id` on the service producer network. Must be in the
+    // format `projects/{project}/global/networks/{network}`, where `{project}`
+    // is a project number, such as `12345`, and `{network}` is the name of a
+    // VPC network in the project. See
+    // [Understanding network configuration
+    // options](https://cloud.google.com/build/docs/private-pools/set-up-private-pool-environment)
+    string peered_network = 1 [
+      (google.api.field_behavior) = IMMUTABLE,
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {
+        type: "compute.googleapis.com/Network"
+      }
+    ];
 
-  // Subnetwork on which the workers are created.
-  // "default" subnetwork is used if empty.
-  string subnetwork = 3;
+    // Option to configure network egress for the workers.
+    EgressOption egress_option = 2;
+  }
+
+  // Machine configuration for the workers in the pool.
+  WorkerConfig worker_config = 1;
+
+  // Network configuration for the pool.
+  NetworkConfig network_config = 2;
 }
 
 // Request to create a new `WorkerPool`.
 message CreateWorkerPoolRequest {
-  // ID of the parent project.
-  string parent = 1;
+  // Required. The parent resource where this worker pool will be created.
+  // Format: `projects/{project}/locations/{location}`.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "locations.googleapis.com/Location"
+    }
+  ];
 
-  // `WorkerPool` resource to create.
-  WorkerPool worker_pool = 2;
+  // Required. `WorkerPool` resource to create.
+  WorkerPool worker_pool = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Required. Immutable. The ID to use for the `WorkerPool`, which will become
+  // the final component of the resource name.
+  //
+  // This value should be 1-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string worker_pool_id = 3 [
+    (google.api.field_behavior) = IMMUTABLE,
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // If set, validate the request and preview the response, but do not actually
+  // post it.
+  bool validate_only = 4;
 }
 
 // Request to get a `WorkerPool` with the specified name.
 message GetWorkerPoolRequest {
-  // The field will contain name of the resource requested, for example:
-  // "projects/project-1/workerPools/workerpool-name"
-  string name = 1;
+  // Required. The name of the `WorkerPool` to retrieve.
+  // Format: `projects/{project}/locations/{location}/workerPools/{workerPool}`.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "cloudbuild.googleapis.com/WorkerPool"
+    }
+  ];
 }
 
 // Request to delete a `WorkerPool`.
 message DeleteWorkerPoolRequest {
-  // The field will contain name of the resource requested, for example:
-  // "projects/project-1/workerPools/workerpool-name"
-  string name = 1;
+  // Required. The name of the `WorkerPool` to delete.
+  // Format:
+  // `projects/{project}/locations/{workerPool}/workerPools/{workerPool}`.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "cloudbuild.googleapis.com/WorkerPool"
+    }
+  ];
+
+  // Optional. If this is provided, it must match the server's etag on the
+  // workerpool for the request to be processed.
+  string etag = 2;
+
+  // If set to true, and the `WorkerPool` is not found, the request will succeed
+  // but no action will be taken on the server.
+  bool allow_missing = 3;
+
+  // If set, validate the request and preview the response, but do not actually
+  // post it.
+  bool validate_only = 4;
 }
 
 // Request to update a `WorkerPool`.
 message UpdateWorkerPoolRequest {
-  // The field will contain name of the resource requested, for example:
-  // "projects/project-1/workerPools/workerpool-name"
-  string name = 2;
+  // Required. The `WorkerPool` to update.
+  //
+  // The `name` field is used to identify the `WorkerPool` to update.
+  // Format: `projects/{project}/locations/{location}/workerPools/{workerPool}`.
+  WorkerPool worker_pool = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // `WorkerPool` resource to update.
-  WorkerPool worker_pool = 3;
+  // A mask specifying which fields in `worker_pool` to update.
+  google.protobuf.FieldMask update_mask = 2;
+
+  // If set, validate the request and preview the response, but do not actually
+  // post it.
+  bool validate_only = 4;
 }
 
 // Request to list `WorkerPool`s.
 message ListWorkerPoolsRequest {
-  // ID of the parent project.
-  string parent = 1;
+  // Required. The parent of the collection of `WorkerPools`.
+  // Format: `projects/{project}/locations/{location}`.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "locations.googleapis.com/Location"
+    }
+  ];
+
+  // The maximum number of `WorkerPool`s to return. The service may return
+  // fewer than this value. If omitted, the server will use a sensible default.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListWorkerPools` call. Provide this
+  // to retrieve the subsequent page.
+  string page_token = 3;
 }
 
 // Response containing existing `WorkerPools`.
 message ListWorkerPoolsResponse {
-  // `WorkerPools` for the project.
+  // `WorkerPools` for the specified project.
   repeated WorkerPool worker_pools = 1;
+
+  // Continuation token used to page through large result sets. Provide this
+  // value in a subsequent ListWorkerPoolsRequest to return the next page of
+  // results.
+  string next_page_token = 2;
+}
+
+// Metadata for the `CreateWorkerPool` operation.
+message CreateWorkerPoolOperationMetadata {
+  // The resource name of the `WorkerPool` to create.
+  // Format:
+  // `projects/{project}/locations/{location}/workerPools/{worker_pool}`.
+  string worker_pool = 1 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/WorkerPool"
+  }];
+
+  // Time the operation was created.
+  google.protobuf.Timestamp create_time = 2;
+
+  // Time the operation was completed.
+  google.protobuf.Timestamp complete_time = 3;
+}
+
+// Metadata for the `UpdateWorkerPool` operation.
+message UpdateWorkerPoolOperationMetadata {
+  // The resource name of the `WorkerPool` being updated.
+  // Format:
+  // `projects/{project}/locations/{location}/workerPools/{worker_pool}`.
+  string worker_pool = 1 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/WorkerPool"
+  }];
+
+  // Time the operation was created.
+  google.protobuf.Timestamp create_time = 2;
+
+  // Time the operation was completed.
+  google.protobuf.Timestamp complete_time = 3;
+}
+
+// Metadata for the `DeleteWorkerPool` operation.
+message DeleteWorkerPoolOperationMetadata {
+  // The resource name of the `WorkerPool` being deleted.
+  // Format:
+  // `projects/{project}/locations/{location}/workerPools/{worker_pool}`.
+  string worker_pool = 1 [(google.api.resource_reference) = {
+    type: "cloudbuild.googleapis.com/WorkerPool"
+  }];
+
+  // Time the operation was created.
+  google.protobuf.Timestamp create_time = 2;
+
+  // Time the operation was completed.
+  google.protobuf.Timestamp complete_time = 3;
 }

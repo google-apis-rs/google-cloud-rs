@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -22,14 +21,12 @@ import "google/cloud/automl/v1/detection.proto";
 import "google/cloud/automl/v1/text_extraction.proto";
 import "google/cloud/automl/v1/text_sentiment.proto";
 import "google/cloud/automl/v1/translation.proto";
-import "google/protobuf/any.proto";
-import "google/api/annotations.proto";
 
 option csharp_namespace = "Google.Cloud.AutoML.V1";
 option go_package = "google.golang.org/genproto/googleapis/cloud/automl/v1;automl";
 option java_multiple_files = true;
 option java_package = "com.google.cloud.automl.v1";
-option php_namespace = "Google\\Cloud\\AutoML\\V1";
+option php_namespace = "Google\\Cloud\\AutoMl\\V1";
 option ruby_package = "Google::Cloud::AutoML::V1";
 
 // Contains annotation information that is relevant to AutoML.
@@ -59,7 +56,7 @@ message AnnotationPayload {
   string annotation_spec_id = 1;
 
   // Output only. The value of
-  // [display_name][google.cloud.automl.v1p1beta.AnnotationSpec.display_name]
+  // [display_name][google.cloud.automl.v1.AnnotationSpec.display_name]
   // when the model was trained. Because this field returns a value at model
   // training time, for different models trained using the same dataset, the
   // returned value could be different as model owner could update the

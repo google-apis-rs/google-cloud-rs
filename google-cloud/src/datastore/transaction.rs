@@ -36,6 +36,7 @@ impl Transaction {
                 mutations: Vec::new(),
                 mode: api::commit_request::Mode::Transactional as i32,
                 transaction_selector: Some(api::commit_request::TransactionSelector::Transaction(tx_key.to_vec())),
+                database_id: "".to_string(),
                 project_id: project_name,
             },
         }
@@ -58,7 +59,7 @@ impl Transaction {
         K: Borrow<Key>,
         T: FromValue,
     {
-        Ok(self.client.get_all_tx(keys, Some(self.tx_key.to_vec())).await?)
+        Ok(self.client.get_all_run(keys, Some(self.tx_key.to_vec())).await?)
     }
 
     /// Create, Modify or delete entity and returns its key.
@@ -120,8 +121,8 @@ impl Transaction {
 
     /// Execute a (potentially) complex query against the Datastore 
     /// in a transaction and return the results.
-    pub async fn query(&mut self, query: Query) -> Result<Vec<Entity>, Error> {
-        Ok(self.client.query_tx(query, Some(self.tx_key.to_vec())).await?)
+    pub async fn query(&mut self, query: Query) -> Result<(Vec<Entity>, Vec<u8>), Error> {
+        Ok(self.client.query_run(query, Some(self.tx_key.to_vec())).await?)
     }
 
     /// Execute the transaction with the accumulated information.
@@ -143,6 +144,7 @@ impl Transaction {
     /// Execute transaction rollback
     pub async fn rollback(&mut self) -> Result<(), Error> {
         let request = self.client.construct_request(RollbackRequest {
+            database_id: "".to_string(),
             project_id: self.client.project_name.to_owned(),
             transaction: self.tx_key.to_vec()
         }).await?;

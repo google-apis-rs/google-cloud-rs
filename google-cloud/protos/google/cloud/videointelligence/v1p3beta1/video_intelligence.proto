@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC.
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,13 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.cloud.videointelligence.v1p3beta1;
 
 import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
@@ -31,8 +32,12 @@ option java_package = "com.google.cloud.videointelligence.v1p3beta1";
 option php_namespace = "Google\\Cloud\\VideoIntelligence\\V1p3beta1";
 option ruby_package = "Google::Cloud::VideoIntelligence::V1p3beta1";
 
-// Service that implements Google Cloud Video Intelligence API.
+// Service that implements the Video Intelligence API.
 service VideoIntelligenceService {
+  option (google.api.default_host) = "videointelligence.googleapis.com";
+  option (google.api.oauth_scopes) =
+      "https://www.googleapis.com/auth/cloud-platform";
+
   // Performs asynchronous video annotation. Progress and results can be
   // retrieved through the `google.longrunning.Operations` interface.
   // `Operation.metadata` contains `AnnotateVideoProgress` (progress).
@@ -43,55 +48,67 @@ service VideoIntelligenceService {
       post: "/v1p3beta1/videos:annotate"
       body: "*"
     };
+    option (google.api.method_signature) = "input_uri,features";
+    option (google.longrunning.operation_info) = {
+      response_type: "AnnotateVideoResponse"
+      metadata_type: "AnnotateVideoProgress"
+    };
   }
 }
 
-// Service that implements Google Cloud Video Intelligence Streaming API.
+// Service that implements streaming Video Intelligence API.
 service StreamingVideoIntelligenceService {
+  option (google.api.default_host) = "videointelligence.googleapis.com";
+  option (google.api.oauth_scopes) =
+      "https://www.googleapis.com/auth/cloud-platform";
+
   // Performs video annotation with bidirectional streaming: emitting results
   // while sending video/audio bytes.
   // This method is only available via the gRPC API (not REST).
   rpc StreamingAnnotateVideo(stream StreamingAnnotateVideoRequest)
-      returns (stream StreamingAnnotateVideoResponse);
+      returns (stream StreamingAnnotateVideoResponse) {}
 }
 
 // Video annotation request.
 message AnnotateVideoRequest {
   // Input video location. Currently, only
-  // [Google Cloud Storage](https://cloud.google.com/storage/) URIs are
-  // supported, which must be specified in the following format:
+  // [Cloud Storage](https://cloud.google.com/storage/) URIs are
+  // supported. URIs must be specified in the following format:
   // `gs://bucket-id/object-id` (other URI formats return
   // [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT]). For
-  // more information, see [Request URIs](/storage/docs/reference-uris). A video
-  // URI may include wildcards in `object-id`, and thus identify multiple
-  // videos. Supported wildcards: '*' to match 0 or more characters;
+  // more information, see [Request
+  // URIs](https://cloud.google.com/storage/docs/request-endpoints). To identify
+  // multiple videos, a video URI may include wildcards in the `object-id`.
+  // Supported wildcards: '*' to match 0 or more characters;
   // '?' to match 1 character. If unset, the input video should be embedded
-  // in the request as `input_content`. If set, `input_content` should be unset.
+  // in the request as `input_content`. If set, `input_content` must be unset.
   string input_uri = 1;
 
   // The video data bytes.
-  // If unset, the input video(s) should be specified via `input_uri`.
-  // If set, `input_uri` should be unset.
+  // If unset, the input video(s) should be specified via the `input_uri`.
+  // If set, `input_uri` must be unset.
   bytes input_content = 6;
 
-  // Requested video annotation features.
-  repeated Feature features = 2;
+  // Required. Requested video annotation features.
+  repeated Feature features = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Additional video context and/or feature-specific parameters.
   VideoContext video_context = 3;
 
-  // Optional location where the output (in JSON format) should be stored.
-  // Currently, only [Google Cloud Storage](https://cloud.google.com/storage/)
-  // URIs are supported, which must be specified in the following format:
+  // Optional. Location where the output (in JSON format) should be stored.
+  // Currently, only [Cloud Storage](https://cloud.google.com/storage/)
+  // URIs are supported. These must be specified in the following format:
   // `gs://bucket-id/object-id` (other URI formats return
   // [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT]). For
-  // more information, see [Request URIs](/storage/docs/reference-uris).
-  string output_uri = 4;
+  // more information, see [Request
+  // URIs](https://cloud.google.com/storage/docs/request-endpoints).
+  string output_uri = 4 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional cloud region where annotation should take place. Supported cloud
-  // regions: `us-east1`, `us-west1`, `europe-west1`, `asia-east1`. If no region
-  // is specified, a region will be determined based on video file location.
-  string location_id = 5;
+  // Optional. Cloud region where annotation should take place. Supported cloud
+  // regions are: `us-east1`, `us-west1`, `europe-west1`, `asia-east1`. If no
+  // region is specified, the region will be determined based on video file
+  // location.
+  string location_id = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Video context and/or feature-specific parameters.
@@ -110,14 +127,56 @@ message VideoContext {
   // Config for EXPLICIT_CONTENT_DETECTION.
   ExplicitContentDetectionConfig explicit_content_detection_config = 4;
 
+  // Config for FACE_DETECTION.
+  FaceDetectionConfig face_detection_config = 5;
+
   // Config for SPEECH_TRANSCRIPTION.
   SpeechTranscriptionConfig speech_transcription_config = 6;
 
   // Config for TEXT_DETECTION.
   TextDetectionConfig text_detection_config = 8;
 
+  // Config for PERSON_DETECTION.
+  PersonDetectionConfig person_detection_config = 11;
+
   // Config for OBJECT_TRACKING.
   ObjectTrackingConfig object_tracking_config = 13;
+}
+
+// Label detection mode.
+enum LabelDetectionMode {
+  // Unspecified.
+  LABEL_DETECTION_MODE_UNSPECIFIED = 0;
+
+  // Detect shot-level labels.
+  SHOT_MODE = 1;
+
+  // Detect frame-level labels.
+  FRAME_MODE = 2;
+
+  // Detect both shot-level and frame-level labels.
+  SHOT_AND_FRAME_MODE = 3;
+}
+
+// Bucketized representation of likelihood.
+enum Likelihood {
+  // Unspecified likelihood.
+  LIKELIHOOD_UNSPECIFIED = 0;
+
+  // Very unlikely.
+  VERY_UNLIKELY = 1;
+
+  // Unlikely.
+  UNLIKELY = 2;
+
+  // Possible.
+  POSSIBLE = 3;
+
+  // Likely.
+  LIKELY = 4;
+
+  // Very likely.
+  VERY_LIKELY = 5;
 }
 
 // Config for LABEL_DETECTION.
@@ -127,9 +186,9 @@ message LabelDetectionConfig {
   // If unspecified, defaults to `SHOT_MODE`.
   LabelDetectionMode label_detection_mode = 1;
 
-  // Whether the video has been shot from a stationary (i.e. non-moving) camera.
-  // When set to true, might improve detection accuracy for moving objects.
-  // Should be used with `SHOT_AND_FRAME_MODE` enabled.
+  // Whether the video has been shot from a stationary (i.e., non-moving)
+  // camera. When set to true, might improve detection accuracy for moving
+  // objects. Should be used with `SHOT_AND_FRAME_MODE` enabled.
   bool stationary_camera = 2;
 
   // Model to use for label detection.
@@ -141,17 +200,80 @@ message LabelDetectionConfig {
   // frame-level detection. If not set, it is set to 0.4 by default. The valid
   // range for this threshold is [0.1, 0.9]. Any value set outside of this
   // range will be clipped.
-  // Note: for best results please follow the default threshold. We will update
+  // Note: For best results, follow the default threshold. We will update
   // the default threshold everytime when we release a new model.
   float frame_confidence_threshold = 4;
 
   // The confidence threshold we perform filtering on the labels from
-  // video-level and shot-level detections. If not set, it is set to 0.3 by
+  // video-level and shot-level detections. If not set, it's set to 0.3 by
   // default. The valid range for this threshold is [0.1, 0.9]. Any value set
   // outside of this range will be clipped.
-  // Note: for best results please follow the default threshold. We will update
+  // Note: For best results, follow the default threshold. We will update
   // the default threshold everytime when we release a new model.
   float video_confidence_threshold = 5;
+}
+
+// Streaming video annotation feature.
+enum StreamingFeature {
+  // Unspecified.
+  STREAMING_FEATURE_UNSPECIFIED = 0;
+
+  // Label detection. Detect objects, such as dog or flower.
+  STREAMING_LABEL_DETECTION = 1;
+
+  // Shot change detection.
+  STREAMING_SHOT_CHANGE_DETECTION = 2;
+
+  // Explicit content detection.
+  STREAMING_EXPLICIT_CONTENT_DETECTION = 3;
+
+  // Object detection and tracking.
+  STREAMING_OBJECT_TRACKING = 4;
+
+  // Action recognition based on AutoML model.
+  STREAMING_AUTOML_ACTION_RECOGNITION = 23;
+
+  // Video classification based on AutoML model.
+  STREAMING_AUTOML_CLASSIFICATION = 21;
+
+  // Object detection and tracking based on AutoML model.
+  STREAMING_AUTOML_OBJECT_TRACKING = 22;
+}
+
+// Video annotation feature.
+enum Feature {
+  // Unspecified.
+  FEATURE_UNSPECIFIED = 0;
+
+  // Label detection. Detect objects, such as dog or flower.
+  LABEL_DETECTION = 1;
+
+  // Shot change detection.
+  SHOT_CHANGE_DETECTION = 2;
+
+  // Explicit content detection.
+  EXPLICIT_CONTENT_DETECTION = 3;
+
+  // Human face detection.
+  FACE_DETECTION = 4;
+
+  // Speech transcription.
+  SPEECH_TRANSCRIPTION = 6;
+
+  // OCR text detection and tracking.
+  TEXT_DETECTION = 7;
+
+  // Object detection and tracking.
+  OBJECT_TRACKING = 9;
+
+  // Logo detection, tracking, and recognition.
+  LOGO_RECOGNITION = 12;
+
+  // Celebrity recognition.
+  CELEBRITY_RECOGNITION = 13;
+
+  // Person detection.
+  PERSON_DETECTION = 14;
 }
 
 // Config for SHOT_CHANGE_DETECTION.
@@ -176,6 +298,38 @@ message ExplicitContentDetectionConfig {
   // Supported values: "builtin/stable" (the default if unset) and
   // "builtin/latest".
   string model = 1;
+}
+
+// Config for FACE_DETECTION.
+message FaceDetectionConfig {
+  // Model to use for face detection.
+  // Supported values: "builtin/stable" (the default if unset) and
+  // "builtin/latest".
+  string model = 1;
+
+  // Whether bounding boxes are included in the face annotation output.
+  bool include_bounding_boxes = 2;
+
+  // Whether to enable face attributes detection, such as glasses, dark_glasses,
+  // mouth_open etc. Ignored if 'include_bounding_boxes' is set to false.
+  bool include_attributes = 5;
+}
+
+// Config for PERSON_DETECTION.
+message PersonDetectionConfig {
+  // Whether bounding boxes are included in the person detection annotation
+  // output.
+  bool include_bounding_boxes = 1;
+
+  // Whether to enable pose landmarks detection. Ignored if
+  // 'include_bounding_boxes' is set to false.
+  bool include_pose_landmarks = 2;
+
+  // Whether to enable person attributes detection, such as cloth color (black,
+  // blue, etc), type (coat, dress, etc), pattern (plain, floral, etc), hair,
+  // etc.
+  // Ignored if 'include_bounding_boxes' is set to false.
+  bool include_attributes = 3;
 }
 
 // Config for TEXT_DETECTION.
@@ -230,7 +384,7 @@ message Entity {
   // API](https://developers.google.com/knowledge-graph/).
   string entity_id = 1;
 
-  // Textual description, e.g. `Fixed-gear bicycle`.
+  // Textual description, e.g., `Fixed-gear bicycle`.
   string description = 2;
 
   // Language code for `description` in BCP-47 format.
@@ -243,9 +397,9 @@ message LabelAnnotation {
   Entity entity = 1;
 
   // Common categories for the detected entity.
-  // E.g. when the label is `Terrier` the category is likely `dog`. And in some
-  // cases there might be more than one categories e.g. `Terrier` could also be
-  // a `pet`.
+  // For example, when the label is `Terrier`, the category is likely `dog`. And
+  // in some cases there might be more than one categories e.g., `Terrier` could
+  // also be a `pet`.
   repeated Entity category_entities = 2;
 
   // All video segments where a label was detected.
@@ -290,8 +444,7 @@ message NormalizedBoundingBox {
   float bottom = 4;
 }
 
-// For tracking related features, such as LOGO_RECOGNITION, FACE_DETECTION,
-// CELEBRITY_RECOGNITION, PERSON_DETECTION.
+// For tracking related features.
 // An object at time_offset with attributes, and located with
 // normalized_bounding_box.
 message TimestampedObject {
@@ -303,7 +456,12 @@ message TimestampedObject {
   google.protobuf.Duration time_offset = 2;
 
   // Optional. The attributes of the object in the bounding box.
-  repeated DetectedAttribute attributes = 3;
+  repeated DetectedAttribute attributes = 3
+      [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The detected landmarks.
+  repeated DetectedLandmark landmarks = 4
+      [(google.api.field_behavior) = OPTIONAL];
 }
 
 // A track of an object instance.
@@ -315,15 +473,16 @@ message Track {
   repeated TimestampedObject timestamped_objects = 2;
 
   // Optional. Attributes in the track level.
-  repeated DetectedAttribute attributes = 3;
+  repeated DetectedAttribute attributes = 3
+      [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The confidence score of the tracked object.
-  float confidence = 4;
+  float confidence = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // A generic detected attribute represented by name in string format.
 message DetectedAttribute {
-  // The name of the attribute, i.e. glasses, dark_glasses, mouth_open etc.
+  // The name of the attribute, for example, glasses, dark_glasses, mouth_open.
   // A full list of supported type names will be provided in the document.
   string name = 1;
 
@@ -335,23 +494,115 @@ message DetectedAttribute {
   string value = 3;
 }
 
+// Celebrity definition.
+message Celebrity {
+  // The resource name of the celebrity. Have the format
+  // `video-intelligence/kg-mid` indicates a celebrity from preloaded gallery.
+  // kg-mid is the id in Google knowledge graph, which is unique for the
+  // celebrity.
+  string name = 1;
+
+  // The celebrity name.
+  string display_name = 2;
+
+  // Textual description of additional information about the celebrity, if
+  // applicable.
+  string description = 3;
+}
+
+// The annotation result of a celebrity face track. RecognizedCelebrity field
+// could be empty if the face track does not have any matched celebrities.
+message CelebrityTrack {
+  // The recognized celebrity with confidence score.
+  message RecognizedCelebrity {
+    // The recognized celebrity.
+    Celebrity celebrity = 1;
+
+    // Recognition confidence. Range [0, 1].
+    float confidence = 2;
+  }
+
+  // Top N match of the celebrities for the face in this track.
+  repeated RecognizedCelebrity celebrities = 1;
+
+  // A track of a person's face.
+  Track face_track = 3;
+}
+
+// Celebrity recognition annotation per video.
+message CelebrityRecognitionAnnotation {
+  // The tracks detected from the input video, including recognized celebrities
+  // and other detected faces in the video.
+  repeated CelebrityTrack celebrity_tracks = 1;
+}
+
+// A generic detected landmark represented by name in string format and a 2D
+// location.
+message DetectedLandmark {
+  // The name of this landmark, for example, left_hand, right_shoulder.
+  string name = 1;
+
+  // The 2D point of the detected landmark using the normalized image
+  // coordindate system. The normalized coordinates have the range from 0 to 1.
+  NormalizedVertex point = 2;
+
+  // The confidence score of the detected landmark. Range [0, 1].
+  float confidence = 3;
+}
+
+// Face detection annotation.
+message FaceDetectionAnnotation {
+  // The face tracks with attributes.
+  repeated Track tracks = 3;
+
+  // The thumbnail of a person's face.
+  bytes thumbnail = 4;
+}
+
+// Person detection annotation per video.
+message PersonDetectionAnnotation {
+  // The detected tracks of a person.
+  repeated Track tracks = 1;
+}
+
 // Annotation results for a single video.
 message VideoAnnotationResults {
   // Video file location in
-  // [Google Cloud Storage](https://cloud.google.com/storage/).
+  // [Cloud Storage](https://cloud.google.com/storage/).
   string input_uri = 1;
 
-  // Label annotations on video level or user specified segment level.
+  // Video segment on which the annotation is run.
+  VideoSegment segment = 10;
+
+  // Topical label annotations on video level or user-specified segment level.
   // There is exactly one element for each unique label.
   repeated LabelAnnotation segment_label_annotations = 2;
 
-  // Label annotations on shot level.
+  // Presence label annotations on video level or user-specified segment level.
+  // There is exactly one element for each unique label. Compared to the
+  // existing topical `segment_label_annotations`, this field presents more
+  // fine-grained, segment-level labels detected in video content and is made
+  // available only when the client sets `LabelDetectionConfig.model` to
+  // "builtin/latest" in the request.
+  repeated LabelAnnotation segment_presence_label_annotations = 23;
+
+  // Topical label annotations on shot level.
   // There is exactly one element for each unique label.
   repeated LabelAnnotation shot_label_annotations = 3;
+
+  // Presence label annotations on shot level. There is exactly one element for
+  // each unique label. Compared to the existing topical
+  // `shot_label_annotations`, this field presents more fine-grained, shot-level
+  // labels detected in video content and is made available only when the client
+  // sets `LabelDetectionConfig.model` to "builtin/latest" in the request.
+  repeated LabelAnnotation shot_presence_label_annotations = 24;
 
   // Label annotations on frame level.
   // There is exactly one element for each unique label.
   repeated LabelAnnotation frame_label_annotations = 4;
+
+  // Face detection annotations.
+  repeated FaceDetectionAnnotation face_detection_annotations = 13;
 
   // Shot annotations. Each shot is represented as a video segment.
   repeated VideoSegment shot_annotations = 6;
@@ -373,6 +624,12 @@ message VideoAnnotationResults {
   // Annotations for list of logos detected, tracked and recognized in video.
   repeated LogoRecognitionAnnotation logo_recognition_annotations = 19;
 
+  // Person detection annotations.
+  repeated PersonDetectionAnnotation person_detection_annotations = 20;
+
+  // Celebrity recognition annotations.
+  CelebrityRecognitionAnnotation celebrity_recognition_annotations = 21;
+
   // If set, indicates an error. Note that for a single `AnnotateVideoRequest`
   // some videos may succeed and some may fail.
   google.rpc.Status error = 9;
@@ -389,7 +646,7 @@ message AnnotateVideoResponse {
 // Annotation progress for a single video.
 message VideoAnnotationProgress {
   // Video file location in
-  // [Google Cloud Storage](https://cloud.google.com/storage/).
+  // [Cloud Storage](https://cloud.google.com/storage/).
   string input_uri = 1;
 
   // Approximate percentage processed thus far. Guaranteed to be
@@ -401,6 +658,14 @@ message VideoAnnotationProgress {
 
   // Time of the most recent update.
   google.protobuf.Timestamp update_time = 4;
+
+  // Specifies which feature is being tracked if the request contains more than
+  // one feature.
+  Feature feature = 5;
+
+  // Specifies which segment is being tracked if the request contains more than
+  // one segment.
+  VideoSegment segment = 6;
 }
 
 // Video annotation progress. Included in the `metadata`
@@ -413,72 +678,73 @@ message AnnotateVideoProgress {
 
 // Config for SPEECH_TRANSCRIPTION.
 message SpeechTranscriptionConfig {
-  // *Required* The language of the supplied audio as a
+  // Required. *Required* The language of the supplied audio as a
   // [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) language tag.
   // Example: "en-US".
   // See [Language Support](https://cloud.google.com/speech/docs/languages)
   // for a list of the currently supported language codes.
-  string language_code = 1;
+  string language_code = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // *Optional* Maximum number of recognition hypotheses to be returned.
+  // Optional. Maximum number of recognition hypotheses to be returned.
   // Specifically, the maximum number of `SpeechRecognitionAlternative` messages
   // within each `SpeechTranscription`. The server may return fewer than
   // `max_alternatives`. Valid values are `0`-`30`. A value of `0` or `1` will
   // return a maximum of one. If omitted, will return a maximum of one.
-  int32 max_alternatives = 2;
+  int32 max_alternatives = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // *Optional* If set to `true`, the server will attempt to filter out
+  // Optional. If set to `true`, the server will attempt to filter out
   // profanities, replacing all but the initial character in each filtered word
   // with asterisks, e.g. "f***". If set to `false` or omitted, profanities
   // won't be filtered out.
-  bool filter_profanity = 3;
+  bool filter_profanity = 3 [(google.api.field_behavior) = OPTIONAL];
 
-  // *Optional* A means to provide context to assist the speech recognition.
-  repeated SpeechContext speech_contexts = 4;
+  // Optional. A means to provide context to assist the speech recognition.
+  repeated SpeechContext speech_contexts = 4
+      [(google.api.field_behavior) = OPTIONAL];
 
-  // *Optional* If 'true', adds punctuation to recognition result hypotheses.
+  // Optional. If 'true', adds punctuation to recognition result hypotheses.
   // This feature is only available in select languages. Setting this for
   // requests in other languages has no effect at all. The default 'false' value
   // does not add punctuation to result hypotheses. NOTE: "This is currently
   // offered as an experimental service, complimentary to all users. In the
   // future this may be exclusively available as a premium feature."
-  bool enable_automatic_punctuation = 5;
+  bool enable_automatic_punctuation = 5
+      [(google.api.field_behavior) = OPTIONAL];
 
-  // *Optional* For file formats, such as MXF or MKV, supporting multiple audio
+  // Optional. For file formats, such as MXF or MKV, supporting multiple audio
   // tracks, specify up to two tracks. Default: track 0.
-  repeated int32 audio_tracks = 6;
+  repeated int32 audio_tracks = 6 [(google.api.field_behavior) = OPTIONAL];
 
-  // *Optional* If 'true', enables speaker detection for each recognized word in
+  // Optional. If 'true', enables speaker detection for each recognized word in
   // the top alternative of the recognition result using a speaker_tag provided
   // in the WordInfo.
   // Note: When this is true, we send all the words from the beginning of the
-  // audio for the top alternative in every consecutive responses.
+  // audio for the top alternative in every consecutive response.
   // This is done in order to improve our speaker tags as our models learn to
   // identify the speakers in the conversation over time.
-  bool enable_speaker_diarization = 7;
+  bool enable_speaker_diarization = 7 [(google.api.field_behavior) = OPTIONAL];
 
-  // *Optional*
-  // If set, specifies the estimated number of speakers in the conversation.
-  // If not set, defaults to '2'.
-  // Ignored unless enable_speaker_diarization is set to true.
-  int32 diarization_speaker_count = 8;
+  // Optional. If set, specifies the estimated number of speakers in the
+  // conversation. If not set, defaults to '2'. Ignored unless
+  // enable_speaker_diarization is set to true.
+  int32 diarization_speaker_count = 8 [(google.api.field_behavior) = OPTIONAL];
 
-  // *Optional* If `true`, the top result includes a list of words and the
+  // Optional. If `true`, the top result includes a list of words and the
   // confidence for those words. If `false`, no word-level confidence
   // information is returned. The default is `false`.
-  bool enable_word_confidence = 9;
+  bool enable_word_confidence = 9 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Provides "hints" to the speech recognizer to favor specific words and phrases
 // in the results.
 message SpeechContext {
-  // *Optional* A list of strings containing words and phrases "hints" so that
+  // Optional. A list of strings containing words and phrases "hints" so that
   // the speech recognition is more likely to recognize them. This can be used
   // to improve the accuracy for specific words and phrases, for example, if
   // specific commands are typically spoken by the user. This can also be used
   // to add additional words to the vocabulary of the recognizer. See
   // [usage limits](https://cloud.google.com/speech/limits#content).
-  repeated string phrases = 1;
+  repeated string phrases = 1 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // A speech recognition result corresponding to a portion of the audio.
@@ -489,11 +755,10 @@ message SpeechTranscription {
   // ranked by the recognizer.
   repeated SpeechRecognitionAlternative alternatives = 1;
 
-  // Output only. The
-  // [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) language tag of the
-  // language in this result. This language code was detected to have the most
-  // likelihood of being spoken in the audio.
-  string language_code = 2;
+  // Output only. The [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt)
+  // language tag of the language in this result. This language code was
+  // detected to have the most likelihood of being spoken in the audio.
+  string language_code = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Alternative hypotheses (a.k.a. n-best list).
@@ -501,16 +766,18 @@ message SpeechRecognitionAlternative {
   // Transcript text representing the words that the user spoke.
   string transcript = 1;
 
-  // The confidence estimate between 0.0 and 1.0. A higher number
+  // Output only. The confidence estimate between 0.0 and 1.0. A higher number
   // indicates an estimated greater likelihood that the recognized words are
-  // correct. This field is typically provided only for the top hypothesis, and
-  // only for `is_final=true` results. Clients should not rely on the
-  // `confidence` field as it is not guaranteed to be accurate or consistent.
+  // correct. This field is set only for the top alternative.
+  // This field is not guaranteed to be accurate and users should not rely on it
+  // to be always provided.
   // The default of 0.0 is a sentinel value indicating `confidence` was not set.
-  float confidence = 2;
+  float confidence = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // A list of word-specific information for each recognized word.
-  repeated WordInfo words = 3;
+  // Output only. A list of word-specific information for each recognized word.
+  // Note: When `enable_speaker_diarization` is set to true, you will see all
+  // the words from the beginning of the audio.
+  repeated WordInfo words = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Word-specific information for recognized words. Word information is only
@@ -538,13 +805,13 @@ message WordInfo {
   // This field is not guaranteed to be accurate and users should not rely on it
   // to be always provided.
   // The default of 0.0 is a sentinel value indicating `confidence` was not set.
-  float confidence = 4;
+  float confidence = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Output only. A distinct integer value is assigned for every speaker within
   // the audio. This field specifies which one of those speakers was detected to
   // have spoken this word. Value ranges from 1 up to diarization_speaker_count,
   // and is only set if speaker diarization is enabled.
-  int32 speaker_tag = 5;
+  int32 speaker_tag = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // A vertex represents a 2D point in the image.
@@ -627,6 +894,22 @@ message ObjectTrackingFrame {
 
 // Annotations corresponding to one tracked object.
 message ObjectTrackingAnnotation {
+  // Different representation of tracking info in non-streaming batch
+  // and streaming modes.
+  oneof track_info {
+    // Non-streaming batch mode ONLY.
+    // Each object track corresponds to one video segment where it appears.
+    VideoSegment segment = 3;
+
+    // Streaming mode ONLY.
+    // In streaming mode, we do not know the end time of a tracked object
+    // before it is completed. Hence, there is no VideoSegment info returned.
+    // Instead, we provide a unique identifiable integer track_id so that
+    // the customers can correlate the results of the ongoing
+    // ObjectTrackAnnotation of the same track_id over time.
+    int64 track_id = 5;
+  }
+
   // Entity to specify the object category that this track is labeled as.
   Entity entity = 1;
 
@@ -638,21 +921,6 @@ message ObjectTrackingAnnotation {
   // messages in frames.
   // Streaming mode: it can only be one ObjectTrackingFrame message in frames.
   repeated ObjectTrackingFrame frames = 2;
-
-  // Different representation of tracking info in non-streaming batch
-  // and streaming modes.
-  oneof track_info {
-    // Non-streaming batch mode ONLY.
-    // Each object track corresponds to one video segment where it appears.
-    VideoSegment segment = 3;
-    // Streaming mode ONLY.
-    // In streaming mode, we do not know the end time of a tracked object
-    // before it is completed. Hence, there is no VideoSegment info returned.
-    // Instead, we provide a unique identifiable integer track_id so that
-    // the customers can correlate the results of the ongoing
-    // ObjectTrackAnnotation of the same track_id over time.
-    int64 track_id = 5;
-  }
 }
 
 // Annotation corresponding to one detected, tracked and recognized logo class.
@@ -694,6 +962,42 @@ message StreamingAnnotateVideoRequest {
   }
 }
 
+// Provides information to the annotator that specifies how to process the
+// request.
+message StreamingVideoConfig {
+  // Config for requested annotation feature.
+  oneof streaming_config {
+    // Config for STREAMING_SHOT_CHANGE_DETECTION.
+    StreamingShotChangeDetectionConfig shot_change_detection_config = 2;
+
+    // Config for STREAMING_LABEL_DETECTION.
+    StreamingLabelDetectionConfig label_detection_config = 3;
+
+    // Config for STREAMING_EXPLICIT_CONTENT_DETECTION.
+    StreamingExplicitContentDetectionConfig explicit_content_detection_config =
+        4;
+
+    // Config for STREAMING_OBJECT_TRACKING.
+    StreamingObjectTrackingConfig object_tracking_config = 5;
+
+    // Config for STREAMING_AUTOML_ACTION_RECOGNITION.
+    StreamingAutomlActionRecognitionConfig automl_action_recognition_config =
+        23;
+
+    // Config for STREAMING_AUTOML_CLASSIFICATION.
+    StreamingAutomlClassificationConfig automl_classification_config = 21;
+
+    // Config for STREAMING_AUTOML_OBJECT_TRACKING.
+    StreamingAutomlObjectTrackingConfig automl_object_tracking_config = 22;
+  }
+
+  // Requested annotation feature.
+  StreamingFeature feature = 1;
+
+  // Streaming storage option. By default: storage is disabled.
+  StreamingStorageConfig storage_config = 30;
+}
+
 // `StreamingAnnotateVideoResponse` is the only message returned to the client
 // by `StreamingAnnotateVideo`. A series of zero or more
 // `StreamingAnnotateVideoResponse` messages are streamed back to the client.
@@ -705,66 +1009,11 @@ message StreamingAnnotateVideoResponse {
   // Streaming annotation results.
   StreamingVideoAnnotationResults annotation_results = 2;
 
-  // GCS URI that stores annotation results of one streaming session.
-  // It is a directory that can hold multiple files in JSON format.
-  // Example uri format:
-  // gs://bucket_id/object_id/cloud_project_name-session_id
+  // Google Cloud Storage(GCS) URI that stores annotation results of one
+  // streaming session in JSON format.
+  // It is the annotation_result_storage_directory
+  // from the request followed by '/cloud_project_number-session_id'.
   string annotation_results_uri = 3;
-}
-
-// Config for AUTOML_CLASSIFICATION in streaming mode.
-message StreamingAutomlClassificationConfig {
-  // Resource name of AutoML model.
-  // Format: `projects/{project_id}/locations/{location_id}/models/{model_id}`
-  string model_name = 1;
-}
-
-// Config for AUTOML_OBJECT_TRACKING in streaming mode.
-message StreamingAutomlObjectTrackingConfig {
-  // Resource name of AutoML model.
-  // Format: `projects/{project_id}/locations/{location_id}/models/{model_id}`
-  string model_name = 1;
-}
-
-// Config for EXPLICIT_CONTENT_DETECTION in streaming mode.
-message StreamingExplicitContentDetectionConfig {
-  // No customized config support.
-}
-
-// Config for LABEL_DETECTION in streaming mode.
-message StreamingLabelDetectionConfig {
-  // Whether the video has been captured from a stationary (i.e. non-moving)
-  // camera. When set to true, might improve detection accuracy for moving
-  // objects. Default: false.
-  bool stationary_camera = 1;
-}
-
-// Config for STREAMING_OBJECT_TRACKING.
-message StreamingObjectTrackingConfig {
-  // No customized config support.
-}
-
-// Config for SHOT_CHANGE_DETECTION in streaming mode.
-message StreamingShotChangeDetectionConfig {
-  // No customized config support.
-}
-
-// Config for streaming storage option.
-message StreamingStorageConfig {
-  // Enable streaming storage. Default: false.
-  bool enable_storage_annotation_result = 1;
-
-  // GCS URI to store all annotation results for one client. Client should
-  // specify this field as the top-level storage directory. Annotation results
-  // of different sessions will be put into different sub-directories denoted
-  // by project_name and session_id. All sub-directories will be auto generated
-  // by program and will be made accessible to client in response proto.
-  // URIs must be specified in the following format: `gs://bucket-id/object-id`
-  // `bucket-id` should be a valid GCS bucket created by client and bucket
-  // permission shall also be configured properly. `object-id` can be arbitrary
-  // string that make sense to client. Other URI formats will return error and
-  // cause GCS write failure.
-  string annotation_result_storage_directory = 3;
 }
 
 // Streaming annotation results corresponding to a portion of the video
@@ -783,115 +1032,59 @@ message StreamingVideoAnnotationResults {
   repeated ObjectTrackingAnnotation object_annotations = 4;
 }
 
-// Provides information to the annotator that specifies how to process the
-// request.
-message StreamingVideoConfig {
-  // Requested annotation feature.
-  StreamingFeature feature = 1;
+// Config for STREAMING_SHOT_CHANGE_DETECTION.
+message StreamingShotChangeDetectionConfig {}
 
-  // Config for requested annotation feature.
-  oneof streaming_config {
-    // Config for STREAMING_SHOT_CHANGE_DETECTION.
-    StreamingShotChangeDetectionConfig shot_change_detection_config = 2;
-
-    // Config for STREAMING_LABEL_DETECTION.
-    StreamingLabelDetectionConfig label_detection_config = 3;
-
-    // Config for STREAMING_EXPLICIT_CONTENT_DETECTION.
-    StreamingExplicitContentDetectionConfig explicit_content_detection_config =
-        4;
-
-    // Config for STREAMING_OBJECT_TRACKING.
-    StreamingObjectTrackingConfig object_tracking_config = 5;
-
-    // Config for STREAMING_AUTOML_CLASSIFICATION.
-    StreamingAutomlClassificationConfig automl_classification_config = 21;
-
-    // Config for STREAMING_AUTOML_OBJECT_TRACKING.
-    StreamingAutomlObjectTrackingConfig automl_object_tracking_config = 22;
-  }
-
-  // Streaming storage option. By default: storage is disabled.
-  StreamingStorageConfig storage_config = 30;
+// Config for STREAMING_LABEL_DETECTION.
+message StreamingLabelDetectionConfig {
+  // Whether the video has been captured from a stationary (i.e. non-moving)
+  // camera. When set to true, might improve detection accuracy for moving
+  // objects. Default: false.
+  bool stationary_camera = 1;
 }
 
-// Video annotation feature.
-enum Feature {
-  // Unspecified.
-  FEATURE_UNSPECIFIED = 0;
+// Config for STREAMING_EXPLICIT_CONTENT_DETECTION.
+message StreamingExplicitContentDetectionConfig {}
 
-  // Label detection. Detect objects, such as dog or flower.
-  LABEL_DETECTION = 1;
+// Config for STREAMING_OBJECT_TRACKING.
+message StreamingObjectTrackingConfig {}
 
-  // Shot change detection.
-  SHOT_CHANGE_DETECTION = 2;
-
-  // Explicit content detection.
-  EXPLICIT_CONTENT_DETECTION = 3;
-
-  // Speech transcription.
-  SPEECH_TRANSCRIPTION = 6;
-
-  // OCR text detection and tracking.
-  TEXT_DETECTION = 7;
-
-  // Object detection and tracking.
-  OBJECT_TRACKING = 9;
-
-  // Logo detection, tracking, and recognition.
-  LOGO_RECOGNITION = 12;
+// Config for STREAMING_AUTOML_ACTION_RECOGNITION.
+message StreamingAutomlActionRecognitionConfig {
+  // Resource name of AutoML model.
+  // Format: `projects/{project_id}/locations/{location_id}/models/{model_id}`
+  string model_name = 1;
 }
 
-// Label detection mode.
-enum LabelDetectionMode {
-  // Unspecified.
-  LABEL_DETECTION_MODE_UNSPECIFIED = 0;
-
-  // Detect shot-level labels.
-  SHOT_MODE = 1;
-
-  // Detect frame-level labels.
-  FRAME_MODE = 2;
-
-  // Detect both shot-level and frame-level labels.
-  SHOT_AND_FRAME_MODE = 3;
+// Config for STREAMING_AUTOML_CLASSIFICATION.
+message StreamingAutomlClassificationConfig {
+  // Resource name of AutoML model.
+  // Format:
+  // `projects/{project_number}/locations/{location_id}/models/{model_id}`
+  string model_name = 1;
 }
 
-// Bucketized representation of likelihood.
-enum Likelihood {
-  // Unspecified likelihood.
-  LIKELIHOOD_UNSPECIFIED = 0;
-
-  // Very unlikely.
-  VERY_UNLIKELY = 1;
-
-  // Unlikely.
-  UNLIKELY = 2;
-
-  // Possible.
-  POSSIBLE = 3;
-
-  // Likely.
-  LIKELY = 4;
-
-  // Very likely.
-  VERY_LIKELY = 5;
+// Config for STREAMING_AUTOML_OBJECT_TRACKING.
+message StreamingAutomlObjectTrackingConfig {
+  // Resource name of AutoML model.
+  // Format: `projects/{project_id}/locations/{location_id}/models/{model_id}`
+  string model_name = 1;
 }
 
-// Streaming video annotation feature.
-enum StreamingFeature {
-  // Unspecified.
-  STREAMING_FEATURE_UNSPECIFIED = 0;
-  // Label detection. Detect objects, such as dog or flower.
-  STREAMING_LABEL_DETECTION = 1;
-  // Shot change detection.
-  STREAMING_SHOT_CHANGE_DETECTION = 2;
-  // Explicit content detection.
-  STREAMING_EXPLICIT_CONTENT_DETECTION = 3;
-  // Object detection and tracking.
-  STREAMING_OBJECT_TRACKING = 4;
-  // Video classification based on AutoML model.
-  STREAMING_AUTOML_CLASSIFICATION = 21;
-  // Object detection and tracking based on AutoML model.
-  STREAMING_AUTOML_OBJECT_TRACKING = 22;
+// Config for streaming storage option.
+message StreamingStorageConfig {
+  // Enable streaming storage. Default: false.
+  bool enable_storage_annotation_result = 1;
+
+  // Cloud Storage URI to store all annotation results for one client. Client
+  // should specify this field as the top-level storage directory. Annotation
+  // results of different sessions will be put into different sub-directories
+  // denoted by project_name and session_id. All sub-directories will be auto
+  // generated by program and will be made accessible to client in response
+  // proto. URIs must be specified in the following format:
+  // `gs://bucket-id/object-id` `bucket-id` should be a valid Cloud Storage
+  // bucket created by client and bucket permission shall also be configured
+  // properly. `object-id` can be arbitrary string that make sense to client.
+  // Other URI formats will return error and cause Cloud Storage write failure.
+  string annotation_result_storage_directory = 3;
 }

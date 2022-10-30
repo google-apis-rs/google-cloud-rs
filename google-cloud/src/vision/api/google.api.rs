@@ -393,6 +393,16 @@ pub enum FieldBehavior {
     /// This indicates that the field may be set once in a request to create a
     /// resource, but may not be changed thereafter.
     Immutable = 5,
+    /// Denotes that a (repeated) field is an unordered list.
+    /// This indicates that the service may provide the elements of the list
+    /// in any arbitrary  order, rather than the order the user originally
+    /// provided. Additionally, the list's order may or may not be stable.
+    UnorderedList = 6,
+    /// Denotes that this field returns a non-empty default value if not set.
+    /// This indicates that if the user provides the empty value in a request,
+    /// a non-empty value will be returned. The user will not be aware of what
+    /// non-empty value to expect.
+    NonEmptyDefault = 7,
 }
 /// A simple descriptor of a resource type.
 ///
@@ -408,22 +418,15 @@ pub enum FieldBehavior {
 ///       // For Kubernetes resources, the format is {api group}/{kind}.
 ///       option (google.api.resource) = {
 ///         type: "pubsub.googleapis.com/Topic"
-///         name_descriptor: {
-///           pattern: "projects/{project}/topics/{topic}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Project"
-///           parent_name_extractor: "projects/{project}"
-///         }
+///         pattern: "projects/{project}/topics/{topic}"
 ///       };
 ///     }
 ///
 /// The ResourceDescriptor Yaml config will look like:
 ///
-///    resources:
-///    - type: "pubsub.googleapis.com/Topic"
-///      name_descriptor:
-///        - pattern: "projects/{project}/topics/{topic}"
-///          parent_type: "cloudresourcemanager.googleapis.com/Project"
-///          parent_name_extractor: "projects/{project}"
+///     resources:
+///     - type: "pubsub.googleapis.com/Topic"
+///       pattern: "projects/{project}/topics/{topic}"
 ///
 /// Sometimes, resources have multiple patterns, typically because they can
 /// live under multiple parents.
@@ -433,26 +436,10 @@ pub enum FieldBehavior {
 ///     message LogEntry {
 ///       option (google.api.resource) = {
 ///         type: "logging.googleapis.com/LogEntry"
-///         name_descriptor: {
-///           pattern: "projects/{project}/logs/{log}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Project"
-///           parent_name_extractor: "projects/{project}"
-///         }
-///         name_descriptor: {
-///           pattern: "folders/{folder}/logs/{log}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Folder"
-///           parent_name_extractor: "folders/{folder}"
-///         }
-///         name_descriptor: {
-///           pattern: "organizations/{organization}/logs/{log}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Organization"
-///           parent_name_extractor: "organizations/{organization}"
-///         }
-///         name_descriptor: {
-///           pattern: "billingAccounts/{billing_account}/logs/{log}"
-///           parent_type: "billing.googleapis.com/BillingAccount"
-///           parent_name_extractor: "billingAccounts/{billing_account}"
-///         }
+///         pattern: "projects/{project}/logs/{log}"
+///         pattern: "folders/{folder}/logs/{log}"
+///         pattern: "organizations/{organization}/logs/{log}"
+///         pattern: "billingAccounts/{billing_account}/logs/{log}"
 ///       };
 ///     }
 ///
@@ -460,48 +447,10 @@ pub enum FieldBehavior {
 ///
 ///     resources:
 ///     - type: 'logging.googleapis.com/LogEntry'
-///       name_descriptor:
-///         - pattern: "projects/{project}/logs/{log}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Project"
-///           parent_name_extractor: "projects/{project}"
-///         - pattern: "folders/{folder}/logs/{log}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Folder"
-///           parent_name_extractor: "folders/{folder}"
-///         - pattern: "organizations/{organization}/logs/{log}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Organization"
-///           parent_name_extractor: "organizations/{organization}"
-///         - pattern: "billingAccounts/{billing_account}/logs/{log}"
-///           parent_type: "billing.googleapis.com/BillingAccount"
-///           parent_name_extractor: "billingAccounts/{billing_account}"
-///
-/// For flexible resources, the resource name doesn't contain parent names, but
-/// the resource itself has parents for policy evaluation.
-///
-/// Example:
-///
-///     message Shelf {
-///       option (google.api.resource) = {
-///         type: "library.googleapis.com/Shelf"
-///         name_descriptor: {
-///           pattern: "shelves/{shelf}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Project"
-///         }
-///         name_descriptor: {
-///           pattern: "shelves/{shelf}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Folder"
-///         }
-///       };
-///     }
-///
-/// The ResourceDescriptor Yaml config will look like:
-///
-///     resources:
-///     - type: 'library.googleapis.com/Shelf'
-///       name_descriptor:
-///         - pattern: "shelves/{shelf}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Project"
-///         - pattern: "shelves/{shelf}"
-///           parent_type: "cloudresourcemanager.googleapis.com/Folder"
+///       pattern: "projects/{project}/logs/{log}"
+///       pattern: "folders/{folder}/logs/{log}"
+///       pattern: "organizations/{organization}/logs/{log}"
+///       pattern: "billingAccounts/{billing_account}/logs/{log}"
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ResourceDescriptor {
     /// The resource type. It must be in the format of
@@ -558,10 +507,14 @@ pub struct ResourceDescriptor {
     ///     }
     #[prost(enumeration = "resource_descriptor::History", tag = "4")]
     pub history: i32,
-    /// The plural name used in the resource name, such as 'projects' for
-    /// the name of 'projects/{project}'. It is the same concept of the `plural`
-    /// field in k8s CRD spec
+    /// The plural name used in the resource name and permission names, such as
+    /// 'projects' for the resource name of 'projects/{project}' and the permission
+    /// name of 'cloudresourcemanager.googleapis.com/projects.get'. It is the same
+    /// concept of the `plural` field in k8s CRD spec
     /// <https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/>
+    ///
+    /// Note: The plural form is required even for singleton resources. See
+    /// <https://aip.dev/156>
     #[prost(string, tag = "5")]
     pub plural: ::prost::alloc::string::String,
     /// The same concept of the `singular` field in k8s CRD spec
@@ -569,6 +522,11 @@ pub struct ResourceDescriptor {
     /// Such as "project" for the `resourcemanager.googleapis.com/Project` type.
     #[prost(string, tag = "6")]
     pub singular: ::prost::alloc::string::String,
+    /// Style flag(s) for this resource.
+    /// These indicate that a resource is expected to conform to a given
+    /// style. See the specific style flags for additional information.
+    #[prost(enumeration = "resource_descriptor::Style", repeated, tag = "10")]
+    pub style: ::prost::alloc::vec::Vec<i32>,
 }
 /// Nested message and enum types in `ResourceDescriptor`.
 pub mod resource_descriptor {
@@ -587,6 +545,22 @@ pub mod resource_descriptor {
         /// that from being necessary once there are multiple patterns.)
         FutureMultiPattern = 2,
     }
+    /// A flag representing a specific style that a resource claims to conform to.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Style {
+        /// The unspecified value. Do not use.
+        Unspecified = 0,
+        /// This resource is intended to be "declarative-friendly".
+        ///
+        /// Declarative-friendly resources must be more strictly consistent, and
+        /// setting this to true communicates to tools that this resource should
+        /// adhere to declarative-friendly expectations.
+        ///
+        /// Note: This is used by the API linter (linter.aip.dev) to enable
+        /// additional checks.
+        DeclarativeFriendly = 1,
+    }
 }
 /// Defines a proto annotation that describes a string field that refers to
 /// an API resource.
@@ -601,6 +575,17 @@ pub struct ResourceReference {
     ///         type: "pubsub.googleapis.com/Topic"
     ///       }];
     ///     }
+    ///
+    /// Occasionally, a field may reference an arbitrary resource. In this case,
+    /// APIs use the special value * in their resource reference.
+    ///
+    /// Example:
+    ///
+    ///     message GetIamPolicyRequest {
+    ///       string resource = 2 [(google.api.resource_reference) = {
+    ///         type: "*"
+    ///       }];
+    ///     }
     #[prost(string, tag = "1")]
     pub r#type: ::prost::alloc::string::String,
     /// The resource type of a child collection that the annotated field
@@ -609,11 +594,11 @@ pub struct ResourceReference {
     ///
     /// Example:
     ///
-    ///   message ListLogEntriesRequest {
-    ///     string parent = 1 [(google.api.resource_reference) = {
-    ///       child_type: "logging.googleapis.com/LogEntry"
-    ///     };
-    ///   }
+    ///     message ListLogEntriesRequest {
+    ///       string parent = 1 [(google.api.resource_reference) = {
+    ///         child_type: "logging.googleapis.com/LogEntry"
+    ///       };
+    ///     }
     #[prost(string, tag = "2")]
     pub child_type: ::prost::alloc::string::String,
 }

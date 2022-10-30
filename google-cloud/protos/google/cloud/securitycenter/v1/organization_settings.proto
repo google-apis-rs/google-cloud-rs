@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,13 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.cloud.securitycenter.v1;
 
-import "google/api/annotations.proto";
+import "google/api/resource.proto";
 
 option csharp_namespace = "Google.Cloud.SecurityCenter.V1";
 option go_package = "google.golang.org/genproto/googleapis/cloud/securitycenter/v1;securitycenter";
@@ -26,9 +25,14 @@ option java_package = "com.google.cloud.securitycenter.v1";
 option php_namespace = "Google\\Cloud\\SecurityCenter\\V1";
 option ruby_package = "Google::Cloud::SecurityCenter::V1";
 
-// User specified settings that are attached to the Cloud Security Command
-// Center (Cloud SCC) organization.
+// User specified settings that are attached to the Security Command
+// Center organization.
 message OrganizationSettings {
+  option (google.api.resource) = {
+    type: "securitycenter.googleapis.com/OrganizationSettings"
+    pattern: "organizations/{organization}/organizationSettings"
+  };
+
   // The configuration used for Asset Discovery runs.
   message AssetDiscoveryConfig {
     // The mode of inclusion when running Asset Discovery.
@@ -58,12 +62,16 @@ message OrganizationSettings {
 
     // The mode to use for filtering asset discovery.
     InclusionMode inclusion_mode = 2;
+
+    // The folder ids to use for filtering asset discovery.
+    // It consists of only digits, e.g., 756619654966.
+    repeated string folder_ids = 3;
   }
 
   // The relative resource name of the settings. See:
   // https://cloud.google.com/apis/design/resource_names#relative_resource_name
   // Example:
-  // "organizations/123/organizationSettings".
+  // "organizations/{organization_id}/organizationSettings".
   string name = 1;
 
   // A flag that indicates if Asset Discovery should be enabled. If the flag is
@@ -74,6 +82,4 @@ message OrganizationSettings {
 
   // The configuration used for Asset Discovery runs.
   AssetDiscoveryConfig asset_discovery_config = 3;
-
-  reserved 4, 5;
 }

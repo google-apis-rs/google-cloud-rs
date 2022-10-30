@@ -5,6 +5,11 @@ title: Cloud Asset API
 
 apis:
 - name: google.cloud.asset.v1.AssetService
+- name: google.longrunning.Operations
+
+types:
+- name: google.cloud.asset.v1.AnalyzeIamPolicyLongrunningMetadata
+- name: google.cloud.asset.v1.AnalyzeIamPolicyLongrunningResponse
 
 documentation:
   summary: The cloud asset API manages the history and inventory of cloud resources.
@@ -17,24 +22,23 @@ documentation:
     a given timestamp.
 
     Read more documents here:
-    https://cloud.google.com/resource-manager/docs/cloud-asset-inventory/overview
+    https://cloud.google.com/asset-inventory/docs
 
 backend:
   rules:
-  - selector: google.cloud.asset.v1.AssetService.BatchGetAssetsHistory
-    deadline: 600.0
-  - selector: google.cloud.asset.v1.AssetService.ExportAssets
+  - selector: 'google.cloud.asset.v1.AssetService.*'
     deadline: 600.0
   - selector: google.longrunning.Operations.GetOperation
     deadline: 60.0
 
+http:
+  rules:
+  - selector: google.longrunning.Operations.GetOperation
+    get: '/v1/{name=*/*/operations/*/**}'
+
 authentication:
   rules:
-  - selector: google.cloud.asset.v1.AssetService.BatchGetAssetsHistory
-    oauth:
-      canonical_scopes: |-
-        https://www.googleapis.com/auth/cloud-platform
-  - selector: google.cloud.asset.v1.AssetService.ExportAssets
+  - selector: 'google.cloud.asset.v1.AssetService.*'
     oauth:
       canonical_scopes: |-
         https://www.googleapis.com/auth/cloud-platform

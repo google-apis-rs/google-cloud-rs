@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -20,6 +19,7 @@ package google.cloud.talent.v4beta1;
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "google/cloud/talent/v4beta1/event.proto";
 
 option go_package = "google.golang.org/genproto/googleapis/cloud/talent/v4beta1;talent";
@@ -51,6 +51,7 @@ service EventService {
         body: "*"
       }
     };
+    option (google.api.method_signature) = "parent,client_event";
   }
 }
 
@@ -61,9 +62,14 @@ message CreateClientEventRequest {
   // The format is "projects/{project_id}/tenants/{tenant_id}", for example,
   // "projects/foo/tenant/bar". If tenant id is unspecified, a default tenant
   // is created, for example, "projects/foo".
-  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "jobs.googleapis.com/Company"
+    }
+  ];
 
-  // Required. Events issued when end user interacts with customer's application
-  // that uses Cloud Talent Solution.
+  // Required. Events issued when end user interacts with customer's application that
+  // uses Cloud Talent Solution.
   ClientEvent client_event = 2 [(google.api.field_behavior) = REQUIRED];
 }

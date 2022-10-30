@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
@@ -22,6 +21,7 @@ import "google/api/field_behavior.proto";
 import "google/cloud/bigquery/v2/encryption_config.proto";
 import "google/cloud/bigquery/v2/model_reference.proto";
 import "google/cloud/bigquery/v2/standard_sql.proto";
+import "google/cloud/bigquery/v2/table_reference.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
@@ -41,31 +41,72 @@ service ModelService {
 
   // Gets the specified model resource by model ID.
   rpc GetModel(GetModelRequest) returns (Model) {
+    option (google.api.http) = {
+      get: "/bigquery/v2/projects/{project_id=*}/datasets/{dataset_id=*}/models/{model_id=*}"
+    };
     option (google.api.method_signature) = "project_id,dataset_id,model_id";
   }
 
   // Lists all models in the specified dataset. Requires the READER dataset
-  // role.
+  // role. After retrieving the list of models, you can get information about a
+  // particular model by calling the models.get method.
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
+    option (google.api.http) = {
+      get: "/bigquery/v2/projects/{project_id=*}/datasets/{dataset_id=*}/models"
+    };
     option (google.api.method_signature) = "project_id,dataset_id,max_results";
   }
 
   // Patch specific fields in the specified model.
   rpc PatchModel(PatchModelRequest) returns (Model) {
+    option (google.api.http) = {
+      patch: "/bigquery/v2/projects/{project_id=*}/datasets/{dataset_id=*}/models/{model_id=*}"
+      body: "model"
+    };
     option (google.api.method_signature) = "project_id,dataset_id,model_id,model";
   }
 
   // Deletes the model specified by modelId from the dataset.
   rpc DeleteModel(DeleteModelRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/bigquery/v2/projects/{project_id=*}/datasets/{dataset_id=*}/models/{model_id=*}"
+    };
     option (google.api.method_signature) = "project_id,dataset_id,model_id";
   }
 }
 
 message Model {
+  message SeasonalPeriod {
+    enum SeasonalPeriodType {
+      SEASONAL_PERIOD_TYPE_UNSPECIFIED = 0;
+
+      // No seasonality
+      NO_SEASONALITY = 1;
+
+      // Daily period, 24 hours.
+      DAILY = 2;
+
+      // Weekly period, 7 days.
+      WEEKLY = 3;
+
+      // Monthly period, 30 days or irregular.
+      MONTHLY = 4;
+
+      // Quarterly period, 90 days or irregular.
+      QUARTERLY = 5;
+
+      // Yearly period, 365 days or irregular.
+      YEARLY = 6;
+    }
+
+
+  }
+
   message KmeansEnums {
     // Indicates the method used to initialize the centroids for KMeans
     // clustering algorithm.
     enum KmeansInitializationMethod {
+      // Unspecified initialization method.
       KMEANS_INITIALIZATION_METHOD_UNSPECIFIED = 0;
 
       // Initializes the centroids randomly.
@@ -74,6 +115,9 @@ message Model {
       // Initializes the centroids using data specified in
       // kmeans_initialization_column.
       CUSTOM = 2;
+
+      // Initializes with kmeans++.
+      KMEANS_PLUS_PLUS = 3;
     }
 
 
@@ -94,7 +138,7 @@ message Model {
     // Median absolute error.
     google.protobuf.DoubleValue median_absolute_error = 4;
 
-    // R^2 score.
+    // R^2 score. This corresponds to r2_score in ML.EVALUATE.
     google.protobuf.DoubleValue r_squared = 5;
   }
 
@@ -276,8 +320,95 @@ message Model {
     // Mean of squared distances between each sample to its cluster centroid.
     google.protobuf.DoubleValue mean_squared_distance = 2;
 
-    // [Beta] Information for all clusters.
+    // Information for all clusters.
     repeated Cluster clusters = 3;
+  }
+
+  // Evaluation metrics used by weighted-ALS models specified by
+  // feedback_type=implicit.
+  message RankingMetrics {
+    // Calculates a precision per user for all the items by ranking them and
+    // then averages all the precisions across all the users.
+    google.protobuf.DoubleValue mean_average_precision = 1;
+
+    // Similar to the mean squared error computed in regression and explicit
+    // recommendation models except instead of computing the rating directly,
+    // the output from evaluate is computed against a preference which is 1 or 0
+    // depending on if the rating exists or not.
+    google.protobuf.DoubleValue mean_squared_error = 2;
+
+    // A metric to determine the goodness of a ranking calculated from the
+    // predicted confidence by comparing it to an ideal rank measured by the
+    // original ratings.
+    google.protobuf.DoubleValue normalized_discounted_cumulative_gain = 3;
+
+    // Determines the goodness of a ranking by computing the percentile rank
+    // from the predicted confidence and dividing it by the original rank.
+    google.protobuf.DoubleValue average_rank = 4;
+  }
+
+  // Model evaluation metrics for ARIMA forecasting models.
+  message ArimaForecastingMetrics {
+    // Model evaluation metrics for a single ARIMA forecasting model.
+    message ArimaSingleModelForecastingMetrics {
+      // Non-seasonal order.
+      ArimaOrder non_seasonal_order = 1;
+
+      // Arima fitting metrics.
+      ArimaFittingMetrics arima_fitting_metrics = 2;
+
+      // Is arima model fitted with drift or not. It is always false when d
+      // is not 1.
+      bool has_drift = 3;
+
+      // The time_series_id value for this time series. It will be one of
+      // the unique values from the time_series_id_column specified during
+      // ARIMA model training. Only present when time_series_id_column
+      // training option was used.
+      string time_series_id = 4;
+
+      // The tuple of time_series_ids identifying this time series. It will
+      // be one of the unique tuples of values present in the
+      // time_series_id_columns specified during ARIMA model training. Only
+      // present when time_series_id_columns training option was used and
+      // the order of values here are same as the order of
+      // time_series_id_columns.
+      repeated string time_series_ids = 9;
+
+      // Seasonal periods. Repeated because multiple periods are supported
+      // for one time series.
+      repeated SeasonalPeriod.SeasonalPeriodType seasonal_periods = 5;
+
+      // If true, holiday_effect is a part of time series decomposition result.
+      google.protobuf.BoolValue has_holiday_effect = 6;
+
+      // If true, spikes_and_dips is a part of time series decomposition result.
+      google.protobuf.BoolValue has_spikes_and_dips = 7;
+
+      // If true, step_changes is a part of time series decomposition result.
+      google.protobuf.BoolValue has_step_changes = 8;
+    }
+
+    // Non-seasonal order.
+    repeated ArimaOrder non_seasonal_order = 1 [deprecated = true];
+
+    // Arima model fitting metrics.
+    repeated ArimaFittingMetrics arima_fitting_metrics = 2 [deprecated = true];
+
+    // Seasonal periods. Repeated because multiple periods are supported for one
+    // time series.
+    repeated SeasonalPeriod.SeasonalPeriodType seasonal_periods = 3 [deprecated = true];
+
+    // Whether Arima model fitted with drift or not. It is always false when d
+    // is not 1.
+    repeated bool has_drift = 4 [deprecated = true];
+
+    // Id to differentiate different time series for the large-scale case.
+    repeated string time_series_id = 5 [deprecated = true];
+
+    // Repeated as there can be many metric sets (one for each model) in
+    // auto-arima and the large-scale case.
+    repeated ArimaSingleModelForecastingMetrics arima_single_model_forecasting_metrics = 6;
   }
 
   // Evaluation metrics of a model. These are either computed on all training
@@ -297,11 +428,76 @@ message Model {
 
       // Populated for clustering models.
       ClusteringMetrics clustering_metrics = 4;
+
+      // Populated for implicit feedback type matrix factorization models.
+      RankingMetrics ranking_metrics = 5;
+
+      // Populated for ARIMA models.
+      ArimaForecastingMetrics arima_forecasting_metrics = 6;
     }
+  }
+
+  // Data split result. This contains references to the training and evaluation
+  // data tables that were used to train the model.
+  message DataSplitResult {
+    // Table reference of the training data after split.
+    TableReference training_table = 1;
+
+    // Table reference of the evaluation data after split.
+    TableReference evaluation_table = 2;
+  }
+
+  // Arima order, can be used for both non-seasonal and seasonal parts.
+  message ArimaOrder {
+    // Order of the autoregressive part.
+    int64 p = 1;
+
+    // Order of the differencing part.
+    int64 d = 2;
+
+    // Order of the moving-average part.
+    int64 q = 3;
+  }
+
+  // ARIMA model fitting metrics.
+  message ArimaFittingMetrics {
+    // Log-likelihood.
+    double log_likelihood = 1;
+
+    // AIC.
+    double aic = 2;
+
+    // Variance.
+    double variance = 3;
+  }
+
+  // Global explanations containing the top most important features
+  // after training.
+  message GlobalExplanation {
+    // Explanation for a single feature.
+    message Explanation {
+      // Full name of the feature. For non-numerical features, will be
+      // formatted like <column_name>.<encoded_feature_name>. Overall size of
+      // feature name will always be truncated to first 120 characters.
+      string feature_name = 1;
+
+      // Attribution of feature.
+      google.protobuf.DoubleValue attribution = 2;
+    }
+
+    // A list of the top global explanations. Sorted by absolute value of
+    // attribution in descending order.
+    repeated Explanation explanations = 1;
+
+    // Class label for this set of global explanations. Will be empty/null for
+    // binary logistic and linear regression models. Sorted alphabetically in
+    // descending order.
+    string class_label = 2;
   }
 
   // Information about a single training query run for the model.
   message TrainingRun {
+    // Options used in model training.
     message TrainingOptions {
       // The maximum number of iterations in training. Used only for iterative
       // training algorithms.
@@ -367,18 +563,54 @@ message Model {
       // training data. Only applicable for classification models.
       map<string, double> label_class_weights = 17;
 
+      // User column specified for matrix factorization models.
+      string user_column = 18;
+
+      // Item column specified for matrix factorization models.
+      string item_column = 19;
+
       // Distance type for clustering models.
       DistanceType distance_type = 20;
 
       // Number of clusters for clustering models.
       int64 num_clusters = 21;
 
-      // [Beta] Google Cloud Storage URI from which the model was imported. Only
+      // Google Cloud Storage URI from which the model was imported. Only
       // applicable for imported models.
       string model_uri = 22;
 
       // Optimization strategy for training linear regression models.
       OptimizationStrategy optimization_strategy = 23;
+
+      // Hidden units for dnn models.
+      repeated int64 hidden_units = 24;
+
+      // Batch size for dnn models.
+      int64 batch_size = 25;
+
+      // Dropout probability for dnn models.
+      google.protobuf.DoubleValue dropout = 26;
+
+      // Maximum depth of a tree for boosted tree models.
+      int64 max_tree_depth = 27;
+
+      // Subsample fraction of the training data to grow tree to prevent
+      // overfitting for boosted tree models.
+      double subsample = 28;
+
+      // Minimum split loss for boosted tree models.
+      google.protobuf.DoubleValue min_split_loss = 29;
+
+      // Num factors specified for matrix factorization models.
+      int64 num_factors = 30;
+
+      // Feedback type that specifies which algorithm to run for matrix
+      // factorization.
+      FeedbackType feedback_type = 31;
+
+      // Hyperparameter for matrix factoration when implicit feedback type is
+      // specified.
+      google.protobuf.DoubleValue wals_alpha = 32;
 
       // The method used to initialize the centroids for kmeans algorithm.
       KmeansEnums.KmeansInitializationMethod kmeans_initialization_method = 33;
@@ -386,6 +618,59 @@ message Model {
       // The column used to provide the initial centroids for kmeans algorithm
       // when kmeans_initialization_method is CUSTOM.
       string kmeans_initialization_column = 34;
+
+      // Column to be designated as time series timestamp for ARIMA model.
+      string time_series_timestamp_column = 35;
+
+      // Column to be designated as time series data for ARIMA model.
+      string time_series_data_column = 36;
+
+      // Whether to enable auto ARIMA or not.
+      bool auto_arima = 37;
+
+      // A specification of the non-seasonal part of the ARIMA model: the three
+      // components (p, d, q) are the AR order, the degree of differencing, and
+      // the MA order.
+      ArimaOrder non_seasonal_order = 38;
+
+      // The data frequency of a time series.
+      DataFrequency data_frequency = 39;
+
+      // Include drift when fitting an ARIMA model.
+      bool include_drift = 41;
+
+      // The geographical region based on which the holidays are considered in
+      // time series modeling. If a valid value is specified, then holiday
+      // effects modeling is enabled.
+      HolidayRegion holiday_region = 42;
+
+      // The time series id column that was used during ARIMA model training.
+      string time_series_id_column = 43;
+
+      // The time series id columns that were used during ARIMA model training.
+      repeated string time_series_id_columns = 51;
+
+      // The number of periods ahead that need to be forecasted.
+      int64 horizon = 44;
+
+      // Whether to preserve the input structs in output feature names.
+      // Suppose there is a struct A with field b.
+      // When false (default), the output feature name is A_b.
+      // When true, the output feature name is A.b.
+      bool preserve_input_structs = 45;
+
+      // The max value of non-seasonal p and q.
+      int64 auto_arima_max_order = 46;
+
+      // If true, perform decompose time series and save the results.
+      google.protobuf.BoolValue decompose_time_series = 50;
+
+      // If true, clean spikes and dips in the input time series.
+      google.protobuf.BoolValue clean_spikes_and_dips = 52;
+
+      // If true, detect step changes and make data adjustment in the input time
+      // series.
+      google.protobuf.BoolValue adjust_step_changes = 53;
     }
 
     // Information about a single iteration of the training run.
@@ -401,6 +686,76 @@ message Model {
 
         // Cluster size, the total number of points assigned to the cluster.
         google.protobuf.Int64Value cluster_size = 3;
+      }
+
+      // (Auto-)arima fitting result. Wrap everything in ArimaResult for easier
+      // refactoring if we want to use model-specific iteration results.
+      message ArimaResult {
+        // Arima coefficients.
+        message ArimaCoefficients {
+          // Auto-regressive coefficients, an array of double.
+          repeated double auto_regressive_coefficients = 1;
+
+          // Moving-average coefficients, an array of double.
+          repeated double moving_average_coefficients = 2;
+
+          // Intercept coefficient, just a double not an array.
+          double intercept_coefficient = 3;
+        }
+
+        // Arima model information.
+        message ArimaModelInfo {
+          // Non-seasonal order.
+          ArimaOrder non_seasonal_order = 1;
+
+          // Arima coefficients.
+          ArimaCoefficients arima_coefficients = 2;
+
+          // Arima fitting metrics.
+          ArimaFittingMetrics arima_fitting_metrics = 3;
+
+          // Whether Arima model fitted with drift or not. It is always false
+          // when d is not 1.
+          bool has_drift = 4;
+
+          // The time_series_id value for this time series. It will be one of
+          // the unique values from the time_series_id_column specified during
+          // ARIMA model training. Only present when time_series_id_column
+          // training option was used.
+          string time_series_id = 5;
+
+          // The tuple of time_series_ids identifying this time series. It will
+          // be one of the unique tuples of values present in the
+          // time_series_id_columns specified during ARIMA model training. Only
+          // present when time_series_id_columns training option was used and
+          // the order of values here are same as the order of
+          // time_series_id_columns.
+          repeated string time_series_ids = 10;
+
+          // Seasonal periods. Repeated because multiple periods are supported
+          // for one time series.
+          repeated SeasonalPeriod.SeasonalPeriodType seasonal_periods = 6;
+
+          // If true, holiday_effect is a part of time series decomposition
+          // result.
+          google.protobuf.BoolValue has_holiday_effect = 7;
+
+          // If true, spikes_and_dips is a part of time series decomposition
+          // result.
+          google.protobuf.BoolValue has_spikes_and_dips = 8;
+
+          // If true, step_changes is a part of time series decomposition
+          // result.
+          google.protobuf.BoolValue has_step_changes = 9;
+        }
+
+        // This message is repeated because there are multiple arima models
+        // fitted in auto-arima. For non-auto-arima model, its size is one.
+        repeated ArimaModelInfo arima_model_info = 1;
+
+        // Seasonal periods. Repeated because multiple periods are supported for
+        // one time series.
+        repeated SeasonalPeriod.SeasonalPeriodType seasonal_periods = 2;
       }
 
       // Index of the iteration, 0 based.
@@ -420,6 +775,8 @@ message Model {
 
       // Information about top clusters for clustering models.
       repeated ClusterInfo cluster_infos = 8;
+
+      ArimaResult arima_result = 9;
     }
 
     // Options that were used for this training run, includes
@@ -435,6 +792,15 @@ message Model {
     // The evaluation metrics over training/eval data that were computed at the
     // end of training.
     EvaluationMetrics evaluation_metrics = 7;
+
+    // Data split result of the training run. Only set when the input data is
+    // actually split.
+    DataSplitResult data_split_result = 9;
+
+    // Global explanations for important features of the model. For multi-class
+    // models, there is one entry for each label class. For other models, there
+    // is only one entry in the list.
+    repeated GlobalExplanation global_explanations = 10;
   }
 
   // Indicates the type of the Model.
@@ -450,8 +816,35 @@ message Model {
     // K-means clustering model.
     KMEANS = 3;
 
-    // [Beta] An imported TensorFlow model.
+    // Matrix factorization model.
+    MATRIX_FACTORIZATION = 4;
+
+    // DNN classifier model.
+    DNN_CLASSIFIER = 5;
+
+    // An imported TensorFlow model.
     TENSORFLOW = 6;
+
+    // DNN regressor model.
+    DNN_REGRESSOR = 7;
+
+    // Boosted tree regressor model.
+    BOOSTED_TREE_REGRESSOR = 9;
+
+    // Boosted tree classifier model.
+    BOOSTED_TREE_CLASSIFIER = 10;
+
+    // ARIMA model.
+    ARIMA = 11;
+
+    // [Beta] AutoML Tables regression model.
+    AUTOML_REGRESSOR = 12;
+
+    // [Beta] AutoML Tables classification model.
+    AUTOML_CLASSIFIER = 13;
+
+    // New name for the ARIMA model.
+    ARIMA_PLUS = 19;
   }
 
   // Loss metric to evaluate model training performance.
@@ -497,6 +890,246 @@ message Model {
     AUTO_SPLIT = 5;
   }
 
+  // Type of supported data frequency for time series forecasting models.
+  enum DataFrequency {
+    DATA_FREQUENCY_UNSPECIFIED = 0;
+
+    // Automatically inferred from timestamps.
+    AUTO_FREQUENCY = 1;
+
+    // Yearly data.
+    YEARLY = 2;
+
+    // Quarterly data.
+    QUARTERLY = 3;
+
+    // Monthly data.
+    MONTHLY = 4;
+
+    // Weekly data.
+    WEEKLY = 5;
+
+    // Daily data.
+    DAILY = 6;
+
+    // Hourly data.
+    HOURLY = 7;
+
+    // Per-minute data.
+    PER_MINUTE = 8;
+  }
+
+  // Type of supported holiday regions for time series forecasting models.
+  enum HolidayRegion {
+    // Holiday region unspecified.
+    HOLIDAY_REGION_UNSPECIFIED = 0;
+
+    // Global.
+    GLOBAL = 1;
+
+    // North America.
+    NA = 2;
+
+    // Japan and Asia Pacific: Korea, Greater China, India, Australia, and New
+    // Zealand.
+    JAPAC = 3;
+
+    // Europe, the Middle East and Africa.
+    EMEA = 4;
+
+    // Latin America and the Caribbean.
+    LAC = 5;
+
+    // United Arab Emirates
+    AE = 6;
+
+    // Argentina
+    AR = 7;
+
+    // Austria
+    AT = 8;
+
+    // Australia
+    AU = 9;
+
+    // Belgium
+    BE = 10;
+
+    // Brazil
+    BR = 11;
+
+    // Canada
+    CA = 12;
+
+    // Switzerland
+    CH = 13;
+
+    // Chile
+    CL = 14;
+
+    // China
+    CN = 15;
+
+    // Colombia
+    CO = 16;
+
+    // Czechoslovakia
+    CS = 17;
+
+    // Czech Republic
+    CZ = 18;
+
+    // Germany
+    DE = 19;
+
+    // Denmark
+    DK = 20;
+
+    // Algeria
+    DZ = 21;
+
+    // Ecuador
+    EC = 22;
+
+    // Estonia
+    EE = 23;
+
+    // Egypt
+    EG = 24;
+
+    // Spain
+    ES = 25;
+
+    // Finland
+    FI = 26;
+
+    // France
+    FR = 27;
+
+    // Great Britain (United Kingdom)
+    GB = 28;
+
+    // Greece
+    GR = 29;
+
+    // Hong Kong
+    HK = 30;
+
+    // Hungary
+    HU = 31;
+
+    // Indonesia
+    ID = 32;
+
+    // Ireland
+    IE = 33;
+
+    // Israel
+    IL = 34;
+
+    // India
+    IN = 35;
+
+    // Iran
+    IR = 36;
+
+    // Italy
+    IT = 37;
+
+    // Japan
+    JP = 38;
+
+    // Korea (South)
+    KR = 39;
+
+    // Latvia
+    LV = 40;
+
+    // Morocco
+    MA = 41;
+
+    // Mexico
+    MX = 42;
+
+    // Malaysia
+    MY = 43;
+
+    // Nigeria
+    NG = 44;
+
+    // Netherlands
+    NL = 45;
+
+    // Norway
+    NO = 46;
+
+    // New Zealand
+    NZ = 47;
+
+    // Peru
+    PE = 48;
+
+    // Philippines
+    PH = 49;
+
+    // Pakistan
+    PK = 50;
+
+    // Poland
+    PL = 51;
+
+    // Portugal
+    PT = 52;
+
+    // Romania
+    RO = 53;
+
+    // Serbia
+    RS = 54;
+
+    // Russian Federation
+    RU = 55;
+
+    // Saudi Arabia
+    SA = 56;
+
+    // Sweden
+    SE = 57;
+
+    // Singapore
+    SG = 58;
+
+    // Slovenia
+    SI = 59;
+
+    // Slovakia
+    SK = 60;
+
+    // Thailand
+    TH = 61;
+
+    // Turkey
+    TR = 62;
+
+    // Taiwan
+    TW = 63;
+
+    // Ukraine
+    UA = 64;
+
+    // United States
+    US = 65;
+
+    // Venezuela
+    VE = 66;
+
+    // Viet Nam
+    VN = 67;
+
+    // South Africa
+    ZA = 68;
+  }
+
   // Indicates the learning rate optimization strategy to use.
   enum LearnRateStrategy {
     LEARN_RATE_STRATEGY_UNSPECIFIED = 0;
@@ -517,6 +1150,17 @@ message Model {
 
     // Uses a normal equation to solve linear regression problem.
     NORMAL_EQUATION = 2;
+  }
+
+  // Indicates the training algorithm to use for matrix factorization models.
+  enum FeedbackType {
+    FEEDBACK_TYPE_UNSPECIFIED = 0;
+
+    // Use weighted-als for implicit feedback problems.
+    IMPLICIT = 1;
+
+    // Use nonweighted-als for explicit feedback problems.
+    EXPLICIT = 2;
   }
 
   // Output only. A hash of this resource.
@@ -558,8 +1202,9 @@ message Model {
 
   // Custom encryption configuration (e.g., Cloud KMS keys). This shows the
   // encryption configuration of the model data while stored in BigQuery
-  // storage.
-  google.cloud.bigquery.v2.EncryptionConfiguration encryption_configuration = 17;
+  // storage. This field can be used with PatchModel to update encryption key
+  // for an already encrypted model.
+  EncryptionConfiguration encryption_configuration = 17;
 
   // Output only. Type of the model resource.
   ModelType model_type = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -573,6 +1218,9 @@ message Model {
   // Output only. Label columns that were used to train this model.
   // The output of the model will have a "predicted_" prefix to these columns.
   repeated StandardSqlField label_columns = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The best trial_id across all training runs.
+  int64 best_trial_id = 19 [deprecated = true];
 }
 
 message GetModelRequest {

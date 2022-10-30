@@ -65,9 +65,15 @@ struct AuthResponse {
 
 impl TokenManager {
     pub(crate) fn new(creds: ApplicationCredentials, scopes: &[&str]) -> TokenManager {
+        let https = hyper_rustls::HttpsConnectorBuilder::new()
+            .with_native_roots()
+            .https_only()
+            .enable_http1()
+            .build();
+
         TokenManager {
             creds,
-            client: Client::builder().build::<_, hyper::Body>(HttpsConnector::with_native_roots()),
+            client: Client::builder().build::<_, hyper::Body>(https),
             scopes: scopes.join(" "),
             current_token: None,
         }

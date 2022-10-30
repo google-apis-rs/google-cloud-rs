@@ -99,7 +99,7 @@ impl Client {
     pub async fn new_transaction(&mut self, option_mode: TrxOption, trx_id: Option<Vec<u8>>) -> Result<Transaction, Error> {
         let trx_option = match option_mode {
             TrxOption::ReadOnly => Some(api::TransactionOptions {
-                            mode: Some(api::transaction_options::Mode::ReadOnly(ReadOnly{}))
+                            mode: Some(api::transaction_options::Mode::ReadOnly(ReadOnly{read_time: None}))
                         }),
             TrxOption::ReadWrite => match trx_id {
                 Some(trx) => Some(api::TransactionOptions {
@@ -111,6 +111,7 @@ impl Client {
         };
 
         let request = api::BeginTransactionRequest {
+            database_id: "".to_string(),
             project_id: self.project_name.clone(),
             transaction_options: trx_option,
         };
@@ -131,6 +132,7 @@ impl Client {
             .collect();
 
         let request = api::AllocateIdsRequest {
+            database_id: "".to_string(),
             project_id: self.project_name.clone(),
             keys: ks,
         };
@@ -164,11 +166,11 @@ impl Client {
         K: Borrow<Key>,
         T: FromValue,
     {
-        Ok(self.get_all_tx(keys, None).await?)
+        Ok(self.get_all_run(keys, None).await?)
     }
 
     /// Gets multiple entities from multiple keys associated with a transaction
-    pub(crate) async fn get_all_tx<T, K, I>(&mut self, keys: I, tx_id: Option<Vec<u8>>) -> Result<Vec<T>, Error>
+    pub(crate) async fn get_all_run<T, K, I>(&mut self, keys: I, tx_id: Option<Vec<u8>>) -> Result<Vec<T>, Error>
     where
         I: IntoIterator<Item = K>,
         K: Borrow<Key>,
@@ -184,7 +186,8 @@ impl Client {
         while !keys.is_empty() {
             let request = match tx_id.to_owned() {
                 Some(tx) => api::LookupRequest {
-                    keys, 
+                    keys,
+                    database_id: "".to_string(),
                     project_id: self.project_name.clone(), 
                     read_options: Some(api::ReadOptions {
                         consistency_type: Some(api::read_options::ConsistencyType::Transaction(tx)),
@@ -192,6 +195,7 @@ impl Client {
                 },
                 None => api::LookupRequest {
                     keys,
+                    database_id: "".to_string(),
                     project_id: self.project_name.clone(),
                     read_options: None,
                 }
@@ -261,6 +265,7 @@ impl Client {
             mutations,
             mode: api::commit_request::Mode::NonTransactional as i32,
             transaction_selector: None,
+            database_id: "".to_string(),
             project_id: self.project_name.clone(),
         };
         let request = self.construct_request(request).await?;
@@ -299,6 +304,7 @@ impl Client {
             mutations,
             mode: api::commit_request::Mode::NonTransactional as i32,
             transaction_selector: None,
+            database_id: "".to_string(),
             project_id: self.project_name.clone(),
         };
         let request = self.construct_request(request).await?;
@@ -308,16 +314,21 @@ impl Client {
     }
 
     /// Runs a (potentially) complex query againt Datastore and returns the results.
-    pub async fn query(&mut self, query: Query) -> Result<Vec<Entity>, Error> {
-        Ok(self.query_tx(query, None).await?)
+    pub async fn query(&mut self, query: Query) -> Result<(Vec<Entity>, Vec<u8>), Error> {
+        Ok(self.query_run(query, None).await?)
     }
 
     /// Runs a (potentially) complex query againt Datastore and returns the results and associated with a transaction
-    pub(crate) async fn query_tx(&mut self, query: Query, tx_id: Option<Vec<u8>>) -> Result<Vec<Entity>, Error> {
+    pub(crate) async fn query_run(&mut self, query: Query, tx_id: Option<Vec<u8>>) -> Result<(Vec<Entity>, Vec<u8>), Error> {
         let mut output = Vec::new();
 
         let mut cur_query = query.clone();
-        let mut cursor = Vec::new();
+
+        let mut cursor = match query.cursor.to_owned() {
+            Some(c) => c,
+            None => Vec::new(),
+        };
+
         loop {
             let projection = cur_query
                 .projections
@@ -361,6 +372,7 @@ impl Client {
             };
             let request = api::RunQueryRequest {
                 partition_id: Some(api::PartitionId {
+                    database_id: "".to_string(),
                     project_id: self.project_name.clone(),
                     namespace_id: cur_query.namespace.unwrap_or_else(String::new),
                 }),
@@ -382,6 +394,7 @@ impl Client {
                         ),
                     }
                 }),
+                database_id: "".to_string(),
                 project_id: self.project_name.clone(),
             };
             let request = self.construct_request(request).await?;
@@ -398,7 +411,7 @@ impl Client {
             if results.more_results
                 != (api::query_result_batch::MoreResultsType::NotFinished as i32)
             {
-                break Ok(output);
+                break Ok((output, results.end_cursor));
             }
 
             cur_query = query.clone();
@@ -410,6 +423,7 @@ impl Client {
 pub(crate) fn convert_key(project_name: &str, key: &Key) -> api::Key {
     api::Key {
         partition_id: Some(api::PartitionId {
+            database_id: "".to_string(),
             project_id: String::from(project_name),
             namespace_id: key.get_namespace().map(String::from).unwrap_or_default(),
         }),
@@ -512,15 +526,12 @@ pub(crate) fn convert_filter(project_name: &str, filters: Vec<Filter>) -> Option
                     Filter::Equal(name, value) => (name, Operator::Equal, value),
                     Filter::GreaterThan(name, value) => (name, Operator::GreaterThan, value),
                     Filter::LesserThan(name, value) => (name, Operator::LessThan, value),
-                    Filter::GreaterThanOrEqual(name, value) => {
-                        (name, Operator::GreaterThanOrEqual, value)
-                    }
-                    Filter::LesserThanEqual(name, value) => {
-                        (name, Operator::LessThanOrEqual, value)
-                    }
-                    Filter::HasAncestor(value) => {
-                        ("__key__".to_string(), Operator::HasAncestor, value)
-                    }
+                    Filter::GreaterThanOrEqual(name, value) => (name, Operator::GreaterThanOrEqual, value),
+                    Filter::LesserThanEqual(name, value) => (name, Operator::LessThanOrEqual, value),
+                    Filter::HasAncestor(value) => ("__key__".to_string(), Operator::HasAncestor, value),
+                    Filter::In(name, value) => (name, Operator::In, value),
+                    Filter::NotIn(name, value) => (name, Operator::NotIn, value),
+                    Filter::NotEqual(name, value) => (name, Operator::NotEqual, value),
                 };
 
                 api::Filter {

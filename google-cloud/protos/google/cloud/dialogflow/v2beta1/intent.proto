@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,23 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 syntax = "proto3";
 
 package google.cloud.dialogflow.v2beta1;
 
 import "google/api/annotations.proto";
+import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
-import "google/cloud/dialogflow/v2beta1/audio_config.proto";
 import "google/cloud/dialogflow/v2beta1/context.proto";
 import "google/longrunning/operations.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
-import "google/api/client.proto";
 
 option cc_enable_arenas = true;
 option csharp_namespace = "Google.Cloud.Dialogflow.V2beta1";
@@ -37,38 +34,7 @@ option java_outer_classname = "IntentProto";
 option java_package = "com.google.cloud.dialogflow.v2beta1";
 option objc_class_prefix = "DF";
 
-// An intent represents a mapping between input from a user and an action to
-// be taken by your application. When you pass user input to the
-// [DetectIntent][google.cloud.dialogflow.v2beta1.Sessions.DetectIntent] (or
-// [StreamingDetectIntent][google.cloud.dialogflow.v2beta1.Sessions.StreamingDetectIntent]) method, the
-// Dialogflow API analyzes the input and searches
-// for a matching intent. If no match is found, the Dialogflow API returns a
-// fallback intent (`is_fallback` = true).
-//
-// You can provide additional information for the Dialogflow API to use to
-// match user input to an intent by adding the following to your intent.
-//
-// *   **Contexts** - provide additional context for intent analysis. For
-//     example, if an intent is related to an object in your application that
-//     plays music, you can provide a context to determine when to match the
-//     intent if the user input is "turn it off". You can include a context
-//     that matches the intent when there is previous user input of
-//     "play music", and not when there is previous user input of
-//     "turn on the light".
-//
-// *   **Events** - allow for matching an intent by using an event name
-//     instead of user input. Your application can provide an event name and
-//     related parameters to the Dialogflow API to match an intent. For
-//     example, when your application starts, you can send a welcome event
-//     with a user name parameter to the Dialogflow API to match an intent with
-//     a personalized welcome message for the user.
-//
-// *   **Training phrases** - provide examples of user input to train the
-//     Dialogflow API agent to better match intents.
-//
-// For more information about intents, see the
-// [Dialogflow
-// documentation](https://cloud.google.com/dialogflow/docs/intents-overview).
+// Service for managing [Intents][google.cloud.dialogflow.v2beta1.Intent].
 service Intents {
   option (google.api.default_host) = "dialogflow.googleapis.com";
   option (google.api.oauth_scopes) =
@@ -82,7 +48,15 @@ service Intents {
       additional_bindings {
         get: "/v2beta1/{parent=projects/*/locations/*/agent}/intents"
       }
+      additional_bindings {
+        get: "/v2beta1/{parent=projects/*/agent/environments/*}/intents"
+      }
+      additional_bindings {
+        get: "/v2beta1/{parent=projects/*/locations/*/agent/environments/*}/intents"
+      }
     };
+    option (google.api.method_signature) = "parent";
+    option (google.api.method_signature) = "parent,language_code";
   }
 
   // Retrieves the specified intent.
@@ -93,9 +67,15 @@ service Intents {
         get: "/v2beta1/{name=projects/*/locations/*/agent/intents/*}"
       }
     };
+    option (google.api.method_signature) = "name";
+    option (google.api.method_signature) = "name,language_code";
   }
 
   // Creates an intent in the specified agent.
+  //
+  // Note: You should always train an agent prior to sending it queries. See the
+  // [training
+  // documentation](https://cloud.google.com/dialogflow/es/docs/training).
   rpc CreateIntent(CreateIntentRequest) returns (Intent) {
     option (google.api.http) = {
       post: "/v2beta1/{parent=projects/*/agent}/intents"
@@ -105,9 +85,15 @@ service Intents {
         body: "intent"
       }
     };
+    option (google.api.method_signature) = "parent,intent";
+    option (google.api.method_signature) = "parent,intent,language_code";
   }
 
   // Updates the specified intent.
+  //
+  // Note: You should always train an agent prior to sending it queries. See the
+  // [training
+  // documentation](https://cloud.google.com/dialogflow/es/docs/training).
   rpc UpdateIntent(UpdateIntentRequest) returns (Intent) {
     option (google.api.http) = {
       patch: "/v2beta1/{intent.name=projects/*/agent/intents/*}"
@@ -117,9 +103,17 @@ service Intents {
         body: "intent"
       }
     };
+    option (google.api.method_signature) = "intent,update_mask";
+    option (google.api.method_signature) = "intent";
+    option (google.api.method_signature) = "intent,language_code";
+    option (google.api.method_signature) = "intent,language_code,update_mask";
   }
 
   // Deletes the specified intent and its direct or indirect followup intents.
+  //
+  // Note: You should always train an agent prior to sending it queries. See the
+  // [training
+  // documentation](https://cloud.google.com/dialogflow/es/docs/training).
   rpc DeleteIntent(DeleteIntentRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v2beta1/{name=projects/*/agent/intents/*}"
@@ -127,11 +121,22 @@ service Intents {
         delete: "/v2beta1/{name=projects/*/locations/*/agent/intents/*}"
       }
     };
+    option (google.api.method_signature) = "name";
   }
 
   // Updates/Creates multiple intents in the specified agent.
   //
-  // Operation <response: [BatchUpdateIntentsResponse][google.cloud.dialogflow.v2beta1.BatchUpdateIntentsResponse]>
+  // This method is a [long-running
+  // operation](https://cloud.google.com/dialogflow/es/docs/how/long-running-operations).
+  // The returned `Operation` type has the following method-specific fields:
+  //
+  // - `metadata`: An empty [Struct
+  //   message](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#struct)
+  // - `response`: [BatchUpdateIntentsResponse][google.cloud.dialogflow.v2beta1.BatchUpdateIntentsResponse]
+  //
+  // Note: You should always train an agent prior to sending it queries. See the
+  // [training
+  // documentation](https://cloud.google.com/dialogflow/es/docs/training).
   rpc BatchUpdateIntents(BatchUpdateIntentsRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
       post: "/v2beta1/{parent=projects/*/agent}/intents:batchUpdate"
@@ -141,11 +146,28 @@ service Intents {
         body: "*"
       }
     };
+    option (google.api.method_signature) = "parent,intent_batch_uri";
+    option (google.api.method_signature) = "parent,intent_batch_inline";
+    option (google.longrunning.operation_info) = {
+      response_type: "google.cloud.dialogflow.v2beta1.BatchUpdateIntentsResponse"
+      metadata_type: "google.protobuf.Struct"
+    };
   }
 
   // Deletes intents in the specified agent.
   //
-  // Operation <response: [google.protobuf.Empty][google.protobuf.Empty]>
+  // This method is a [long-running
+  // operation](https://cloud.google.com/dialogflow/es/docs/how/long-running-operations).
+  // The returned `Operation` type has the following method-specific fields:
+  //
+  // - `metadata`: An empty [Struct
+  //   message](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#struct)
+  // - `response`: An [Empty
+  //   message](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#empty)
+  //
+  // Note: You should always train an agent prior to sending it queries. See the
+  // [training
+  // documentation](https://cloud.google.com/dialogflow/es/docs/training).
   rpc BatchDeleteIntents(BatchDeleteIntentsRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
       post: "/v2beta1/{parent=projects/*/agent}/intents:batchDelete"
@@ -155,12 +177,23 @@ service Intents {
         body: "*"
       }
     };
+    option (google.api.method_signature) = "parent,intents";
+    option (google.longrunning.operation_info) = {
+      response_type: "google.protobuf.Empty"
+      metadata_type: "google.protobuf.Struct"
+    };
   }
 }
 
-// Represents an intent.
-// Intents convert a number of user expressions or patterns into an action. An
-// action is an extraction of a user command or sentence semantics.
+// An intent categorizes an end-user's intention for one conversation turn. For
+// each agent, you define many intents, where your combined intents can handle a
+// complete conversation. When an end-user writes or says something, referred to
+// as an end-user expression or end-user input, Dialogflow matches the end-user
+// input to the best intent in your agent. Matching an intent is also known as
+// intent classification.
+//
+// For more information, see the [intent
+// guide](https://cloud.google.com/dialogflow/docs/intents-overview).
 message Intent {
   option (google.api.resource) = {
     type: "dialogflow.googleapis.com/Intent"
@@ -168,8 +201,39 @@ message Intent {
     pattern: "projects/{project}/locations/{location}/agent/intents/{intent}"
   };
 
+  // Represents the different states that webhooks can be in.
+  enum WebhookState {
+    // Webhook is disabled in the agent and in the intent.
+    WEBHOOK_STATE_UNSPECIFIED = 0;
+
+    // Webhook is enabled in the agent and in the intent.
+    WEBHOOK_STATE_ENABLED = 1;
+
+    // Webhook is enabled in the agent and in the intent. Also, each slot
+    // filling prompt is forwarded to the webhook.
+    WEBHOOK_STATE_ENABLED_FOR_SLOT_FILLING = 2;
+  }
+
   // Represents an example that the agent is trained on.
   message TrainingPhrase {
+    // Represents different types of training phrases.
+    enum Type {
+      // Not specified. This value should never be used.
+      TYPE_UNSPECIFIED = 0;
+
+      // Examples do not contain @-prefixed entity type names, but example parts
+      // can be annotated with entity types.
+      EXAMPLE = 1;
+
+      // Templates are not annotated with entity types, but they can contain
+      // @-prefixed entity type names as substrings.
+      // Note: Template mode has been deprecated. Example mode is the only
+      // supported way to create new training phrases. If you have existing
+      // training phrases in template mode, they will be removed during training
+      // and it can cause a drop in agent performance.
+      TEMPLATE = 2 [deprecated = true];
+    }
+
     // Represents a part of a training phrase.
     message Part {
       // Required. The text for this part.
@@ -191,29 +255,11 @@ message Intent {
       bool user_defined = 4;
     }
 
-    // Represents different types of training phrases.
-    enum Type {
-      // Not specified. This value should never be used.
-      TYPE_UNSPECIFIED = 0;
-
-      // Examples do not contain @-prefixed entity type names, but example parts
-      // can be annotated with entity types.
-      EXAMPLE = 1;
-
-      // Templates are not annotated with entity types, but they can contain
-      // @-prefixed entity type names as substrings.
-      // Template mode has been deprecated. Example mode is the only supported
-      // way to create new training phrases. If you have existing training
-      // phrases that you've created in template mode, those will continue to
-      // work.
-      TEMPLATE = 2 [deprecated = true];
-    }
-
     // Output only. The unique identifier of this training phrase.
     string name = 1;
 
     // Required. The type of the training phrase.
-    Type type = 2;
+    Type type = 2 [(google.api.field_behavior) = REQUIRED];
 
     // Required. The ordered list of training phrase parts.
     // The parts are concatenated in order to form the training phrase.
@@ -234,12 +280,12 @@ message Intent {
     // -   `Part.text` is set to a part of the phrase that you want to annotate,
     //     and the `entity_type`, `alias`, and `user_defined` fields are all
     //     set.
-    repeated Part parts = 3;
+    repeated Part parts = 3 [(google.api.field_behavior) = REQUIRED];
 
     // Optional. Indicates how many times this example was added to
     // the intent. Each time a developer adds an existing sample by editing an
     // intent or training, this counter is increased.
-    int32 times_added_count = 4;
+    int32 times_added_count = 4 [(google.api.field_behavior) = OPTIONAL];
   }
 
   // Represents intent parameters.
@@ -251,6 +297,7 @@ message Intent {
     string display_name = 2;
 
     // Optional. The definition of the parameter value. It can be:
+    //
     // - a constant string,
     // - a parameter value defined as `$parameter_name`,
     // - an original parameter value defined as `$parameter_name.original`,
@@ -284,6 +331,44 @@ message Intent {
 
   // Corresponds to the `Response` field in the Dialogflow console.
   message Message {
+    // Represents different platforms that a rich message can be intended for.
+    enum Platform {
+      // Not specified.
+      PLATFORM_UNSPECIFIED = 0;
+
+      // Facebook.
+      FACEBOOK = 1;
+
+      // Slack.
+      SLACK = 2;
+
+      // Telegram.
+      TELEGRAM = 3;
+
+      // Kik.
+      KIK = 4;
+
+      // Skype.
+      SKYPE = 5;
+
+      // Line.
+      LINE = 6;
+
+      // Viber.
+      VIBER = 7;
+
+      // Google Assistant
+      // See [Dialogflow webhook
+      // format](https://developers.google.com/assistant/actions/build/json/dialogflow-webhook-json)
+      ACTIONS_ON_GOOGLE = 8;
+
+      // Telephony Gateway.
+      TELEPHONY = 10;
+
+      // Google Hangouts.
+      GOOGLE_HANGOUTS = 11;
+    }
+
     // The text response message.
     message Text {
       // Optional. The collection of the agent's responses.
@@ -437,6 +522,9 @@ message Intent {
 
       // Required. List items.
       repeated Item items = 2;
+
+      // Optional. Subtitle of the list.
+      string subtitle = 3 [(google.api.field_behavior) = OPTIONAL];
     }
 
     // The card for presenting a carousel of options to select from.
@@ -531,8 +619,6 @@ message Intent {
     // Rich cards allow you to respond to users with more vivid content, e.g.
     // with media and suggestions.
     //
-    // For more details about RBM rich cards, please see:
-    // https://developers.google.com/rcs-business-messaging/rbm/guides/build/send-messages#rich-cards.
     // If you want to show a single card with more control over the layout,
     // please use [RbmStandaloneCard][google.cloud.dialogflow.v2beta1.Intent.Message.RbmStandaloneCard] instead.
     message RbmCarouselCard {
@@ -561,8 +647,6 @@ message Intent {
     // Rich cards allow you to respond to users with more vivid content, e.g.
     // with media and suggestions.
     //
-    // For more details about RBM rich cards, please see:
-    // https://developers.google.com/rcs-business-messaging/rbm/guides/build/send-messages#rich-cards.
     // You can group multiple rich cards into one using [RbmCarouselCard][google.cloud.dialogflow.v2beta1.Intent.Message.RbmCarouselCard] but
     // carousel cards will give you less control over the card layout.
     message RbmStandaloneCard {
@@ -607,21 +691,21 @@ message Intent {
       // Rich Business Messaging (RBM) Media displayed in Cards
       // The following media-types are currently supported:
       //
-      // ## Image Types
+      // Image Types
       //
-      //  image/jpeg
-      //  image/jpg'
-      //  image/gif
-      //  image/png
+      // * image/jpeg
+      // * image/jpg'
+      // * image/gif
+      // * image/png
       //
-      // ## Video Types
+      // Video Types
       //
-      //  video/h263
-      //  video/m4v
-      //  video/mp4
-      //  video/mpeg
-      //  video/mpeg4
-      //  video/webm
+      // * video/h263
+      // * video/m4v
+      // * video/mp4
+      // * video/mpeg
+      // * video/mpeg4
+      // * video/webm
       message RbmMedia {
         // Media height
         enum Height {
@@ -653,7 +737,7 @@ message Intent {
         string thumbnail_uri = 2;
 
         // Required for cards with vertical orientation. The height of the media
-        // within a rich card with a vertical layout. (https://goo.gl/NeFCjz).
+        // within a rich card with a vertical layout.
         // For a standalone card with horizontal layout, height is not
         // customizable, and this field is ignored.
         Height height = 3;
@@ -707,7 +791,7 @@ message Intent {
     // can choose from the card.
     message RbmSuggestedAction {
       // Opens the user's default dialer app with the specified phone number
-      // but does not dial automatically (https://goo.gl/ergbB2).
+      // but does not dial automatically.
       message RbmSuggestedActionDial {
         // Required. The phone number to fill in the default dialer app.
         // This field should be in [E.164](https://en.wikipedia.org/wiki/E.164)
@@ -717,7 +801,7 @@ message Intent {
       }
 
       // Opens the user's default web browser app to the specified uri
-      // (https://goo.gl/6GLJD2). If the user has an app installed that is
+      // If the user has an app installed that is
       // registered as the default handler for the URL, then this app will be
       // opened instead, and its icon will be used in the suggested action UI.
       message RbmSuggestedActionOpenUri {
@@ -726,7 +810,7 @@ message Intent {
       }
 
       // Opens the device's location chooser so the user can pick a location
-      // to send back to the agent (https://goo.gl/GXotJW).
+      // to send back to the agent.
       message RbmSuggestedActionShareLocation {
 
       }
@@ -754,6 +838,15 @@ message Intent {
 
     // The media content card for Actions on Google.
     message MediaContent {
+      // Format of response media type.
+      enum ResponseMediaType {
+        // Unspecified.
+        RESPONSE_MEDIA_TYPE_UNSPECIFIED = 0;
+
+        // Response media type is audio.
+        AUDIO = 1;
+      }
+
       // Response media object for media content card.
       message ResponseMediaObject {
         // Required. Name of media card.
@@ -773,15 +866,6 @@ message Intent {
 
         // Required. Url where the media is stored.
         string content_url = 5;
-      }
-
-      // Format of response media type.
-      enum ResponseMediaType {
-        // Unspecified.
-        RESPONSE_MEDIA_TYPE_UNSPECIFIED = 0;
-
-        // Response media type is audio.
-        AUDIO = 1;
       }
 
       // Optional. What type of media is the content (ie "audio").
@@ -935,102 +1019,6 @@ message Intent {
       string text = 1;
     }
 
-    // Represents different platforms that a rich message can be intended for.
-    enum Platform {
-      // Not specified.
-      PLATFORM_UNSPECIFIED = 0;
-
-      // Facebook.
-      FACEBOOK = 1;
-
-      // Slack.
-      SLACK = 2;
-
-      // Telegram.
-      TELEGRAM = 3;
-
-      // Kik.
-      KIK = 4;
-
-      // Skype.
-      SKYPE = 5;
-
-      // Line.
-      LINE = 6;
-
-      // Viber.
-      VIBER = 7;
-
-      // Actions on Google.
-      // When using Actions on Google, you can choose one of the specific
-      // Intent.Message types that mention support for Actions on Google,
-      // or you can use the advanced Intent.Message.payload field.
-      // The payload field provides access to AoG features not available in the
-      // specific message types.
-      // If using the Intent.Message.payload field, it should have a structure
-      // similar to the JSON message shown here. For more information, see
-      // [Actions on Google Webhook
-      // Format](https://developers.google.com/actions/dialogflow/webhook)
-      // <pre>{
-      //   "expectUserResponse": true,
-      //   "isSsml": false,
-      //   "noInputPrompts": [],
-      //   "richResponse": {
-      //     "items": [
-      //       {
-      //         "simpleResponse": {
-      //           "displayText": "hi",
-      //           "textToSpeech": "hello"
-      //         }
-      //       }
-      //     ],
-      //     "suggestions": [
-      //       {
-      //         "title": "Say this"
-      //       },
-      //       {
-      //         "title": "or this"
-      //       }
-      //     ]
-      //   },
-      //   "systemIntent": {
-      //     "data": {
-      //       "@type": "type.googleapis.com/google.actions.v2.OptionValueSpec",
-      //       "listSelect": {
-      //         "items": [
-      //           {
-      //             "optionInfo": {
-      //               "key": "key1",
-      //               "synonyms": [
-      //                 "key one"
-      //               ]
-      //             },
-      //             "title": "must not be empty, but unique"
-      //           },
-      //           {
-      //             "optionInfo": {
-      //               "key": "key2",
-      //               "synonyms": [
-      //                 "key two"
-      //               ]
-      //             },
-      //             "title": "must not be empty, but unique"
-      //           }
-      //         ]
-      //       }
-      //     },
-      //     "intent": "actions.intent.OPTION"
-      //   }
-      // }</pre>
-      ACTIONS_ON_GOOGLE = 8;
-
-      // Telephony Gateway.
-      TELEPHONY = 10;
-
-      // Google Hangouts.
-      GOOGLE_HANGOUTS = 11;
-    }
-
     // Required. The rich response message.
     oneof message {
       // Returns a text response.
@@ -1045,9 +1033,7 @@ message Intent {
       // Displays a card.
       Card card = 4;
 
-      // Returns a response containing a custom, platform-specific payload.
-      // See the Intent.Message.Platform type for a description of the
-      // structure that may be required for your platform.
+      // A custom platform-specific response.
       google.protobuf.Struct payload = 5;
 
       // Returns a voice or text-only response for Actions on Google.
@@ -1100,7 +1086,7 @@ message Intent {
     }
 
     // Optional. The platform that this message is intended for.
-    Platform platform = 6;
+    Platform platform = 6 [(google.api.field_behavior) = OPTIONAL];
   }
 
   // Represents a single followup intent in the chain.
@@ -1114,40 +1100,33 @@ message Intent {
     string parent_followup_intent_name = 2;
   }
 
-  // Represents the different states that webhooks can be in.
-  enum WebhookState {
-    // Webhook is disabled in the agent and in the intent.
-    WEBHOOK_STATE_UNSPECIFIED = 0;
-
-    // Webhook is enabled in the agent and in the intent.
-    WEBHOOK_STATE_ENABLED = 1;
-
-    // Webhook is enabled in the agent and in the intent. Also, each slot
-    // filling prompt is forwarded to the webhook.
-    WEBHOOK_STATE_ENABLED_FOR_SLOT_FILLING = 2;
-  }
-
-  // The unique identifier of this intent.
+  // Optional. The unique identifier of this intent.
   // Required for [Intents.UpdateIntent][google.cloud.dialogflow.v2beta1.Intents.UpdateIntent] and [Intents.BatchUpdateIntents][google.cloud.dialogflow.v2beta1.Intents.BatchUpdateIntents]
   // methods.
-  // Format: `projects/<Project ID>/agent/intents/<Intent ID>`.
-  string name = 1;
+  // Supported formats:
+  //
+  // - `projects/<Project ID>/agent/intents/<Intent ID>`
+  // - `projects/<Project ID>/locations/<Location ID>/agent/intents/<Intent ID>`
+  string name = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Required. The name of this intent.
-  string display_name = 2;
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Optional. Indicates whether webhooks are enabled for the intent.
-  WebhookState webhook_state = 6;
+  WebhookState webhook_state = 6 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The priority of this intent. Higher numbers represent higher
-  // priorities. If this is zero or unspecified, we use the default
-  // priority 500000.
+  // priorities.
   //
-  // Negative numbers mean that the intent is disabled.
-  int32 priority = 3;
+  // - If the supplied value is unspecified or 0, the service
+  //   translates the value to 500,000, which corresponds to the
+  //   `Normal` priority in the console.
+  // - If the supplied value is negative, the intent is ignored
+  //   in runtime detect intent requests.
+  int32 priority = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. Indicates whether this is a fallback intent.
-  bool is_fallback = 4;
+  bool is_fallback = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. Indicates whether Machine Learning is enabled for the intent.
   // Note: If `ml_enabled` setting is set to false, then this intent is not
@@ -1156,54 +1135,69 @@ message Intent {
   // DEPRECATED! Please use `ml_disabled` field instead.
   // NOTE: If both `ml_enabled` and `ml_disabled` are either not set or false,
   // then the default value is determined as follows:
+  //
   // - Before April 15th, 2018 the default is:
   //   ml_enabled = false / ml_disabled = true.
   // - After April 15th, 2018 the default is:
   //   ml_enabled = true / ml_disabled = false.
-  bool ml_enabled = 5 [deprecated = true];
+  bool ml_enabled = 5 [
+    deprecated = true,
+    (google.api.field_behavior) = OPTIONAL
+  ];
 
   // Optional. Indicates whether Machine Learning is disabled for the intent.
   // Note: If `ml_disabled` setting is set to true, then this intent is not
   // taken into account during inference in `ML ONLY` match mode. Also,
   // auto-markup in the UI is turned off.
-  bool ml_disabled = 19;
+  bool ml_disabled = 19 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Indicates that a live agent should be brought in to handle the
+  // interaction with the user. In most cases, when you set this flag to true,
+  // you would also want to set end_interaction to true as well. Default is
+  // false.
+  bool live_agent_handoff = 20 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. Indicates that this intent ends an interaction. Some integrations
   // (e.g., Actions on Google or Dialogflow phone gateway) use this information
   // to close interaction with an end user. Default is false.
-  bool end_interaction = 21;
+  bool end_interaction = 21 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The list of context names required for this intent to be
   // triggered.
-  // Format: `projects/<Project ID>/agent/sessions/-/contexts/<Context ID>`.
-  repeated string input_context_names = 7;
+  // Formats:
+  //
+  // - `projects/<Project ID>/agent/sessions/-/contexts/<Context ID>`
+  // - `projects/<Project ID>/locations/<Location
+  //   ID>/agent/sessions/-/contexts/<Context ID>`
+  repeated string input_context_names = 7 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The collection of event names that trigger the intent.
   // If the collection of input contexts is not empty, all of the contexts must
   // be present in the active user session for an event to trigger this intent.
-  repeated string events = 8;
+  // Event names are limited to 150 characters.
+  repeated string events = 8 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The collection of examples that the agent is
   // trained on.
-  repeated TrainingPhrase training_phrases = 9;
+  repeated TrainingPhrase training_phrases = 9 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The name of the action associated with the intent.
   // Note: The action name must not contain whitespaces.
-  string action = 10;
+  string action = 10 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The collection of contexts that are activated when the intent
   // is matched. Context messages in this collection should not set the
   // parameters field. Setting the `lifespan_count` to 0 will reset the context
   // when the intent is matched.
   // Format: `projects/<Project ID>/agent/sessions/-/contexts/<Context ID>`.
-  repeated Context output_contexts = 11;
+  repeated Context output_contexts = 11 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. Indicates whether to delete all contexts in the current
   // session when this intent is matched.
-  bool reset_contexts = 12;
+  bool reset_contexts = 12 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The collection of parameters associated with the intent.
-  repeated Parameter parameters = 13;
+  repeated Parameter parameters = 13 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The collection of rich messages corresponding to the
   // `Response` field in the Dialogflow console.
@@ -1211,42 +1205,55 @@ message Intent {
 
   // Optional. The list of platforms for which the first responses will be
   // copied from the messages in PLATFORM_UNSPECIFIED (i.e. default platform).
-  repeated Message.Platform default_response_platforms = 15;
+  repeated Message.Platform default_response_platforms = 15 [(google.api.field_behavior) = OPTIONAL];
 
-  // Read-only. The unique identifier of the root intent in the chain of
+  // Output only. The unique identifier of the root intent in the chain of
   // followup intents. It identifies the correct followup intents chain for
-  // this intent. We populate this field only in the output.
+  // this intent.
   //
   // Format: `projects/<Project ID>/agent/intents/<Intent ID>`.
-  string root_followup_intent_name = 16;
+  string root_followup_intent_name = 16 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Read-only after creation. The unique identifier of the parent intent in the
+  // Optional. The unique identifier of the parent intent in the
   // chain of followup intents. You can set this field when creating an intent,
-  // for example with [CreateIntent][] or [BatchUpdateIntents][], in order to
-  // make this intent a followup intent.
+  // for example with [CreateIntent][google.cloud.dialogflow.v2beta1.Intents.CreateIntent] or
+  // [BatchUpdateIntents][google.cloud.dialogflow.v2beta1.Intents.BatchUpdateIntents], in order to make this
+  // intent a followup intent.
   //
   // It identifies the parent followup intent.
   // Format: `projects/<Project ID>/agent/intents/<Intent ID>`.
-  string parent_followup_intent_name = 17;
+  string parent_followup_intent_name = 17 [(google.api.field_behavior) = OPTIONAL];
 
-  // Read-only. Information about all followup intents that have this intent as
+  // Output only. Information about all followup intents that have this intent as
   // a direct or indirect parent. We populate this field only in the output.
-  repeated FollowupIntentInfo followup_intent_info = 18;
+  repeated FollowupIntentInfo followup_intent_info = 18 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // The request message for [Intents.ListIntents][google.cloud.dialogflow.v2beta1.Intents.ListIntents].
 message ListIntentsRequest {
   // Required. The agent to list all intents from.
-  // Format: `projects/<Project ID>/agent`.
-  string parent = 1;
+  // Format: `projects/<Project ID>/agent` or `projects/<Project
+  // ID>/locations/<Location ID>/agent`.
+  //
+  // Alternatively, you can specify the environment to list intents for.
+  // Format: `projects/<Project ID>/agent/environments/<Environment ID>`
+  // or `projects/<Project ID>/locations/<Location
+  // ID>/agent/environments/<Environment ID>`.
+  // Note: training phrases of the intents will not be returned for non-draft
+  // environment.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "dialogflow.googleapis.com/Intent"
+    }
+  ];
 
-  // Optional. The language to list training phrases, parameters and rich
-  // messages for. If not specified, the agent's default language is used.
-  // [Many
-  // languages](https://cloud.google.com/dialogflow/docs/reference/language)
-  // are supported. Note: languages must be enabled in the agent before they can
-  // be used.
-  string language_code = 2;
+  // Optional. The language used to access language-specific data.
+  // If not specified, the agent's default language is used.
+  // For more information, see
+  // [Multilingual intent and entity
+  // data](https://cloud.google.com/dialogflow/docs/agents-multilingual#intent-entity).
+  string language_code = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The resource view to apply to the returned intent.
   IntentView intent_view = 3;
@@ -1273,16 +1280,23 @@ message ListIntentsResponse {
 // The request message for [Intents.GetIntent][google.cloud.dialogflow.v2beta1.Intents.GetIntent].
 message GetIntentRequest {
   // Required. The name of the intent.
-  // Format: `projects/<Project ID>/agent/intents/<Intent ID>`.
-  string name = 1;
+  // Supported formats:
+  //
+  // - `projects/<Project ID>/agent/intents/<Intent ID>`
+  // - `projects/<Project ID>/locations/<Location ID>/agent/intents/<Intent ID>`
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "dialogflow.googleapis.com/Intent"
+    }
+  ];
 
-  // Optional. The language to retrieve training phrases, parameters and rich
-  // messages for. If not specified, the agent's default language is used.
-  // [Many
-  // languages](https://cloud.google.com/dialogflow/docs/reference/language)
-  // are supported. Note: languages must be enabled in the agent before they can
-  // be used.
-  string language_code = 2;
+  // Optional. The language used to access language-specific data.
+  // If not specified, the agent's default language is used.
+  // For more information, see
+  // [Multilingual intent and entity
+  // data](https://cloud.google.com/dialogflow/docs/agents-multilingual#intent-entity).
+  string language_code = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The resource view to apply to the returned intent.
   IntentView intent_view = 3;
@@ -1291,19 +1305,26 @@ message GetIntentRequest {
 // The request message for [Intents.CreateIntent][google.cloud.dialogflow.v2beta1.Intents.CreateIntent].
 message CreateIntentRequest {
   // Required. The agent to create a intent for.
-  // Format: `projects/<Project ID>/agent`.
-  string parent = 1;
+  // Supported formats:
+  //
+  // - `projects/<Project ID>/agent`
+  // - `projects/<Project ID>/locations/<Location ID>/agent`
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "dialogflow.googleapis.com/Intent"
+    }
+  ];
 
   // Required. The intent to create.
-  Intent intent = 2;
+  Intent intent = 2 [(google.api.field_behavior) = REQUIRED];
 
-  // Optional. The language of training phrases, parameters and rich messages
-  // defined in `intent`. If not specified, the agent's default language is
-  // used. [Many
-  // languages](https://cloud.google.com/dialogflow/docs/reference/language)
-  // are supported. Note: languages must be enabled in the agent before they can
-  // be used.
-  string language_code = 3;
+  // Optional. The language used to access language-specific data.
+  // If not specified, the agent's default language is used.
+  // For more information, see
+  // [Multilingual intent and entity
+  // data](https://cloud.google.com/dialogflow/docs/agents-multilingual#intent-entity).
+  string language_code = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The resource view to apply to the returned intent.
   IntentView intent_view = 4;
@@ -1312,15 +1333,14 @@ message CreateIntentRequest {
 // The request message for [Intents.UpdateIntent][google.cloud.dialogflow.v2beta1.Intents.UpdateIntent].
 message UpdateIntentRequest {
   // Required. The intent to update.
-  Intent intent = 1;
+  Intent intent = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Optional. The language of training phrases, parameters and rich messages
-  // defined in `intent`. If not specified, the agent's default language is
-  // used. [Many
-  // languages](https://cloud.google.com/dialogflow/docs/reference/language)
-  // are supported. Note: languages must be enabled in the agent before they can
-  // be used.
-  string language_code = 2;
+  // Optional. The language used to access language-specific data.
+  // If not specified, the agent's default language is used.
+  // For more information, see
+  // [Multilingual intent and entity
+  // data](https://cloud.google.com/dialogflow/docs/agents-multilingual#intent-entity).
+  string language_code = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The mask to control which fields get updated.
   google.protobuf.FieldMask update_mask = 3;
@@ -1334,15 +1354,31 @@ message DeleteIntentRequest {
   // Required. The name of the intent to delete. If this intent has direct or
   // indirect followup intents, we also delete them.
   //
-  // Format: `projects/<Project ID>/agent/intents/<Intent ID>`.
-  string name = 1;
+  // Supported formats:
+  //
+  // - `projects/<Project ID>/agent/intents/<Intent ID>`
+  // - `projects/<Project ID>/locations/<Location ID>/agent/intents/<Intent ID>`
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "dialogflow.googleapis.com/Intent"
+    }
+  ];
 }
 
 // The request message for [Intents.BatchUpdateIntents][google.cloud.dialogflow.v2beta1.Intents.BatchUpdateIntents].
 message BatchUpdateIntentsRequest {
   // Required. The name of the agent to update or create intents in.
-  // Format: `projects/<Project ID>/agent`.
-  string parent = 1;
+  // Supported formats:
+  //
+  // - `projects/<Project ID>/agent`
+  // - `projects/<Project ID>/locations/<Location ID>/agent`
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "dialogflow.googleapis.com/Intent"
+    }
+  ];
 
   // Required. The source of the intent batch.
   //
@@ -1360,13 +1396,12 @@ message BatchUpdateIntentsRequest {
     IntentBatch intent_batch_inline = 3;
   }
 
-  // Optional. The language of training phrases, parameters and rich messages
-  // defined in `intents`. If not specified, the agent's default language is
-  // used. [Many
-  // languages](https://cloud.google.com/dialogflow/docs/reference/language)
-  // are supported. Note: languages must be enabled in the agent before they can
-  // be used.
-  string language_code = 4;
+  // Optional. The language used to access language-specific data.
+  // If not specified, the agent's default language is used.
+  // For more information, see
+  // [Multilingual intent and entity
+  // data](https://cloud.google.com/dialogflow/docs/agents-multilingual#intent-entity).
+  string language_code = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Optional. The mask to control which fields get updated.
   google.protobuf.FieldMask update_mask = 5;
@@ -1383,19 +1418,21 @@ message BatchUpdateIntentsResponse {
 
 // The request message for [Intents.BatchDeleteIntents][google.cloud.dialogflow.v2beta1.Intents.BatchDeleteIntents].
 message BatchDeleteIntentsRequest {
-  // Required. The name of the agent to delete all entities types for. Format:
-  // `projects/<Project ID>/agent`.
-  string parent = 1;
+  // Required. The name of the agent to delete all entities types for.
+  // Supported formats:
+  //
+  // - `projects/<Project ID>/agent`
+  // - `projects/<Project ID>/locations/<Location ID>/agent`
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "dialogflow.googleapis.com/Intent"
+    }
+  ];
 
   // Required. The collection of intents to delete. Only intent `name` must be
   // filled in.
-  repeated Intent intents = 2;
-}
-
-// This message is a wrapper around a collection of intents.
-message IntentBatch {
-  // A collection of intents.
-  repeated Intent intents = 1;
+  repeated Intent intents = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Represents the options for views of an intent.
@@ -1407,4 +1444,10 @@ enum IntentView {
 
   // All fields are populated.
   INTENT_VIEW_FULL = 1;
+}
+
+// This message is a wrapper around a collection of intents.
+message IntentBatch {
+  // A collection of intents.
+  repeated Intent intents = 1;
 }
